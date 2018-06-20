@@ -43,10 +43,12 @@
   <ItemGroup>
     <Compile Include="Content\GameContent.cs" />
     <Compile Include="GameInstance.cs" />
+    <Compile Include="Objects\Inventory.cs" />
     <Compile Include="Objects\Map.cs" />
     <Compile Include="Objects\Sprite.cs" />
     <Compile Include="Objects\SpritePlayer.cs" />
     <Compile Include="Objects\Tile.cs" />
+    <Compile Include="Objects\TileObjects.cs" />
     <Compile Include="States\GameState.cs" />
     <Compile Include="States\MenuState.cs" />
     <Compile Include="Program.cs" />
@@ -57,6 +59,7 @@
     <Compile Include="UI\Component.cs" />
     <Compile Include="UI\GridCell.cs" />
     <Compile Include="UI\HorizontalScrollMenu.cs" />
+    <Compile Include="UI\HUD.cs" />
     <Compile Include="UI\SelectionCell.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -15,9 +15,9 @@ namespace CitySim.Objects
     // this data is used for savedata, and for loading / generating maps mostly
     public class TileData
     {
-        public int TextureIndex { get; set; } = 0;
         public Vector2 TileIndex { get; set; } = new Vector2(0,0);
         public Vector2 Position { get; set; } = new Vector2(0,0);
+        public TileObject Object { get; set; }
     }
 
     public class Tile
@@ -27,6 +27,9 @@ namespace CitySim.Objects
 
         // this tile's respective tiledata (will match tile properties)
         public TileData TileData { get; set; }
+
+        public TileObject Object { get; set; }
+
         // index of the tile (0-MapWidth,0-MapHeight)
         public Vector2 TileIndex { get; set; }
 
@@ -44,6 +47,7 @@ namespace CitySim.Objects
         // used to determine when clicked
         public event EventHandler Click;
 
+        // hitbox for mouse touch
         public Rectangle TouchHitbox
         {
             get { return new Rectangle((int) Position.X + 8, (int) Position.Y + 83, 18, 10); }
@@ -66,37 +70,46 @@ namespace CitySim.Objects
         {
             Position = tileData_.Position;
             TileIndex = tileData_.TileIndex;
-            // get the texture to render from the gamecontent manager using the TextureIndex from the tiledata
-            Texture = content_.GetTileTexture(tileData_.TextureIndex);
+            // set object from tiledata if not null, otherwise generate default tileobject
+            Object = tileData_.Object ?? new TileObject();
+            // get the texture to render from the gamecontent manager using the TextureIndex from the tile's tileobject - if not null, otherwise default to 3 (grass)
+            Texture = content_.GetTileTexture(Object?.TextureIndex ?? 3);
 
             // set DebugRect data (optional w debug options)
             DebugRect = new Texture2D(graphicsDevice_, 1, 1);
             DebugRect.SetData(new[] { Color.Red });
 
+            // initialize previous mouse state w current mouse state (not really that big of a deal as it will only make one frame behave odd and that frame is over with before user even notices unless their pc is literally a piece of shit)
             _previousMouseState = Mouse.GetState();
         }
 
+        // update
+        // - check for mouse hovering and click (select)
         public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera)
         {
             // update tile?
 
             var currentMouse = Mouse.GetState();
 
-            var cb = camera.GetBounds();
-
-            var m_screenPosition = new Vector2(cb.X + (currentMouse.X * ( 0 - camera.Zoom)), cb.Y - (currentMouse.Y * (0 - camera.Zoom)));
+            // convert mouse screen position to world position
+            var m_screenPosition = new Vector2(currentMouse.X, currentMouse.Y);
             var m_worldPosition = Vector2.Zero;
-
             camera.ToWorld(ref m_screenPosition, out m_worldPosition);
 
+            // apply offset (why the fuck this is needed I absolutely do not know but I randomly fucking figured out this formula and somehow it works so for the love of fuck - do not change this until a superior solution is TESTED and delivered
+            m_worldPosition.X -= camera.Width / 2;
+            m_worldPosition.Y -= camera.Height / 2;
+
+            // get bounds for mouse world position
             var mouseRectangle = new Rectangle((int)m_worldPosition.X, (int)m_worldPosition.Y, 1, 1);
 
             IsHovered = false;
 
+            // check if mouse bounds intersects with tile touchbox bounds
             if (mouseRectangle.Intersects(TouchHitbox))
             {
                 IsHovered = true;
-                Console.WriteLine("Mouse is hovering over tile.");
+                Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
 
                 if (currentMouse.LeftButton == ButtonState.Released && _previousMouseState.LeftButton == ButtonState.Pressed)
                 {
@@ -104,13 +117,20 @@ namespace CitySim.Objects
                 }
             }
 
+            // save mouse state as previous mousestate for next update call
             _previousMouseState = currentMouse;
         }
 
+        // draw
+        // - draw tile
+        // - draw outline if selected
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
             spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f);
-            // draw outline?
+            
+            // draw extras ?
+
+            // if tile is hovered, draw debug box on tile
             if(IsHovered)
                 spriteBatch_.Draw(DebugRect, destinationRectangle: TouchHitbox, color: new Color(Color.White, 0.25f));
         }

@@ -20,7 +20,10 @@ namespace CitySim.States
     {
         // list to hold all components in menu
         private List<Component> _components;
-        
+
+        // texture for mouse cursor
+        private Texture2D _cursorTexture { get; set; }
+
         // construct state
         public MenuState(GameInstance game, GraphicsDevice graphicsDevice, ContentManager content) : base(game, graphicsDevice, content)
         {
@@ -77,6 +80,9 @@ namespace CitySim.States
 
             // set mouse position
             Mouse.SetPosition(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 2);
+
+            // load (mouse) cursor content
+            _cursorTexture = _content.Load<Texture2D>("Sprites/UI/UI_Cursor");
         }
 
         // functions for button click events
@@ -116,6 +122,11 @@ namespace CitySim.States
             // draw each component
             foreach (var component in _components)
                 component.Draw(gameTime, spriteBatch);
+
+            var msp = Mouse.GetState().Position;
+            var mp = new Vector2(msp.X, msp.Y);
+            // draw UI / HUD here 
+            spriteBatch.Draw(_cursorTexture, mp, Color.White);
 
             spriteBatch.End();
         }

@@ -20,29 +20,55 @@ namespace CitySim.States
 {
     public class GameState : State
     {
+        #region PROPS
+
+        #region SYSTEM & DEBUGGING
         // is game currently debugging?
         private bool _debug { get; set; } = false;
 
+        private GraphicsDevice _graphicsDevice { get; set; }
+        #endregion
+
+        #region GAME CONTENT
         // gamecontent manager - holds all sprites, effects, sounds
         private GameContent _gameContent { get; set; }
 
-        private GraphicsDevice _graphicsDevice { get; set; }
+        // texture for mouse cursor
+        private Texture2D _cursorTexture { get; set; }
+        #endregion
 
+        #region MAP AND CAMERA
         // current map rendering
         private Map _currentMap { get; set; }
 
         // game camera
         private Camera _camera { get; set; }
+        #endregion
 
+        #region MOUSE & KEYBOARD STATES
         // previous keyboard state (before current)
         private KeyboardState _previousKeyboardState { get; set; }
 
         // previous mouse state (before current)
         private MouseState _previousMouseState { get; set; }
+        #endregion
 
+        #region EXTRA PROPERTIES
         // first render?
         private bool _firstTake { get; set; } = true;
+        #endregion
 
+        #region INVENTORY
+
+        public Inventory PlayerInventory { get; set; }
+
+        #endregion
+
+        #endregion
+
+        #region METHODS
+
+        #region CONSTRUCTOR
         // construct state
         public GameState(GameInstance game, GraphicsDevice graphicsDevice, ContentManager content) : base(game, graphicsDevice, content)
         {
@@ -56,6 +82,7 @@ namespace CitySim.States
             bool mapLoaded = false;
             Console.WriteLine($"Searching for map files...");
 
+            // loop through until success
             while (mapLoaded.Equals(false))
             {
                 if (LoadMap())
@@ -69,13 +96,31 @@ namespace CitySim.States
                 }
             }
 
+            // this console output shall signify success
             Console.WriteLine($"Map loaded.");
 
             // create camera instance and set its position to mid map
             _camera = new Camera(graphicsDevice);
             _camera.Position = _currentMap.Tiles[25, 25].Position;
-        }
 
+            // load (mouse) cursor content
+            _cursorTexture = _gameContent.GetUiTexture(4);
+
+            // initialize player's inventory (currently, these are the default values being passed so fucking deal with it)
+            PlayerInventory = new Inventory()
+            {
+                Gold = 500,
+                Wood = 100,
+                Coal = 50,
+                Iron = 20,
+                Food = 50,
+                Workers = 10,
+                Energy = 10
+            };
+        }
+        #endregion
+
+        #region HANDLE MAP DATA
         public bool LoadMap()
         {
             // array to hold tiles
@@ -178,12 +223,12 @@ namespace CitySim.States
                     // so that the "diamond" shape of each tile fits together snug
                     var position = new Vector2(x * 17 - y * 17, x * 9 + y * 9);
 
-                    // set tile data
+                    // set tile and (inner) object data
                     var td = new TileData
                     {
                         TileIndex = new Vector2(x, y),
                         Position = position,
-                        TextureIndex = 3
+                        Object = new TileObject()
                     };
 
                     // add tiledata to list
@@ -198,7 +243,9 @@ namespace CitySim.States
             }
             Console.WriteLine("Map finished generating.");
         }
+        #endregion
 
+        #region UPDATE & POST UPDATE
         // update
         public override void Update(GameTime gameTime)
         {
@@ -214,6 +261,19 @@ namespace CitySim.States
             _previousMouseState = Mouse.GetState();
         }
 
+        // post update (called after update)
+        public override void PostUpdate(GameTime gameTime)
+        {
+            // get keyboard state
+            var keyboardState = Keyboard.GetState();
+
+            // update map and camera
+            _currentMap.Update(gameTime, keyboardState, _camera);
+            _camera.Update(gameTime);
+        }
+        #endregion
+
+        #region HANDLE INPUTS
         public void HandleInput(GameTime gameTime, KeyboardState keyboardState, MouseState mouseState)
         {
             // if first render
@@ -256,7 +316,9 @@ namespace CitySim.States
 
             // if mouse scrollwheel value is different than last frames scroll wheel value,
             // zoom camera accordingly
-
+            // REMOVED TEMPORARILY
+            // TODO: PROPERLY CONVERT MOUSE SCREEN POS TO WORLD POS WHEN CAMERA IS ZOOMED, THEN RE-ADD SCROLLING
+            /*
             if (mouseState.ScrollWheelValue < _previousMouseState.ScrollWheelValue)
             {
                 // check for camera zoom > 0 ?
@@ -266,18 +328,11 @@ namespace CitySim.States
             {
                 _camera.Zoom += 0.2f;
             }
+            */
         }
+        #endregion
 
-        public override void PostUpdate(GameTime gameTime)
-        {
-            // get keyboard state
-            var keyboardState = Keyboard.GetState();
-
-            // update map and camera
-            _currentMap.Update(gameTime, keyboardState, _camera);
-            _camera.Update(gameTime);
-        }
-
+        #region DRAW
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // TWO SPRITE BATCHES:
@@ -295,10 +350,15 @@ namespace CitySim.States
             //---------------------------------------------------------
 
             spriteBatch.Begin();
-
+            var msp = Mouse.GetState().Position;
+            var mp = new Vector2(msp.X, msp.Y);
             // draw UI / HUD here 
+            spriteBatch.Draw(_cursorTexture, mp, Color.White);
 
             spriteBatch.End();
         }
+        #endregion
+
+        #endregion
     }
 }

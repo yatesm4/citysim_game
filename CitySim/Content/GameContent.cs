@@ -123,6 +123,7 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Arrow_Green", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Arrow_Black", _content));
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Cursor", _content));
 
             Console.WriteLine($"Ui Textures: {i}");
         }

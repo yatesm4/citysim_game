@@ -30,7 +30,8 @@ namespace CitySim
         /// </summary>
         protected override void Initialize()
         {
-            IsMouseVisible = true;
+            // uncomment if mouse visibility is needed
+            //IsMouseVisible = true;
             base.Initialize();
         }
 
