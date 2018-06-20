@@ -26,6 +26,8 @@ namespace CitySim.States
         // gamecontent manager - holds all sprites, effects, sounds
         private GameContent _gameContent { get; set; }
 
+        private GraphicsDevice _graphicsDevice { get; set; }
+
         // current map rendering
         private Map _currentMap { get; set; }
 
@@ -46,6 +48,9 @@ namespace CitySim.States
         {
             // create new gamecontent instance
             _gameContent = new GameContent(content);
+
+            // save graphics device
+            _graphicsDevice = graphicsDevice;
 
             // mapLoaded = false, until a map is succesfully loaded in LoadMap()
             bool mapLoaded = false;
@@ -104,7 +109,7 @@ namespace CitySim.States
                         var y = (int)t.TileIndex.Y;
 
                         // create new tile and pass gamecontent instance and tiledata
-                        tileArr_[x, y] = new Tile(_gameContent, t);
+                        tileArr_[x, y] = new Tile(_gameContent, _graphicsDevice, t);
                         // set outline texture
                         tileArr_[x, y].OutlineTexture = _gameContent.GetTileTexture(1);
                     }
