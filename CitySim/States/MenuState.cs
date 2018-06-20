@@ -18,12 +18,17 @@ namespace CitySim.States
 {
     public class MenuState : State
     {
+        // list to hold all components in menu
         private List<Component> _components;
         
+        // construct state
         public MenuState(GameInstance game, GraphicsDevice graphicsDevice, ContentManager content) : base(game, graphicsDevice, content)
         {
+            // variables to hold button texture and font
             var buttonTexture = _content.Load<Texture2D>("Sprites/UI/UI_Button");
             var buttonFont = _content.Load<SpriteFont>("Fonts/Font_01");
+
+            // create buttons and set properties, and click event functions
 
             var newGameButton = new Button(buttonTexture, buttonFont)
             {
@@ -61,6 +66,7 @@ namespace CitySim.States
             };
             quitGameButton.Click += QuitGameButton_Click;
 
+            // add buttons to list of components
             _components = new List<Component>()
             {
                 newGameButton,
@@ -69,8 +75,11 @@ namespace CitySim.States
                 quitGameButton
             };
 
+            // set mouse position
             Mouse.SetPosition(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 2);
         }
+
+        // functions for button click events
 
         private void QuitGameButton_Click(object sender, EventArgs e)
         {
@@ -99,10 +108,12 @@ namespace CitySim.States
             // load edit map
         }
 
+        // draw state
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             spriteBatch.Begin();
 
+            // draw each component
             foreach (var component in _components)
                 component.Draw(gameTime, spriteBatch);
 
@@ -114,8 +125,10 @@ namespace CitySim.States
             // remove sprites if not needed
         }
 
+        // update
         public override void Update(GameTime gameTime)
         {
+            // update each component
             foreach (var component in _components)
                 component.Update(gameTime);
         }
