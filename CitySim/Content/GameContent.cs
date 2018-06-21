@@ -142,12 +142,15 @@ namespace CitySim.Content
         {
             // total: 12
             var i = 1;
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Cement", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Dirt", _content));
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Grass", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Road_Blank", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Road_01", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Road_02", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Dirt", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Cement", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Water", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Stone", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Coal", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Iron", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Tree_Single_01", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Tree_Cluster_01", _content));
 
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/01", _content));
 

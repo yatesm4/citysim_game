@@ -17,24 +17,36 @@ namespace CitySim.Objects
     {
         public Vector2 TileIndex { get; set; } = new Vector2(0,0);
         public Vector2 Position { get; set; } = new Vector2(0,0);
+        public int TerrainId { get; set; } = 0;
         public TileObject Object { get; set; }
     }
 
     public class Tile
     {
+        public GameContent Content { get; set; }
+
         // debug texture for drawing hitbox (click area)
         public Texture2D DebugRect { get; set; }
 
         // this tile's respective tiledata (will match tile properties)
         public TileData TileData { get; set; }
 
+        // object (building or resource) belong to this tile
         public TileObject Object { get; set; }
+
+        // the type of terrain on this tile (0 = Grass, 1 = Dirt, 2 = Water)
+        public int TerrainId { get; set; }
 
         // index of the tile (0-MapWidth,0-MapHeight)
         public Vector2 TileIndex { get; set; }
 
         // the texture of this tile
         public Texture2D Texture { get; set; }
+
+        public Sprite Spr { get; set; }
+        public SpritePlayer SprPlayer { get; set; }
+
+        public Texture2D ObjectTexture { get; set; }
 
         // is the tile interactable, is it hovered, and the hover properties
         public bool IsInteractable { get; set; } = false;
@@ -68,12 +80,38 @@ namespace CitySim.Objects
         // tile constructor, pass a gamecontent manager and tiledata to load from
         public Tile(GameContent content_, GraphicsDevice graphicsDevice_, TileData tileData_)
         {
+            Content = content_;
+
+
             Position = tileData_.Position;
             TileIndex = tileData_.TileIndex;
+            TerrainId = tileData_.TerrainId;
             // set object from tiledata if not null, otherwise generate default tileobject
             Object = tileData_.Object ?? new TileObject();
             // get the texture to render from the gamecontent manager using the TextureIndex from the tile's tileobject - if not null, otherwise default to 3 (grass)
-            Texture = content_.GetTileTexture(Object?.TextureIndex ?? 3);
+
+            int texture_for_terrain = 0;
+            switch (TerrainId)
+            {
+                case 0:
+                    texture_for_terrain = 1;
+                    break;
+                case 1:
+                    texture_for_terrain = 2;
+                    break;
+                case 2:
+                    texture_for_terrain = 4;
+                    break;
+            }
+
+            Texture = content_.GetTileTexture(texture_for_terrain);
+
+            if (TerrainId.Equals(2))
+            {
+                // terrain is water
+                Spr = new Sprite(Texture, 3f);
+                SprPlayer.PlaySprite(Spr);
+            }
 
             // set DebugRect data (optional w debug options)
             DebugRect = new Texture2D(graphicsDevice_, 1, 1);
@@ -109,7 +147,7 @@ namespace CitySim.Objects
             if (mouseRectangle.Intersects(TouchHitbox))
             {
                 IsHovered = true;
-                Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
+                //Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
 
                 if (currentMouse.LeftButton == ButtonState.Released && _previousMouseState.LeftButton == ButtonState.Pressed)
                 {
@@ -121,18 +159,51 @@ namespace CitySim.Objects
             _previousMouseState = currentMouse;
         }
 
+
+
         // draw
         // - draw tile
         // - draw outline if selected
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
-            spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f);
+            if (IsHovered)
+            {
+                spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: Color.OrangeRed);
+            }
+            else
+            {
+                if (TerrainId.Equals(2))
+                {
+                    SprPlayer.Draw(gameTime_, spriteBatch_, Position, SpriteEffects.None);
+                }
+                else
+                {
+                    spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f);
+                }
+            }
+
+            if (Object.TypeId != 0)
+            {
+                if (TerrainId.Equals(2))
+                {
+                    // terrain is water => object is water, so dont render anything over the tile
+                }
+                else
+                {
+                    spriteBatch_.Draw(ObjectTexture, position: Position, scale: Scale, layerDepth: 0.4f);
+                }
+            }
             
             // draw extras ?
 
             // if tile is hovered, draw debug box on tile
-            if(IsHovered)
-                spriteBatch_.Draw(DebugRect, destinationRectangle: TouchHitbox, color: new Color(Color.White, 0.25f));
+            //if(IsHovered)
+            //    spriteBatch_.Draw(DebugRect, destinationRectangle: TouchHitbox, color: new Color(Color.White, 0.25f));
+        }
+
+        public void RefreshObjectTexture()
+        {
+            ObjectTexture = Content.GetTileTexture(Object.TextureIndex);
         }
     }
 }

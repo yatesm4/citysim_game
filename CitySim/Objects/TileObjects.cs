@@ -18,7 +18,7 @@ namespace CitySim.Objects
         //-------------------------------------
 
         // set texture index to 3 (grass) by default
-        public int TextureIndex { get; set; } = 3;
+        public int TextureIndex { get; set; } = 1;
 
         // how many cycles has this object completed
         public int CyclesCompleted { get; set; } = 0;
@@ -36,6 +36,7 @@ namespace CitySim.Objects
         public int WoodCost { get; set; } = 0;
         public int CoalCost { get; set; } = 0;
         public int IronCost { get; set; } = 0;
+        public int StoneCost { get; set; } = 0;
         public int WorkersCost { get; set; } = 0;
         public int EnergyCost { get; set; } = 0;
         public int FoodCost { get; set; } = 0;
@@ -47,6 +48,7 @@ namespace CitySim.Objects
         public int WoodOutput { get; set; } = 0;
         public int CoalOutput { get; set; } = 0;
         public int IronOutput { get; set; } = 0;
+        public int StoneOutput { get; set; } = 0;
         public int WorkersOutput { get; set; } = 0;
         public int EnergyOutput { get; set; } = 0;
         public int FoodOutput { get; set; } = 0;
@@ -62,7 +64,7 @@ namespace CitySim.Objects
             Id = (int)settings_[0];
             TypeId = (int)settings_[1];
             ObjectId = (int)settings_[2];
-            TextureIndex = (int)settings_[3];
+            TextureIndex = (int) settings_[3];
             CycleTime = settings_[4];
 
             // set costs
@@ -70,18 +72,20 @@ namespace CitySim.Objects
             WoodCost = costs_[1];
             CoalCost = costs_[2];
             IronCost = costs_[3];
-            WorkersCost = costs_[4];
-            EnergyCost = costs_[5];
-            FoodCost = costs_[6];
+            StoneCost = costs_[4];
+            WorkersCost = costs_[5];
+            EnergyCost = costs_[6];
+            FoodCost = costs_[7];
 
             // set outputs
             GoldOutput = outputs_[0];
             WoodOutput = outputs_[1];
             CoalOutput = outputs_[2];
             IronOutput = outputs_[3];
-            WorkersOutput = outputs_[4];
-            EnergyOutput = outputs_[5];
-            FoodOutput = outputs_[6];
+            StoneOutput = outputs_[4];
+            WorkersOutput = outputs_[5];
+            EnergyOutput = outputs_[6];
+            FoodOutput = outputs_[7];
         }
 
         public void Update(GameTime gameTime)
@@ -98,6 +102,7 @@ namespace CitySim.Objects
         public int WoodOutput { get; set; } = 0;
         public int CoalOutput { get; set; } = 0;
         public int IronOutput { get; set; } = 0;
+        public int StoneOutput { get; set; } = 0;
         public int WorkersOutput { get; set; } = 0;
         public int EnergyOutput { get; set; } = 0;
         public int FoodOutput { get; set; } = 0;
@@ -119,9 +124,10 @@ namespace CitySim.Objects
             WoodOutput = outputs_[1];
             CoalOutput = outputs_[2];
             IronOutput = outputs_[3];
-            WorkersOutput = outputs_[4];
-            EnergyOutput = outputs_[5];
-            FoodOutput = outputs_[6];
+            StoneOutput = outputs_[4];
+            WorkersOutput = outputs_[5];
+            EnergyOutput = outputs_[6];
+            FoodOutput = outputs_[7];
         }
 
         public void Update(GameTime gameTime)
