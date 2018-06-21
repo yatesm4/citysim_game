@@ -264,7 +264,7 @@ namespace CitySim.States
             // create list to hold tile data
             List<TileData> tileData = new List<TileData>();
 
-            // loop through each tile in the map (50, 50 is default now)
+            // loop through and generate each tile in the map (default them to grass/empty) (50, 50 is default now)
             for (var x = 0; x < 50; x++)
             {
                 for (var y = 0; y < 50; y++)
@@ -293,70 +293,95 @@ namespace CitySim.States
             {
                 for (var y = 0; y < 50; y++)
                 {
+                    // this function will run a chance roll on the tile for spawning resources / terrain
+                    // and will also do the same for adjacent tiles
+                    RunTileAndAdjacentsForWater(tileData, x, y);
+                }
+            }
+            for (var x = 0; x < 50; x++)
+            {
+                for (var y = 0; y < 50; y++)
+                {
+                    RunTileAndAdjacentsForTrees(tileData, x, y);
+                }
+            }
+            for (var x = 0; x < 50; x++)
+            {
+                for (var y = 0; y < 50; y++)
+                {
+                    RunTileAndAdjacentsForOre(tileData, x, y, 5, 4);
+                }
+            }
+            for (var x = 0; x < 50; x++)
+            {
+                for (var y = 0; y < 50; y++)
+                {
+                    RunTileAndAdjacentsForOre(tileData, x, y, 6, 5);
+                }
+            }
+            for (var x = 0; x < 50; x++)
+            {
+                for (var y = 0; y < 50; y++)
+                {
+                    RunTileAndAdjacentsForOre(tileData, x, y, 7, 6);
+                }
+            }
+            // run through tiles and check if 50% of surrounding tiles are water, if so - fill in the middle
+            for (var x = 0; x < 50; x++)
+            {
+                for (var y = 0; y < 50; y++)
+                {
                     var index = new Vector2(x,y);
-                    var td = from a in tileData where a.TileIndex == index select a;
-                    if (!td.Any()) continue;
-                    foreach (var t in td)
-                    {
-                        int i = _rndGen.Next(0, 1000);
-                        // if random chance
-                        if (i > 970)
-                        {
-                            // generate water tile
-                            t.TerrainId = 2;
-                            t.Object = new TileObject()
-                            {
-                                Id = Convert.ToInt32($"{index.X}{index.Y}"),
-                                TypeId = 1,
-                                ObjectId = 3,
-                                TextureIndex = 4
-                            };
-                            // for each adjacent direction
-                            for (var loop_dir = 0; loop_dir < 4; loop_dir++)
-                            {
-                                Vector2 ref_tile = new Vector2(0,0);
-                                // set the tile index offset for the direction
-                                switch (loop_dir)
-                                {
-                                    case 0:
-                                        ref_tile = new Vector2(1, 0);
-                                        break;
-                                    case 1:
-                                        ref_tile = new Vector2(0, 1);
-                                        break;
-                                    case 2:
-                                        ref_tile = new Vector2(-1, 0);
-                                        break;
-                                    case 3:
-                                        ref_tile = new Vector2(0, -1);
-                                        break;
-                                }
+                    var tile = from t in tileData where t.TileIndex == index select t;
+                    if (!tile.Any()) continue;
+                    var tile_loaded = tile.FirstOrDefault();
 
-                                // if random chance
-                                int chance = _rndGen.Next(0, 500);
-                                if (chance > 350)
-                                {
-                                    // get adjacent from current index + offset
-                                    ref_tile = index += ref_tile;
-                                    var dir_tile = from b in tileData where b.TileIndex == ref_tile select b;
-                                    if (dir_tile.Any())
-                                    {
-                                        foreach (var selected_tile in dir_tile)
-                                        {
-                                            // set tile to water
-                                            selected_tile.TerrainId = 2;
-                                            selected_tile.Object = new TileObject()
-                                            {
-                                                Id = Convert.ToInt32($"{selected_tile.TileIndex.X}{selected_tile.TileIndex.Y}"),
-                                                TypeId = 1,
-                                                ObjectId = 3,
-                                                TextureIndex = 4
-                                            };
-                                        }
-                                    }
-                                }
+                    // if the terrain / object is already set, skip
+                    if (tile_loaded.TerrainId != 0) continue;
+                    if (tile_loaded.Object.TypeId > 0) continue;
+
+                    var matchingTiles = 0;
+                    for (int o = 0; o < 4; o++)
+                    {
+                        Vector2 dir = new Vector2(0, 0);
+                        switch (o)
+                        {
+                            case 0:
+                                dir = index + new Vector2(1, 0);
+                                break;
+                            case 1:
+                                dir = index + new Vector2(0, 1);
+                                break;
+                            case 2:
+                                dir = index + new Vector2(-1, 0);
+                                break;
+                            case 3:
+                                dir = index + new Vector2(0, -1);
+                                break;
+                        }
+
+                        var adj_tiles = from tiles in tileData where tiles.TileIndex == dir select tiles;
+                        if (adj_tiles.Any())
+                        {
+                            foreach (var adj_tile in adj_tiles)
+                            {
+                                // run check
+                                if (adj_tile.TerrainId.Equals(2))
+                                    matchingTiles++;
                             }
                         }
+                    }
+
+                    if (matchingTiles >= 2)
+                    {
+                        tile_loaded.TerrainId = 2;
+                        tile_loaded.Object = new TileObject()
+                        {
+                            Id = Convert.ToInt32($"{x}{y}"),
+                            TypeId = 1,
+                            ObjectId = 3,
+                            TextureIndex = 4
+                        };
                     }
                 }
             }
@@ -368,6 +393,282 @@ namespace CitySim.States
                 streamWriter.WriteLine(JsonConvert.SerializeObject(tileData, Formatting.Indented));
             }
             Console.WriteLine("Map finished generating.");
+        }
+
+        public void RunTileAndAdjacentsForWater(List<TileData> tileData, int x, int y)
+        {
+            var index = new Vector2(x, y);
+            var td = from a in tileData where a.TileIndex == index select a;
+            if (!td.Any()) return; // theres no tile so just skip
+            foreach (var t in td)
+            {
+                // if the tile is already water - dont even bother
+                if (t.TerrainId.Equals(2))
+                {
+                    return;
+                }
+
+                // if the tile is already a resource/building - dont even bother
+                if (t.Object.TypeId.Equals(1) || t.Object.TypeId.Equals(2))
+                {
+                    return;
+                }
+
+                int i = _rndGen.Next(0, 1000000);
+
+                int adj_water_tiles = 0;
+
+                // check to see if any adjacent tiles are already water
+                for (int o = 0; o < 4; o++)
+                {
+                    Vector2 dir = new Vector2(0,0);
+                    switch (o)
+                    {
+                        case 0:
+                            dir = index + new Vector2(1, 0);
+                            break;
+                        case 1:
+                            dir = index + new Vector2(0, 1);
+                            break;
+                        case 2:
+                            dir = index + new Vector2(-1, 0);
+                            break;
+                        case 3:
+                            dir = index + new Vector2(0, -1);
+                            break;
+                    }
+
+                    var adj_tiles = from tiles in tileData where tiles.TileIndex == dir select tiles;
+                    if (adj_tiles.Any())
+                    {
+                        foreach (var adj_tile in adj_tiles)
+                        {
+                            if (adj_tile.TerrainId.Equals(2))
+                                adj_water_tiles++;
+                        }
+                    }
+                }
+                // if random chance
+                if (i > (adj_water_tiles > 0 ? (adj_water_tiles < 2 ? 700000 : (adj_water_tiles < 3 ? 800000 : 900000)) : 990000))
+                {
+                    // generate water tile
+                    t.TerrainId = 2;
+                    t.Object = new TileObject()
+                    {
+                        Id = Convert.ToInt32($"{index.X}{index.Y}"),
+                        TypeId = 1,
+                        ObjectId = 3,
+                        TextureIndex = 4
+                    };
+                    // for each adjacent direction
+                    for (var loop_dir = 0; loop_dir < 4; loop_dir++)
+                    {
+                        Vector2 ref_tile = new Vector2(0, 0);
+                        var adj_chance = 0.0f;
+                        // set the tile index offset for the direction
+                        switch (loop_dir)
+                        {
+                            case 0:
+                                ref_tile = new Vector2(1, 0);
+                                break;
+                            case 1:
+                                ref_tile = new Vector2(0, 1);
+                                break;
+                            case 2:
+                                ref_tile = new Vector2(-1, 0);
+                                break;
+                            case 3:
+                                ref_tile = new Vector2(0, -1);
+                                break;
+                        }
+
+                        ref_tile = index += ref_tile;
+                        RunTileAndAdjacentsForWater(tileData, (int)ref_tile.X, (int)ref_tile.Y);
+                    }
+                }
+            }
+        }
+
+        public void RunTileAndAdjacentsForTrees(List<TileData> tileData, int x, int y)
+        {
+            var index = new Vector2(x, y);
+            var td = from a in tileData where a.TileIndex == index select a;
+            if (!td.Any()) return; // theres no tile so just skip
+            foreach (var t in td)
+            {
+                // if the tile is already water - dont even bother
+                if (t.TerrainId.Equals(2))
+                {
+                    return;
+                }
+
+                // if the tile is already a resource - dont even bother
+                if (t.Object.TypeId.Equals(1) || t.Object.TypeId.Equals(2))
+                {
+                    return;
+                }
+
+                int i = _rndGen.Next(0, 1000000);
+
+                int adj_tree_tiles = 0;
+
+                // check to see if any adjacent tiles are already water
+                for (int o = 0; o < 4; o++)
+                {
+                    Vector2 dir = new Vector2(0, 0);
+                    switch (o)
+                    {
+                        case 0:
+                            dir = index + new Vector2(1, 0);
+                            break;
+                        case 1:
+                            dir = index + new Vector2(0, 1);
+                            break;
+                        case 2:
+                            dir = index + new Vector2(-1, 0);
+                            break;
+                        case 3:
+                            dir = index + new Vector2(0, -1);
+                            break;
+                    }
+
+                    var adj_tiles = from tiles in tileData where tiles.TileIndex == dir select tiles;
+                    if (adj_tiles.Any())
+                    {
+                        adj_tree_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(1) && (adj_tile.Object.ObjectId.Equals(1) || adj_tile.Object.ObjectId.Equals(2)));
+                    }
+                }
+
+                // if random chance
+                if (i > (adj_tree_tiles > 0 ? (adj_tree_tiles < 2 ? 700000 : (adj_tree_tiles < 3 ? 800000 : 900000)) : 990000))
+                {
+                    // generate tree tile
+                    t.TerrainId = 0;
+                    t.Object = new TileObject()
+                    {
+                        Id = Convert.ToInt32($"{index.X}{index.Y}"),
+                        TypeId = 1,
+                        ObjectId = 2,
+                        TextureIndex = 9
+                    };
+                    // for each adjacent direction
+                    for (var loop_dir = 0; loop_dir < 4; loop_dir++)
+                    {
+                        Vector2 ref_tile = new Vector2(0, 0);
+                        var adj_chance = 0.0f;
+                        // set the tile index offset for the direction
+                        switch (loop_dir)
+                        {
+                            case 0:
+                                ref_tile = new Vector2(1, 0);
+                                break;
+                            case 1:
+                                ref_tile = new Vector2(0, 1);
+                                break;
+                            case 2:
+                                ref_tile = new Vector2(-1, 0);
+                                break;
+                            case 3:
+                                ref_tile = new Vector2(0, -1);
+                                break;
+                        }
+
+                        ref_tile = index += ref_tile;
+                        RunTileAndAdjacentsForTrees(tileData, (int)ref_tile.X, (int)ref_tile.Y);
+                    }
+                }
+            }
+        }
+
+        public void RunTileAndAdjacentsForOre(List<TileData> tileData, int x, int y, int textureid, int objectid)
+        {
+            var index = new Vector2(x, y);
+            var td = from a in tileData where a.TileIndex == index select a;
+            if (!td.Any()) return; // theres no tile so just skip
+            foreach (var t in td)
+            {
+                // if the tile is already water - dont even bother
+                if (t.TerrainId.Equals(2))
+                {
+                    return;
+                }
+
+                // if the tile is already a resource - dont even bother
+                if (t.Object.TypeId.Equals(1) || t.Object.TypeId.Equals(2))
+                {
+                    return;
+                }
+
+                int i = _rndGen.Next(0, 1000000);
+
+                int adj_stone_tiles = 0;
+
+                // check to see if any adjacent tiles are already water
+                for (int o = 0; o < 4; o++)
+                {
+                    Vector2 dir = new Vector2(0, 0);
+                    switch (o)
+                    {
+                        case 0:
+                            dir = index + new Vector2(1, 0);
+                            break;
+                        case 1:
+                            dir = index + new Vector2(0, 1);
+                            break;
+                        case 2:
+                            dir = index + new Vector2(-1, 0);
+                            break;
+                        case 3:
+                            dir = index + new Vector2(0, -1);
+                            break;
+                    }
+
+                    var adj_tiles = from tiles in tileData where tiles.TileIndex == dir select tiles;
+                    if (adj_tiles.Any())
+                    {
+                        adj_stone_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(1) && adj_tile.Object.ObjectId.Equals(objectid));
+                    }
+                }
+
+                // if random chance
+                if (i > (adj_stone_tiles > 0 ? (adj_stone_tiles < 2 ? 900000 : (adj_stone_tiles < 3 ? 950000 : 975000)) : 995000))
+                {
+                    // generate tree tile
+                    t.TerrainId = 0; // add random chance for dirt or grass?
+                    t.Object = new TileObject()
+                    {
+                        Id = Convert.ToInt32($"{index.X}{index.Y}"),
+                        TypeId = 1,
+                        ObjectId = objectid,
+                        TextureIndex = textureid
+                    };
+                    // for each adjacent direction
+                    for (var loop_dir = 0; loop_dir < 4; loop_dir++)
+                    {
+                        Vector2 ref_tile = new Vector2(0, 0);
+                        var adj_chance = 0.0f;
+                        // set the tile index offset for the direction
+                        switch (loop_dir)
+                        {
+                            case 0:
+                                ref_tile = new Vector2(1, 0);
+                                break;
+                            case 1:
+                                ref_tile = new Vector2(0, 1);
+                                break;
+                            case 2:
+                                ref_tile = new Vector2(-1, 0);
+                                break;
+                            case 3:
+                                ref_tile = new Vector2(0, -1);
+                                break;
+                        }
+
+                        ref_tile = index += ref_tile;
+                        RunTileAndAdjacentsForOre(tileData, (int)ref_tile.X, (int)ref_tile.Y, textureid, objectid);
+                    }
+                }
+            }
         }
         #endregion
 

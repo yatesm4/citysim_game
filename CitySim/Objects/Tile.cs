@@ -51,8 +51,7 @@ namespace CitySim.Objects
         // is the tile interactable, is it hovered, and the hover properties
         public bool IsInteractable { get; set; } = false;
         public bool IsHovered { get; set; } = false;
-        public Texture2D OutlineTexture { get; set; }
-        public bool ShowOutline { get; set; } = false;
+        public Color DrawColor { get; set; } = Color.White;
 
         private MouseState _previousMouseState { get; set; }
 
@@ -160,14 +159,9 @@ namespace CitySim.Objects
         // - draw outline if selected
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
-            if (IsHovered)
-            {
-                spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: Color.OrangeRed);
-            }
-            else
-            {
-                spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f);
-            }
+            DrawColor = IsHovered ? Color.OrangeRed : Color.White;
+
+            spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor); 
 
             if (Object.TypeId != 0)
             {
@@ -177,7 +171,16 @@ namespace CitySim.Objects
                 }
                 else
                 {
-                    spriteBatch_.Draw(ObjectTexture, position: Position, scale: Scale, layerDepth: 0.4f);
+                    if(ObjectTexture is null)
+                        RefreshObjectTexture();
+                    try
+                    {
+                        spriteBatch_.Draw(ObjectTexture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Error drawing object sprite: " + e.Message);
+                    }
                 }
             }
             
