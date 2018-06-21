@@ -14,6 +14,7 @@ namespace CitySim.Objects
         public Sprite Sprite
         {
             get { return _sprite; }
+            set { _sprite = value; }
         }
 
         private Sprite _sprite;
@@ -73,7 +74,7 @@ namespace CitySim.Objects
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_, Vector2 position_, SpriteEffects spriteEffects_)
         {
             // if no sprite
-            if (Sprite is null)
+            if (_sprite is null)
                 throw new NotSupportedException("No sprite is loaded -> no sprite can be played.");
 
             // get current time of playback

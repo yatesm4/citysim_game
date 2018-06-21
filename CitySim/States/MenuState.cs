@@ -97,14 +97,16 @@ namespace CitySim.States
         {
             // todo load game
             Console.WriteLine("Loading game...");
+            _game.ChangeState(new GameState(_game, _graphicsDevice, _content));
+            // load previous game
         }
 
         private void NewGameButton_Click(object sender, EventArgs e)
         {
             // todo new game
             Console.WriteLine("Starting new game...");
-            _game.ChangeState(new GameState(_game, _graphicsDevice, _content));
-            // load new state
+            _game.ChangeState(new GameState(_game, _graphicsDevice, _content, true));
+            // load new game
         }
 
         private void EditMapButton_Click(object sender, EventArgs e)

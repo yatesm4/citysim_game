@@ -25,6 +25,7 @@ namespace CitySim.States
         #region SYSTEM & DEBUGGING
         // is game currently debugging?
         private bool _debug { get; set; } = false;
+        private Random _rndGen = new Random();
 
         private GraphicsDevice _graphicsDevice { get; set; }
         #endregion
@@ -118,6 +119,59 @@ namespace CitySim.States
                 Energy = 10
             };
         }
+
+        // constructor for new game
+        public GameState(GameInstance game, GraphicsDevice graphicsDevice, ContentManager content, bool newgame) : base(game, graphicsDevice, content)
+        {
+            // create new gamecontent instance
+            _gameContent = new GameContent(content);
+
+            // save graphics device
+            _graphicsDevice = graphicsDevice;
+
+            // mapLoaded = false, until a map is succesfully loaded in LoadMap()
+            bool mapLoaded = false;
+            Console.WriteLine($"Starting new game...");
+
+            // generate map
+            GenerateMap();
+
+            // loop through until success
+            while (mapLoaded.Equals(false))
+            {
+                if (LoadMap())
+                {
+                    mapLoaded = true;
+                }
+                else
+                {
+                    Console.WriteLine("No maps found, generating maps...");
+                    GenerateMap();
+                }
+            }
+
+            // this console output shall signify success
+            Console.WriteLine($"Map loaded.");
+
+            // create camera instance and set its position to mid map
+            _camera = new Camera(graphicsDevice);
+            _camera.Position = _currentMap.Tiles[25, 25].Position;
+
+            // load (mouse) cursor content
+            _cursorTexture = _gameContent.GetUiTexture(4);
+
+            // initialize player's inventory (currently, these are the default values being passed so fucking deal with it)
+            PlayerInventory = new Inventory()
+            {
+                Gold = 500,
+                Wood = 100,
+                Coal = 50,
+                Iron = 20,
+                Food = 50,
+                Workers = 10,
+                Energy = 10
+            };
+        }
         #endregion
 
         #region HANDLE MAP DATA
@@ -155,8 +209,6 @@ namespace CitySim.States
 
                         // create new tile and pass gamecontent instance and tiledata
                         tileArr_[x, y] = new Tile(_gameContent, _graphicsDevice, t);
-                        // set outline texture
-                        tileArr_[x, y].OutlineTexture = _gameContent.GetTileTexture(1);
                     }
                 }
 
@@ -221,7 +273,7 @@ namespace CitySim.States
                     // the position is calculated so that the tile will be placed in a fashion that it will render isometrically
                     // this means rendering tiles side by side, but also connecting them by offsetting the x and y with each row
                     // so that the "diamond" shape of each tile fits together snug
-                    var position = new Vector2(x * 17 - y * 17, x * 9 + y * 9);
+                    var position = new Vector2(x * 17 - y * 17, x * 8.5f + y * 8.5f);
 
                     // set tile and (inner) object data
                     var td = new TileData
@@ -235,6 +287,80 @@ namespace CitySim.States
                     tileData.Add(td);
                 }
             }
+
+            // loop through tiles and generate unique map
+            for (var x = 0; x < 50; x++)
+            {
+                for (var y = 0; y < 50; y++)
+                {
+                    var index = new Vector2(x,y);
+                    var td = from a in tileData where a.TileIndex == index select a;
+                    if (!td.Any()) continue;
+                    foreach (var t in td)
+                    {
+                        int i = _rndGen.Next(0, 1000);
+                        // if random chance
+                        if (i > 970)
+                        {
+                            // generate water tile
+                            t.TerrainId = 2;
+                            t.Object = new TileObject()
+                            {
+                                Id = Convert.ToInt32($"{index.X}{index.Y}"),
+                                TypeId = 1,
+                                ObjectId = 3,
+                                TextureIndex = 4
+                            };
+                            // for each adjacent direction
+                            for (var loop_dir = 0; loop_dir < 4; loop_dir++)
+                            {
+                                Vector2 ref_tile = new Vector2(0,0);
+                                // set the tile index offset for the direction
+                                switch (loop_dir)
+                                {
+                                    case 0:
+                                        ref_tile = new Vector2(1, 0);
+                                        break;
+                                    case 1:
+                                        ref_tile = new Vector2(0, 1);
+                                        break;
+                                    case 2:
+                                        ref_tile = new Vector2(-1, 0);
+                                        break;
+                                    case 3:
+                                        ref_tile = new Vector2(0, -1);
+                                        break;
+                                }
+
+                                // if random chance
+                                int chance = _rndGen.Next(0, 500);
+                                if (chance > 350)
+                                {
+                                    // get adjacent from current index + offset
+                                    ref_tile = index += ref_tile;
+                                    var dir_tile = from b in tileData where b.TileIndex == ref_tile select b;
+                                    if (dir_tile.Any())
+                                    {
+                                        foreach (var selected_tile in dir_tile)
+                                        {
+                                            // set tile to water
+                                            selected_tile.TerrainId = 2;
+                                            selected_tile.Object = new TileObject()
+                                            {
+                                                Id = Convert.ToInt32($"{selected_tile.TileIndex.X}{selected_tile.TileIndex.Y}"),
+                                                TypeId = 1,
+                                                ObjectId = 3,
+                                                TextureIndex = 4
+                                            };
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // get data_map.json file
             using (var streamWriter = new System.IO.StreamWriter($"data_map.json"))
             {

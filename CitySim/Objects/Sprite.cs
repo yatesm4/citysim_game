@@ -55,8 +55,10 @@ namespace CitySim.Objects
         // sprite's frame width - if an animation, return the height (width is multiple frames, height will be same as width for each frame)
         public int FrameWidth
         {
-            get { return IsAnimation ? Texture.Height : Texture.Width; }
+            get { return IsAnimation ? (CustomFrameWidth > 0 ? CustomFrameWidth : Texture.Height) : Texture.Width; }
         }
+
+        public int CustomFrameWidth { get; set; } = 0;
 
         public int FrameHeight
         {

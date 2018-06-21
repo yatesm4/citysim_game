@@ -43,8 +43,8 @@ namespace CitySim.Objects
         // the texture of this tile
         public Texture2D Texture { get; set; }
 
-        public Sprite Spr { get; set; }
-        public SpritePlayer SprPlayer { get; set; }
+        public Sprite Spr;
+        public SpritePlayer SprPlayer;
 
         public Texture2D ObjectTexture { get; set; }
 
@@ -106,13 +106,6 @@ namespace CitySim.Objects
 
             Texture = content_.GetTileTexture(texture_for_terrain);
 
-            if (TerrainId.Equals(2))
-            {
-                // terrain is water
-                Spr = new Sprite(Texture, 3f);
-                SprPlayer.PlaySprite(Spr);
-            }
-
             // set DebugRect data (optional w debug options)
             DebugRect = new Texture2D(graphicsDevice_, 1, 1);
             DebugRect.SetData(new[] { Color.Red });
@@ -148,6 +141,7 @@ namespace CitySim.Objects
             {
                 IsHovered = true;
                 //Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
+                //Console.WriteLine($"Hovering Over Tile: {TileIndex.ToString()}");
 
                 if (currentMouse.LeftButton == ButtonState.Released && _previousMouseState.LeftButton == ButtonState.Pressed)
                 {
@@ -172,14 +166,7 @@ namespace CitySim.Objects
             }
             else
             {
-                if (TerrainId.Equals(2))
-                {
-                    SprPlayer.Draw(gameTime_, spriteBatch_, Position, SpriteEffects.None);
-                }
-                else
-                {
-                    spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f);
-                }
+                spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f);
             }
 
             if (Object.TypeId != 0)
