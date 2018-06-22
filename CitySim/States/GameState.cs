@@ -30,12 +30,35 @@ namespace CitySim.States
         private GraphicsDevice _graphicsDevice { get; set; }
         #endregion
 
+        #region LOADING
+
+        // how much of the load pool is remaining (gets subtracted from with every milestone)
+        private int _remainingLoad = 100;
+
+        public int LoadProgress
+        {
+            get { return 100 - _remainingLoad; }
+        }
+
+        // is the game loaded?
+        public bool IsLoaded
+        {
+            get { return LoadProgress.Equals(100); }
+        }
+
+        // is the game currently loading?
+        public bool IsLoading = false;
+        #endregion
+
         #region GAME CONTENT
         // gamecontent manager - holds all sprites, effects, sounds
         private GameContent _gameContent { get; set; }
 
         // texture for mouse cursor
         private Texture2D _cursorTexture { get; set; }
+
+        // font for writing text
+        private SpriteFont _font { get; set; }
         #endregion
 
         #region MAP AND CAMERA
@@ -84,18 +107,22 @@ namespace CitySim.States
             Console.WriteLine($"Searching for map files...");
 
             // loop through until success
+            /* needs to be updated for async loading
             while (mapLoaded.Equals(false))
             {
                 if (LoadMap())
                 {
                     mapLoaded = true;
+                    _remainingLoad = 0;
                 }
                 else
                 {
                     Console.WriteLine("No maps found, generating maps...");
-                    GenerateMap();
+                    if (_remainingLoad < 100) _remainingLoad = 100;
+                    Task.Run(() => GenerateMap());
                 }
             }
+            */
 
             // this console output shall signify success
             Console.WriteLine($"Map loaded.");
@@ -106,6 +133,9 @@ namespace CitySim.States
 
             // load (mouse) cursor content
             _cursorTexture = _gameContent.GetUiTexture(4);
+
+            // load font
+            _font = _gameContent.GetFont(1);
 
             // initialize player's inventory (currently, these are the default values being passed so fucking deal with it)
             PlayerInventory = new Inventory()
@@ -133,49 +163,19 @@ namespace CitySim.States
             bool mapLoaded = false;
             Console.WriteLine($"Starting new game...");
 
-            // generate map
-            GenerateMap();
-
-            // loop through until success
-            while (mapLoaded.Equals(false))
-            {
-                if (LoadMap())
-                {
-                    mapLoaded = true;
-                }
-                else
-                {
-                    Console.WriteLine("No maps found, generating maps...");
-                    GenerateMap();
-                }
-            }
-
-            // this console output shall signify success
-            Console.WriteLine($"Map loaded.");
-
-            // create camera instance and set its position to mid map
-            _camera = new Camera(graphicsDevice);
-            _camera.Position = _currentMap.Tiles[25, 25].Position;
+            if (_remainingLoad < 100) _remainingLoad = 100;
+            Task.Run(() => GenerateMap());
 
             // load (mouse) cursor content
             _cursorTexture = _gameContent.GetUiTexture(4);
 
-            // initialize player's inventory (currently, these are the default values being passed so fucking deal with it)
-            PlayerInventory = new Inventory()
-            {
-                Gold = 500,
-                Wood = 100,
-                Coal = 50,
-                Iron = 20,
-                Food = 50,
-                Workers = 10,
-                Energy = 10
-            };
+            // create camera instance and set its position to mid map
+            _camera = new Camera(graphicsDevice);
         }
         #endregion
 
         #region HANDLE MAP DATA
-        public bool LoadMap()
+        public async Task<bool> LoadMap()
         {
             // array to hold tiles
             Tile[,] tileArr_ = new Tile[50, 50];
@@ -258,7 +258,7 @@ namespace CitySim.States
         }
 
         // generate map
-        public void GenerateMap()
+        public async void GenerateMap()
         {
             Console.WriteLine($"Generating map...");
             // create list to hold tile data
@@ -288,6 +288,8 @@ namespace CitySim.States
                 }
             }
 
+            _remainingLoad -= 10;
+
             // loop through tiles and generate unique map
             for (var x = 0; x < 50; x++)
             {
@@ -298,6 +300,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForWater(tileData, x, y);
                 }
             }
+            _remainingLoad -= 20;
             for (var x = 0; x < 50; x++)
             {
                 for (var y = 0; y < 50; y++)
@@ -305,6 +308,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForTrees(tileData, x, y);
                 }
             }
+            _remainingLoad -= 20;
             for (var x = 0; x < 50; x++)
             {
                 for (var y = 0; y < 50; y++)
@@ -312,6 +316,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForOre(tileData, x, y, 5, 4);
                 }
             }
+            _remainingLoad -= 20;
             for (var x = 0; x < 50; x++)
             {
                 for (var y = 0; y < 50; y++)
@@ -326,6 +331,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForOre(tileData, x, y, 7, 6);
                 }
             }
+            _remainingLoad -= 20;
             // run through tiles and check if 50% of surrounding tiles are water, if so - fill in the middle
             for (var x = 0; x < 50; x++)
             {
@@ -393,6 +399,24 @@ namespace CitySim.States
                 streamWriter.WriteLine(JsonConvert.SerializeObject(tileData, Formatting.Indented));
             }
             Console.WriteLine("Map finished generating.");
+
+            await LoadMap();
+
+            _camera.Position = _currentMap.Tiles[25, 25].Position;
+
+            // initialize player's inventory (currently, these are the default values being passed so fucking deal with it)
+            PlayerInventory = new Inventory()
+            {
+                Gold = 500,
+                Wood = 100,
+                Coal = 50,
+                Iron = 20,
+                Food = 50,
+                Workers = 10,
+                Energy = 10
+            };
+
+            _remainingLoad -= 10;
         }
 
         public void RunTileAndAdjacentsForWater(List<TileData> tileData, int x, int y)
@@ -676,27 +700,45 @@ namespace CitySim.States
         // update
         public override void Update(GameTime gameTime)
         {
-            // get current keyboard state
-            var keyboardState = Keyboard.GetState();
-            var mouseState = Mouse.GetState();
+            if (IsLoaded)
+            {
+                // game state is loaded
 
-            // handle current state input (keyboard / mouse)
-            HandleInput(gameTime, keyboardState, mouseState);
+                // get current keyboard state
+                var keyboardState = Keyboard.GetState();
+                var mouseState = Mouse.GetState();
 
-            // set previous keyboardstate = keyboardstate;
-            _previousKeyboardState = keyboardState;
-            _previousMouseState = Mouse.GetState();
+                // handle current state input (keyboard / mouse)
+                HandleInput(gameTime, keyboardState, mouseState);
+
+                // set previous keyboardstate = keyboardstate;
+                _previousKeyboardState = keyboardState;
+                _previousMouseState = Mouse.GetState();
+            }
+            else
+            {
+                // game state is still loading
+            }
         }
 
         // post update (called after update)
         public override void PostUpdate(GameTime gameTime)
         {
-            // get keyboard state
-            var keyboardState = Keyboard.GetState();
+            if (IsLoaded)
+            {
+                // game state is loaded
 
-            // update map and camera
-            _currentMap.Update(gameTime, keyboardState, _camera);
-            _camera.Update(gameTime);
+                // get keyboard state
+                var keyboardState = Keyboard.GetState();
+
+                // update map and camera
+                _currentMap.Update(gameTime, keyboardState, _camera);
+                _camera.Update(gameTime);
+            }
+            else
+            {
+                // game state is still loading
+            }
         }
         #endregion
 
@@ -762,27 +804,50 @@ namespace CitySim.States
         #region DRAW
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            // TWO SPRITE BATCHES:
-            // First batch is for the game itself, the map, npcs, all that live shit
-            // Second batch is for UI and HUD rendering - separate from camera matrixes and all that ingame shit
-
-            spriteBatch.Begin(_camera);
-
-            // draw game here
-
-            _currentMap.Draw(gameTime, spriteBatch);
-
-            spriteBatch.End();
-
-            //---------------------------------------------------------
-
-            spriteBatch.Begin();
             var msp = Mouse.GetState().Position;
             var mp = new Vector2(msp.X, msp.Y);
-            // draw UI / HUD here 
-            spriteBatch.Draw(_cursorTexture, mp, Color.White);
 
-            spriteBatch.End();
+            if (IsLoaded)
+            {
+                // game state is loaded
+
+                // TWO SPRITE BATCHES:
+                // First batch is for the game itself, the map, npcs, all that live shit
+                // Second batch is for UI and HUD rendering - separate from camera matrixes and all that ingame shit
+
+                spriteBatch.Begin(_camera);
+
+                // draw game here
+
+                _currentMap.Draw(gameTime, spriteBatch);
+
+                spriteBatch.End();
+
+                //---------------------------------------------------------
+
+                spriteBatch.Begin();
+                // draw UI / HUD here 
+                spriteBatch.Draw(_cursorTexture, mp, Color.White);
+
+                spriteBatch.End();
+            }
+            else
+            {
+                // game state hasnt finished loading
+                
+                // most of whats drawn in here is strictly UI so only one spritebatch should be needed
+                spriteBatch.Begin();
+
+                var loadingScreenText = "LOADING THE GAME";
+
+                spriteBatch.DrawString(_gameContent.GetFont(1), loadingScreenText, new Vector2(200,400), Color.Black, 0.0f, Vector2.Zero, 1.0f, SpriteEffects.None, 1.0f);
+
+                spriteBatch.Draw(_cursorTexture, mp, Color.White);
+
+                // draw loading screen here?
+
+                spriteBatch.End();
+            }
         }
         #endregion
 
