@@ -119,7 +119,7 @@ namespace CitySim.States
         // draw state
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             // draw each component
             foreach (var component in _components)

@@ -40,7 +40,7 @@ namespace CitySim.States
             _graphicsDevice.Clear(Color.Wheat);
 
             // begin spriteBatch for state
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             // draw sprite
             _sprPlayer.Draw(gameTime, spriteBatch, new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height), SpriteEffects.None);
             spriteBatch.End();

@@ -74,18 +74,11 @@ namespace CitySim.Objects
             {
                 for (int y = 0; y < 50; y++)
                 {
-                    // update tiles before draw?
+                    Tiles[x,y].Draw(gameTime,spriteBatch);
                 }
             }
 
-            // draw each tile and sort based on depth
-            List<Tile> tiles = Tiles.OfType<Tile>().ToList();
-            List<Tile> sortedTiles = Tiles.OfType<Tile>().ToList().OrderBy(o => o.Position.Y).ToList();
-
-            foreach (Tile t in sortedTiles)
-            {
-                t.Draw(gameTime, spriteBatch);
-            }
+            
         }
     }
 }

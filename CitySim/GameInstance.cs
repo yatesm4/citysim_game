@@ -19,6 +19,7 @@ namespace CitySim
         public GameInstance()
         {
             graphics = new GraphicsDeviceManager(this);
+            //graphics.IsFullScreen = true;
             Content.RootDirectory = "Content";
         }
 

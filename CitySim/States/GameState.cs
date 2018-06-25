@@ -48,6 +48,13 @@ namespace CitySim.States
 
         // is the game currently loading?
         public bool IsLoading = false;
+
+        public string LoadingText { get; set; } = "Loading Game...";
+
+        public Rectangle LoadingBar { get; set; }
+
+        public Texture2D LoadingTexture { get; set; }
+        public Texture2D LoadingCellTexture { get; set; }
         #endregion
 
         #region GAME CONTENT
@@ -102,52 +109,20 @@ namespace CitySim.States
             // save graphics device
             _graphicsDevice = graphicsDevice;
 
+            LoadLoadingScreen();
+
             // mapLoaded = false, until a map is succesfully loaded in LoadMap()
             bool mapLoaded = false;
-            Console.WriteLine($"Searching for map files...");
+            Console.WriteLine($"Loading game...");
 
-            // loop through until success
-            /* needs to be updated for async loading
-            while (mapLoaded.Equals(false))
-            {
-                if (LoadMap())
-                {
-                    mapLoaded = true;
-                    _remainingLoad = 0;
-                }
-                else
-                {
-                    Console.WriteLine("No maps found, generating maps...");
-                    if (_remainingLoad < 100) _remainingLoad = 100;
-                    Task.Run(() => GenerateMap());
-                }
-            }
-            */
-
-            // this console output shall signify success
-            Console.WriteLine($"Map loaded.");
-
-            // create camera instance and set its position to mid map
-            _camera = new Camera(graphicsDevice);
-            _camera.Position = _currentMap.Tiles[25, 25].Position;
+            if (_remainingLoad < 100) _remainingLoad = 100;
+            Task.Run(() => LoadGame());
 
             // load (mouse) cursor content
             _cursorTexture = _gameContent.GetUiTexture(4);
 
-            // load font
-            _font = _gameContent.GetFont(1);
-
-            // initialize player's inventory (currently, these are the default values being passed so fucking deal with it)
-            PlayerInventory = new Inventory()
-            {
-                Gold = 500,
-                Wood = 100,
-                Coal = 50,
-                Iron = 20,
-                Food = 50,
-                Workers = 10,
-                Energy = 10
-            };
+            // create camera instance and set its position to mid map
+            _camera = new Camera(graphicsDevice);
         }
 
         // constructor for new game
@@ -158,6 +133,8 @@ namespace CitySim.States
 
             // save graphics device
             _graphicsDevice = graphicsDevice;
+
+            LoadLoadingScreen();
 
             // mapLoaded = false, until a map is succesfully loaded in LoadMap()
             bool mapLoaded = false;
@@ -172,9 +149,48 @@ namespace CitySim.States
             // create camera instance and set its position to mid map
             _camera = new Camera(graphicsDevice);
         }
+
+        public void LoadLoadingScreen()
+        {
+            var loading_bar_dimensions = new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 8);
+            var loading_bar_location =
+                new Vector2(_graphicsDevice.Viewport.Width / 4, (_graphicsDevice.Viewport.Height / 4) * 2.5f);
+
+            LoadingBar = new Rectangle((int)loading_bar_location.X, (int)loading_bar_location.Y, (int)loading_bar_dimensions.X, (int)loading_bar_dimensions.Y);
+
+            LoadingTexture = new Texture2D(_graphicsDevice, 1, 1);
+            LoadingTexture.SetData(new[] { Color.DarkSlateGray });
+
+            LoadingCellTexture = new Texture2D(_graphicsDevice, 1, 1);
+            LoadingCellTexture.SetData(new[] { Color.LightCyan });
+        }
         #endregion
 
         #region HANDLE MAP DATA
+
+        public async void LoadGame()
+        {
+            await LoadMap();
+
+            LoadingText = $"Wrapping things up...";
+
+            _camera.Position = _currentMap.Tiles[25, 25].Position;
+
+            // initialize player's inventory (currently, these are the default values being passed so fucking deal with it)
+            PlayerInventory = new Inventory()
+            {
+                Gold = 500,
+                Wood = 100,
+                Coal = 50,
+                Iron = 20,
+                Food = 50,
+                Workers = 10,
+                Energy = 10
+            };
+
+            _remainingLoad -= 100;
+        }
+
         public async Task<bool> LoadMap()
         {
             // array to hold tiles
@@ -260,7 +276,11 @@ namespace CitySim.States
         // generate map
         public async void GenerateMap()
         {
-            Console.WriteLine($"Generating map...");
+            LoadingText = $"Generating map...";
+
+            LoadingText = $"...";
+
+            Console.WriteLine(LoadingText);
             // create list to hold tile data
             List<TileData> tileData = new List<TileData>();
 
@@ -273,7 +293,7 @@ namespace CitySim.States
                     // the position is calculated so that the tile will be placed in a fashion that it will render isometrically
                     // this means rendering tiles side by side, but also connecting them by offsetting the x and y with each row
                     // so that the "diamond" shape of each tile fits together snug
-                    var position = new Vector2(x * 17 - y * 17, x * 8.5f + y * 8.5f);
+                    var position = new Vector2(x * 17 - y * 17, x * 9 + y * 9);
 
                     // set tile and (inner) object data
                     var td = new TileData
@@ -290,6 +310,8 @@ namespace CitySim.States
 
             _remainingLoad -= 10;
 
+            LoadingText = $"Filling lakes with water...";
+
             // loop through tiles and generate unique map
             for (var x = 0; x < 50; x++)
             {
@@ -301,6 +323,8 @@ namespace CitySim.States
                 }
             }
             _remainingLoad -= 20;
+
+            LoadingText = $"Growing some trees...";
             for (var x = 0; x < 50; x++)
             {
                 for (var y = 0; y < 50; y++)
@@ -309,6 +333,8 @@ namespace CitySim.States
                 }
             }
             _remainingLoad -= 20;
+
+            LoadingText = $"Creating ores...";
             for (var x = 0; x < 50; x++)
             {
                 for (var y = 0; y < 50; y++)
@@ -332,6 +358,8 @@ namespace CitySim.States
                 }
             }
             _remainingLoad -= 20;
+
+            LoadingText = $"Cleaning up map...";
             // run through tiles and check if 50% of surrounding tiles are water, if so - fill in the middle
             for (var x = 0; x < 50; x++)
             {
@@ -401,6 +429,8 @@ namespace CitySim.States
             Console.WriteLine("Map finished generating.");
 
             await LoadMap();
+
+            LoadingText = $"Wrapping things up...";
 
             _camera.Position = _currentMap.Tiles[25, 25].Position;
 
@@ -815,7 +845,7 @@ namespace CitySim.States
                 // First batch is for the game itself, the map, npcs, all that live shit
                 // Second batch is for UI and HUD rendering - separate from camera matrixes and all that ingame shit
 
-                spriteBatch.Begin(_camera);
+                spriteBatch.Begin(_camera, samplerState: SamplerState.PointClamp);
 
                 // draw game here
 
@@ -836,11 +866,36 @@ namespace CitySim.States
                 // game state hasnt finished loading
                 
                 // most of whats drawn in here is strictly UI so only one spritebatch should be needed
-                spriteBatch.Begin();
+                spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-                var loadingScreenText = "LOADING THE GAME";
+                var scale = new Vector2
+                {
+                    X = _graphicsDevice.Viewport.Width,
+                    Y = _graphicsDevice.Viewport.Height
+                };
 
-                spriteBatch.DrawString(_gameContent.GetFont(1), loadingScreenText, new Vector2(200,400), Color.Black, 0.0f, Vector2.Zero, 1.0f, SpriteEffects.None, 1.0f);
+                var dimensions = new Vector2
+                {
+                    X = scale.X / 2,
+                    Y = scale.Y / 2
+                };
+
+                var x = (_gameContent.GetFont(1).MeasureString(LoadingText).X / 2);
+                var y = (_gameContent.GetFont(1).MeasureString(LoadingText).Y / 2);
+
+                spriteBatch.DrawString(_gameContent.GetFont(1), LoadingText, dimensions, Color.Black, 0.0f, new Vector2(x,y), 1.0f, SpriteEffects.None, 1.0f);
+
+                Console.WriteLine(LoadProgress);
+
+                spriteBatch.Draw(LoadingTexture, destinationRectangle: LoadingBar, color: Color.White);
+
+                var cells = LoadProgress / 10;
+
+                for (int i = 0; i < cells + 1; i++)
+                {
+                    var cellRectangle = new Rectangle(LoadingBar.X + (i * (LoadingBar.Width / 10)), LoadingBar.Y, LoadingBar.Width / 10, LoadingBar.Height);
+                    spriteBatch.Draw(LoadingCellTexture, destinationRectangle: cellRectangle, color: Color.White);
+                }
 
                 spriteBatch.Draw(_cursorTexture, mp, Color.White);
 
