@@ -20,6 +20,9 @@ namespace CitySim
         {
             graphics = new GraphicsDeviceManager(this);
             //graphics.IsFullScreen = true;
+            graphics.PreferredBackBufferWidth = 480 * 3;
+            graphics.PreferredBackBufferHeight = 270 * 3;
+
             Content.RootDirectory = "Content";
         }
 

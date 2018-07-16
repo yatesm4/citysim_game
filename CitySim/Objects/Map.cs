@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CitySim.Content;
+using CitySim.States;
 using Comora;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -54,15 +55,15 @@ namespace CitySim.Objects
         }
         
         // update map
-        public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera)
+        public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera, GameState state)
         {
             // for each tile in each row
-            for (int x = 0; x < 50; x++)
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < 50; y++)
+                for (int y = 0; y < height; y++)
                 {
                     // update tile
-                    Tiles[x, y].Update(gameTime, keyboardState, camera);
+                    Tiles[x, y].Update(gameTime, keyboardState, camera, state);
                 }
             }
         }
@@ -70,9 +71,9 @@ namespace CitySim.Objects
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
 
-            for (int x = 0; x < 50; x++)
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < 50; y++)
+                for (int y = 0; y < height; y++)
                 {
                     Tiles[x,y].Draw(gameTime,spriteBatch);
                 }

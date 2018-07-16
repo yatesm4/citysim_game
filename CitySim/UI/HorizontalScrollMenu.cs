@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 using CitySim.Objects;
+using CitySim.States;
 
 namespace CitySim.UI
 {
@@ -139,15 +140,15 @@ namespace CitySim.UI
             spriteBatch.Draw(SelectedTexture, PreviewRectangle, Color.White);
         }
 
-        public override void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime, GameState state)
         {
             foreach(Button b in Buttons)
             {
-                b.Update(gameTime);
+                b.Update(gameTime, state);
             }
             for (int i = (int)SelectionIndex.X; i < SelectionIndex.Y; i++)
             {
-                SelectionCells[i].Update(gameTime);
+                SelectionCells[i].Update(gameTime, state);
             }
         }
     }

@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 using CitySim.Objects;
+using CitySim.States;
 
 namespace CitySim.UI
 {
@@ -83,7 +84,7 @@ namespace CitySim.UI
             spriteBatch.Draw(txt, Rectangle, Color.White);
         }
 
-        public override void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime, GameState state)
         {
             // update
             _previousMouse = _currentMouse;

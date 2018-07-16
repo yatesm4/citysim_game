@@ -152,7 +152,9 @@ namespace CitySim.Content
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Tree_Single_01", _content));
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Tree_Cluster_01", _content));
 
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/TownHall/01", _content));
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/01", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Wood/01", _content));
 
             Console.WriteLine($"Tile Textures: {i}");
         }

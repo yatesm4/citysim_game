@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CitySim.Content;
+using CitySim.States;
 using Comora;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -19,11 +20,15 @@ namespace CitySim.Objects
         public Vector2 Position { get; set; } = new Vector2(0,0);
         public int TerrainId { get; set; } = 0;
         public TileObject Object { get; set; }
+
+        public bool IsVisible { get; set; } = false;
+        public bool IsActive { get; set; } = false;
     }
 
     public class Tile
     {
         public GameContent Content { get; set; }
+        public GraphicsDevice GraphicsDevice_ { get; set; }
 
         // debug texture for drawing hitbox (click area)
         public Texture2D DebugRect { get; set; }
@@ -53,7 +58,12 @@ namespace CitySim.Objects
         public bool IsHovered { get; set; } = false;
         public Color DrawColor { get; set; } = Color.White;
 
+        public bool IsVisible { get; set; } = false;
+        public bool IsActive { get; set; } = false;
+
         private MouseState _previousMouseState { get; set; }
+
+        private GameState _gameState { get; set; }
 
         // used to determine when clicked
         public event EventHandler Click;
@@ -61,7 +71,7 @@ namespace CitySim.Objects
         // hitbox for mouse touch
         public Rectangle TouchHitbox
         {
-            get { return new Rectangle((int) Position.X + 8, (int) Position.Y + 83, 18, 10); }
+            get { return new Rectangle((int) Position.X + 16, (int) Position.Y + (83 * 2), 18 * 2, 10 * 2); }
         }
 
         // tile position
@@ -74,13 +84,13 @@ namespace CitySim.Objects
         }
 
         // scale to draw the tile at
-        public Vector2 Scale { get; set; } = new Vector2(1,1);
+        public Vector2 Scale { get; set; } = new Vector2(2,2);
 
         // tile constructor, pass a gamecontent manager and tiledata to load from
         public Tile(GameContent content_, GraphicsDevice graphicsDevice_, TileData tileData_)
         {
             Content = content_;
-
+            GraphicsDevice_ = graphicsDevice_;
 
             Position = tileData_.Position;
             TileIndex = tileData_.TileIndex;
@@ -105,6 +115,9 @@ namespace CitySim.Objects
 
             Texture = content_.GetTileTexture(texture_for_terrain);
 
+            IsActive = tileData_.IsActive;
+            IsVisible = tileData_.IsVisible;
+
             // set DebugRect data (optional w debug options)
             DebugRect = new Texture2D(graphicsDevice_, 1, 1);
             DebugRect.SetData(new[] { Color.Red });
@@ -115,7 +128,7 @@ namespace CitySim.Objects
 
         // update
         // - check for mouse hovering and click (select)
-        public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera)
+        public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera, GameState state)
         {
             // update tile?
 
@@ -127,8 +140,11 @@ namespace CitySim.Objects
             camera.ToWorld(ref m_screenPosition, out m_worldPosition);
 
             // apply offset (why the fuck this is needed I absolutely do not know but I randomly fucking figured out this formula and somehow it works so for the love of fuck - do not change this until a superior solution is TESTED and delivered
-            m_worldPosition.X -= camera.Width / 2;
-            m_worldPosition.Y -= camera.Height / 2;
+            m_worldPosition.X -= camera.Width / 2f;
+            m_worldPosition.Y -= camera.Height / 2f;
+
+            //m_worldPosition.X += (GraphicsDevice_.Viewport.Width * 0.25f);
+            //m_worldPosition.Y += (GraphicsDevice_.Viewport.Height * 0.25f);
 
             // get bounds for mouse world position
             var mouseRectangle = new Rectangle((int)m_worldPosition.X, (int)m_worldPosition.Y, 1, 1);
@@ -139,6 +155,7 @@ namespace CitySim.Objects
             if (mouseRectangle.Intersects(TouchHitbox))
             {
                 IsHovered = true;
+                state.CurrentlySelectedTile = this;
                 //Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
                 //Console.WriteLine($"Hovering Over Tile: {TileIndex.ToString()}");
 
@@ -150,6 +167,8 @@ namespace CitySim.Objects
 
             // save mouse state as previous mousestate for next update call
             _previousMouseState = currentMouse;
+
+            _gameState = state;
         }
 
 
@@ -159,7 +178,10 @@ namespace CitySim.Objects
         // - draw outline if selected
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
-            DrawColor = IsHovered ? Color.OrangeRed : Color.White;
+            // set draw color to orange red if hovered by mouse, otherwise draw normal color
+            DrawColor = IsHovered && (_gameState.CurrentlySelectedTile == this) ? Color.OrangeRed : Color.White;
+            // but set drawcolor to greyed out if not visible
+            DrawColor = (IsVisible || IsActive) ? DrawColor : Color.DarkGray;
 
             spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor); 
 
@@ -171,11 +193,9 @@ namespace CitySim.Objects
                 }
                 else
                 {
-                    if(ObjectTexture is null)
-                        RefreshObjectTexture();
                     try
                     {
-                        spriteBatch_.Draw(ObjectTexture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                        spriteBatch_.Draw(Content.GetTileTexture(Object.TextureIndex), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
                     }
                     catch (Exception e)
                     {
@@ -183,17 +203,14 @@ namespace CitySim.Objects
                     }
                 }
             }
-            
+
             // draw extras ?
 
             // if tile is hovered, draw debug box on tile
             //if(IsHovered)
             //    spriteBatch_.Draw(DebugRect, destinationRectangle: TouchHitbox, color: new Color(Color.White, 0.25f));
-        }
 
-        public void RefreshObjectTexture()
-        {
-            ObjectTexture = Content.GetTileTexture(Object.TextureIndex);
+            //spriteBatch_.Draw(DebugRect, destinationRectangle: TouchHitbox, color: new Color(Color.White, 0.25f));
         }
     }
 }

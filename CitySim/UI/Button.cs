@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using CitySim.States;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -87,7 +87,7 @@ namespace CitySim.UI
             }
         }
 
-        public override void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime, GameState state)
         {
             _previousMouse = _currentMouse;
             _currentMouse = Mouse.GetState();

@@ -42,7 +42,7 @@ namespace CitySim.States
             // begin spriteBatch for state
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             // draw sprite
-            _sprPlayer.Draw(gameTime, spriteBatch, new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height), SpriteEffects.None);
+            _sprPlayer.Draw(gameTime, spriteBatch, new Vector2(_graphicsDevice.Viewport.Width / 2, (_graphicsDevice.Viewport.Height / 3) * 2), SpriteEffects.None);
             spriteBatch.End();
         }
 

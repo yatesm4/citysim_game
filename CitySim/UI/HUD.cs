@@ -25,7 +25,7 @@ namespace CitySim.UI
         private Vector2 _displaySize { get; set; }
 
         private Texture2D _texture { get; set; }
-        private Color _displayColor { get; set; } = Color.DarkSlateGray;
+        private Color _displayColor { get; set; } = Color.AntiqueWhite;
         private Color[] _displayColorData { get; set; }
 
         private Vector2 _position { get; set; }
@@ -37,10 +37,10 @@ namespace CitySim.UI
 
         public HUD(GraphicsDevice graphicsDevice_, GameContent content_)
         {
-            int height = graphicsDevice_.Viewport.Height / 8;
-            int width = (int)(graphicsDevice_.Viewport.Width - (graphicsDevice_.Viewport.Width * 0.2f));
+            int height = (int)(graphicsDevice_.Viewport.Height * 0.1f);
+            int width = (int)(graphicsDevice_.Viewport.Width);
 
-            _position = new Vector2(graphicsDevice_.Viewport.Width * 0.1f, graphicsDevice_.Viewport.Width * 0.1f);
+            _position = new Vector2(0, graphicsDevice_.Viewport.Height - height);
             _displaySize = new Vector2(width, height);
 
             Console.WriteLine("HUD created.");
@@ -68,18 +68,31 @@ namespace CitySim.UI
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(_texture, DisplayRect, Color.White);
+
             foreach (Component c in _components)
             {
                 c.Draw(gameTime, spriteBatch);
             }
+
+            // draw resource strings
+            if (State is null)
+                return;
+
+            string game_day = $"Day: {State.GSData.Day}";
+            var game_day_origin = new Vector2(0, _font.MeasureString(game_day).Y / 2);
+
+            spriteBatch.DrawString(_font, game_day, _position + new Vector2(5,_displaySize.Y / 2), Color.Black, 0.0f, game_day_origin, 2.5f, SpriteEffects.None, 1.0f);
         }
 
-        public override void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime, GameState state)
         {
             foreach (Component c in _components)
             {
-                c.Update(gameTime);
+                c.Update(gameTime, state);
             }
+
+            // save gamestate
+            State = state;
         }
     }
 }
