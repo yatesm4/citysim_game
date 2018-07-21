@@ -126,6 +126,19 @@ namespace CitySim.Objects
             _previousMouseState = Mouse.GetState();
         }
 
+        public TileData GetTileData()
+        {
+            return TileData = new TileData()
+            {
+                TileIndex = this.TileIndex,
+                Position = this.Position,
+                TerrainId = this.TerrainId,
+                IsActive = this.IsActive,
+                IsVisible = this.IsVisible,
+                Object = this.Object
+            };
+        }
+
         // update
         // - check for mouse hovering and click (select)
         public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera, GameState state)

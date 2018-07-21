@@ -70,6 +70,12 @@ namespace CitySim.States
 
         public Texture2D LoadingTexture { get; set; }
         public Texture2D LoadingCellTexture { get; set; }
+
+        public Texture2D LoadingScreen_MapCellTexture { get; set; }
+        public Texture2D LoadingScreen_MapCellHighlightedTexture { get; set; }
+        public Vector2 LoadingScreen_CurrentCell { get; set; }
+        public List<Vector2> LoadingScreen_HighlightedCells { get; set; } = new List<Vector2>();
+
         #endregion
 
         #region GAME CONTENT
@@ -148,7 +154,7 @@ namespace CitySim.States
                 Task.Run(() => GenerateMap());
             } else
             {
-                Console.WriteLine($"Loading game...");
+                Console.WriteLine($"Loading previous game...");
                 Task.Run(() => LoadGame());
             }
 
@@ -193,6 +199,11 @@ namespace CitySim.States
 
             LoadingCellTexture = new Texture2D(_graphicsDevice, 1, 1);
             LoadingCellTexture.SetData(new[] { Color.LightCyan });
+
+            LoadingScreen_MapCellTexture = new Texture2D(_graphicsDevice, 1, 1);
+            LoadingScreen_MapCellTexture.SetData(new[] { Color.WhiteSmoke });
+            LoadingScreen_MapCellHighlightedTexture = new Texture2D(_graphicsDevice, 1, 1);
+            LoadingScreen_MapCellHighlightedTexture.SetData(new[] { Color.Red });
         }
 
         public async void LoadHUD()
@@ -306,7 +317,7 @@ namespace CitySim.States
             foreach(Tile t in _currentMap.Tiles)
             {
                 // add its tile data to list
-                GSData.TileData.Add(t.TileData);
+                GSData.TileData.Add(t.GetTileData());
             }
 
             // backup old map data first
@@ -351,6 +362,8 @@ namespace CitySim.States
                     // variables for debuging purposes
                     currentCell++;
 
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
+
                     float mapTotal = _mapBounds * _mapBounds;
                     float per = currentCell / mapTotal;
                     float pcent = per * 100f;
@@ -374,7 +387,7 @@ namespace CitySim.States
                     _tileData.Add(td);
                 }
             }
-
+            LoadingScreen_HighlightedCells = new List<Vector2>();
             _remainingLoad -= 10;
 
             LoadingText = $"Filling lakes with water...";
@@ -388,6 +401,8 @@ namespace CitySim.States
                     // variables for debuging purposes
                     currentCell++;
 
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
+
                     float mapTotal = _mapBounds * _mapBounds;
                     float per = currentCell / mapTotal;
                     float pcent = per * 100f;
@@ -398,6 +413,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForWater(_tileData, x, y);
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
             _remainingLoad -= 20;
 
             currentCell = 0;
@@ -409,6 +425,8 @@ namespace CitySim.States
                     // variables for debuging purposes
                     currentCell++;
 
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
+
                     float mapTotal = _mapBounds * _mapBounds;
                     float per = currentCell / mapTotal;
                     float pcent = per * 100f;
@@ -417,6 +435,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForTrees(_tileData, x, y);
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
             _remainingLoad -= 20;
 
             currentCell = 0;
@@ -428,6 +447,8 @@ namespace CitySim.States
                     // variables for debuging purposes
                     currentCell++;
 
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
+
                     float mapTotal = _mapBounds * _mapBounds;
                     float per = currentCell / mapTotal;
                     float pcent = per * 100f;
@@ -436,6 +457,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForOre(_tileData, x, y, 5, 4);
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
             _remainingLoad -= 20;
             currentCell = 0;
             for (var x = 0; x < _mapBounds; x++)
@@ -445,6 +467,8 @@ namespace CitySim.States
                     // variables for debuging purposes
                     currentCell++;
 
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
+
                     float mapTotal = _mapBounds * _mapBounds;
                     float per = currentCell / mapTotal;
                     float pcent = per * 100f;
@@ -453,6 +477,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForOre(_tileData, x, y, 6, 5);
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
             currentCell = 0;
             for (var x = 0; x < _mapBounds; x++)
             {
@@ -460,6 +485,8 @@ namespace CitySim.States
                 {
                     // variables for debuging purposes
                     currentCell++;
+
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
 
                     float mapTotal = _mapBounds * _mapBounds;
                     float per = currentCell / mapTotal;
@@ -469,6 +496,7 @@ namespace CitySim.States
                     RunTileAndAdjacentsForOre(_tileData, x, y, 7, 6);
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
             _remainingLoad -= 20;
 
             currentCell = 0;
@@ -480,6 +508,8 @@ namespace CitySim.States
                 {
                     // variables for debuging purposes
                     currentCell++;
+
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
 
                     float mapTotal = _mapBounds * _mapBounds;
                     float per = currentCell / mapTotal;
@@ -518,6 +548,7 @@ namespace CitySim.States
                         var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
                         if (adj_tiles.Any())
                         {
+                            LoadingScreen_CurrentCell = dir;
                             foreach (var adj_tile in adj_tiles)
                             {
                                 // run check
@@ -540,6 +571,7 @@ namespace CitySim.States
                     }
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
 
             // spawn a town hall
             var townHall = Building.TownHall();
@@ -550,6 +582,8 @@ namespace CitySim.States
             {
                 for(int y = 0; y < _mapBounds; y++)
                 {
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
+
                     if (townHallMade is true)
                         continue;
 
@@ -591,6 +625,7 @@ namespace CitySim.States
                         var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
                         if (adj_tiles.Any())
                         {
+                            LoadingScreen_CurrentCell = dir;
                             adj_grass_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId < 1 && adj_tile.Object.ObjectId < 1 && adj_tile.TerrainId < 1);
                         }
                     }
@@ -611,6 +646,7 @@ namespace CitySim.States
                     }
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
 
             LoadingText = $"Lighting up the area...";
             // loop thru the tiles around the town hall and add them/ give them visibility
@@ -618,6 +654,8 @@ namespace CitySim.States
             {
                 for (int y = ((int)_townHallIndex.Y - 5); y < (_townHallIndex.Y + 6); y++)
                 {
+                    LoadingScreen_CurrentCell = new Vector2(x, y);
+
                     var sel_index = new Vector2(x, y);
                     var sel_tile = from t in _tileData where t.TileIndex == sel_index select t;
                     var found_tile = sel_tile.FirstOrDefault();
@@ -631,6 +669,7 @@ namespace CitySim.States
                     }
                 }
             }
+            LoadingScreen_HighlightedCells = new List<Vector2>();
 
             // generate newgame data and set tiledata to generated map
             GameStateData newgame = new GameStateData()
@@ -674,6 +713,8 @@ namespace CitySim.States
                     return;
                 }
 
+                LoadingScreen_CurrentCell = new Vector2(x, y);
+
                 int i = _rndGen.Next(0, 1000000);
 
                 int adj_water_tiles = 0;
@@ -701,6 +742,7 @@ namespace CitySim.States
                     var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
                     if (adj_tiles.Any())
                     {
+                        LoadingScreen_CurrentCell = dir;
                         foreach (var adj_tile in adj_tiles)
                         {
                             if (adj_tile.TerrainId.Equals(2))
@@ -741,7 +783,7 @@ namespace CitySim.States
                                 ref_tile = new Vector2(0, -1);
                                 break;
                         }
-
+                        LoadingScreen_CurrentCell = ref_tile;
                         ref_tile = index += ref_tile;
                         RunTileAndAdjacentsForWater(_tileData, (int)ref_tile.X, (int)ref_tile.Y);
                     }
@@ -767,6 +809,8 @@ namespace CitySim.States
                 {
                     return;
                 }
+
+                LoadingScreen_CurrentCell = new Vector2(x, y);
 
                 int i = _rndGen.Next(0, 1000000);
 
@@ -795,6 +839,7 @@ namespace CitySim.States
                     var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
                     if (adj_tiles.Any())
                     {
+                        LoadingScreen_CurrentCell = dir;
                         adj_tree_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(1) && (adj_tile.Object.ObjectId.Equals(1) || adj_tile.Object.ObjectId.Equals(2)));
                     }
                 }
@@ -832,7 +877,7 @@ namespace CitySim.States
                                 ref_tile = new Vector2(0, -1);
                                 break;
                         }
-
+                        LoadingScreen_CurrentCell = ref_tile;
                         ref_tile = index += ref_tile;
                         RunTileAndAdjacentsForTrees(_tileData, (int)ref_tile.X, (int)ref_tile.Y);
                     }
@@ -858,6 +903,8 @@ namespace CitySim.States
                 {
                     return;
                 }
+
+                LoadingScreen_CurrentCell = new Vector2(x, y);
 
                 int i = _rndGen.Next(0, 1000000);
 
@@ -886,6 +933,7 @@ namespace CitySim.States
                     var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
                     if (adj_tiles.Any())
                     {
+                        LoadingScreen_CurrentCell = dir;
                         adj_stone_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(1) && adj_tile.Object.ObjectId.Equals(objectid));
                     }
                 }
@@ -923,7 +971,7 @@ namespace CitySim.States
                                 ref_tile = new Vector2(0, -1);
                                 break;
                         }
-
+                        LoadingScreen_CurrentCell = ref_tile;
                         ref_tile = index += ref_tile;
                         RunTileAndAdjacentsForOre(_tileData, (int)ref_tile.X, (int)ref_tile.Y, textureid, objectid);
                     }
@@ -1115,6 +1163,60 @@ namespace CitySim.States
                 // most of whats drawn in here is strictly UI so only one spritebatch should be needed
                 spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
+                //      DRAW MAP REPRESENTATION
+
+                var CellStartPos = new Vector2((_graphicsDevice.Viewport.Width / 2) - (_mapBounds / 2) * 4, (_graphicsDevice.Viewport.Height / 4) - (_mapBounds / 2) * 4);
+
+                for(int i = 0; i < _mapBounds; i++)
+                {
+                    for(int j = 0; j < _mapBounds; j++)
+                    {
+                        var CellPos = CellStartPos + new Vector2(4 * i, 4 * j);
+                        var CellRectangle = new Rectangle((int)CellPos.X, (int)CellPos.Y, 4, 4);
+                        var Cell = new Vector2(i, j);
+                        var highlighted = false;
+
+                        if (LoadingScreen_CurrentCell.Equals(Cell))
+                        {
+                            highlighted = true;
+                        }
+
+                        var CellOrigin = new Vector2(0, 1);
+
+                        if(highlighted is true)
+                        {
+                            spriteBatch.Draw(LoadingScreen_MapCellHighlightedTexture, destinationRectangle: CellRectangle, color: Color.Blue, origin: CellOrigin);
+                        } else
+                        {
+                            var drawn = false;
+                            foreach (var c in LoadingScreen_HighlightedCells)
+                            {
+                                if (drawn is true) continue;
+                                if (c.Equals(Cell))
+                                {
+                                    drawn = true;
+                                    spriteBatch.Draw(LoadingScreen_MapCellHighlightedTexture, destinationRectangle: CellRectangle, color: Color.White, origin: CellOrigin);
+                                }
+                            }
+                            if(!drawn is true) {
+                                if(Cell.X < LoadingScreen_CurrentCell.X)
+                                {
+                                    spriteBatch.Draw(LoadingScreen_MapCellTexture, destinationRectangle: CellRectangle, color: Color.LightBlue, origin: CellOrigin);
+                                } else
+                                {
+                                    spriteBatch.Draw(LoadingScreen_MapCellTexture, destinationRectangle: CellRectangle, color: Color.White, origin: CellOrigin);
+
+                                }
+                            }
+                        }
+
+                        if (highlighted is true) LoadingScreen_HighlightedCells.Add(Cell);
+                    }
+
+                }
+
+                //      DRAW LOADING BAR AND TEXT
+
                 var scale = new Vector2
                 {
                     X = _graphicsDevice.Viewport.Width,
@@ -1153,4 +1255,4 @@ namespace CitySim.States
 
         #endregion
     }
-}
+}                                                                                 
