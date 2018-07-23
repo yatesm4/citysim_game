@@ -24,6 +24,7 @@ namespace CitySim.States
     {
         // time data
         public int Day { get; set; } = 1;
+        public int Year { get { return Day / 365; } }
         public float DayTime { get; set; } = 0f;
 
         // player inventory data
@@ -1232,7 +1233,7 @@ namespace CitySim.States
                 var x = (_gameContent.GetFont(1).MeasureString(LoadingText).X / 2);
                 var y = (_gameContent.GetFont(1).MeasureString(LoadingText).Y / 2);
 
-                spriteBatch.DrawString(_gameContent.GetFont(1), LoadingText, dimensions, Color.Black, 0.0f, new Vector2(x,y), 1.0f, SpriteEffects.None, 1.0f);
+                spriteBatch.DrawString(_gameContent.GetFont(1), LoadingText, dimensions, Color.White, 0.0f, new Vector2(x,y), 1.0f, SpriteEffects.None, 1.0f);
 
                 spriteBatch.Draw(LoadingTexture, destinationRectangle: LoadingBar, color: Color.White);
 
