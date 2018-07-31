@@ -25,13 +25,19 @@ namespace CitySim.UI
         private Vector2 _displaySize { get; set; }
 
         private Texture2D _texture { get; set; }
-        private Color _displayColor { get; set; } = Color.AntiqueWhite;
+        private Color _displayColor { get; set; } = Color.WhiteSmoke;
         private Color[] _displayColorData { get; set; }
+
+        private Vector2 _buttonSize { get; set; }
+        private Texture2D _buttonHouseTexture { get; set; }
+
+        private Texture2D _popupTexture { get; set; }
 
         private Vector2 _position { get; set; }
         private Vector2 _scale { get; set; } = new Vector2(1, 1);
 
         private List<Component> _components = new List<Component>();
+        private PopupMenu _popupMenu { get; set; }
 
         public Rectangle DisplayRect => new Rectangle((int)_position.X, (int)_position.Y, (int)_displaySize.X, (int)_displaySize.Y);
         public Rectangle BorderRect => new Rectangle((int)_position.X, (int)_position.Y - 5, (int)_displaySize.X, 5);
@@ -49,6 +55,7 @@ namespace CitySim.UI
 
             _position = new Vector2(0, graphicsDevice_.Viewport.Height - height);
             _displaySize = new Vector2(width, height);
+            _buttonSize = new Vector2(30, height * 0.8f);
 
             Console.WriteLine("HUD created.");
             Console.WriteLine($"HUD Size: {_displaySize}");
@@ -63,7 +70,10 @@ namespace CitySim.UI
                 5,6,7,8,9,10,11
             };
 
-            //LoadItemsMenu(graphicsDevice_);
+
+            _buttonHouseTexture = _content.GetUiTexture(12);
+            SetPopupMenus();
+            SetButtons();
         }
 
         public void SetColorData(GraphicsDevice graphicsDevice_)
@@ -75,6 +85,63 @@ namespace CitySim.UI
                 _displayColorData[i] = _displayColor;
             }
             _texture.SetData(_displayColorData);
+
+            var popupTexture = new Texture2D(graphicsDevice_, 120, 240);
+            var popupColorData = new Color[120 * 240];
+            for (int i = 0; i < popupColorData.Length; i++)
+            {
+                popupColorData[i] = Color.White;
+            }
+            popupTexture.SetData(popupColorData);
+            _popupTexture = popupTexture;
+        }
+
+        public void SetPopupMenus()
+        {
+        }
+
+        private void Popup_Click(object sender, EventArgs e)
+        {
+            // do something
+        }
+
+        public void SetButtons()
+        {
+            // add button for selecting buildings
+            var btn_top_offset = (DisplayRect.Height - _buttonHouseTexture.Height) / 2;
+            var init_btn_pos = _position + new Vector2(DisplayRect.Width, btn_top_offset) - new Vector2(_buttonHouseTexture.Width + 10, 0);
+            var btnBuildings = new Button(_buttonHouseTexture, _font)
+            {
+                Position = init_btn_pos,
+                HoverColor = Color.Blue,
+                Scale = new Vector2(1, 1)
+            };
+            btnBuildings.Click += OpenPopup;
+            _components.Add(btnBuildings);
+
+            // add popup menu for button
+            var popupPosition = init_btn_pos + new Vector2(_buttonHouseTexture.Width / 2, _buttonHouseTexture.Height / 2) - new Vector2(120, 240);
+            var popup = new PopupMenu(_popupTexture, _font)
+            {
+                Position = popupPosition,
+                HoverColor = Color.Blue,
+                Scale = new Vector2(1, 1)
+            };
+            popup.Click += Popup_Click;
+            _components.Add(popup);
+            _popupMenu = popup;
+        }
+
+        private void OpenPopup(object sender, EventArgs e)
+        {
+            Console.WriteLine($"{sender.ToString()} clicked! Popup is " + _popupMenu.IsActive.ToString());
+            if (_popupMenu.IsActive.Equals(true))
+            {
+                _popupMenu.IsActive = false;
+            } else
+            {
+                _popupMenu.IsActive = true;
+            }
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
