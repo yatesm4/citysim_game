@@ -135,6 +135,8 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Energy", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Workers", _content));
 
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_House", _content));
+
 
             Console.WriteLine($"Ui Textures: {i}");
         }

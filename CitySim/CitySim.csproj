@@ -60,6 +60,7 @@
     <Compile Include="UI\GridCell.cs" />
     <Compile Include="UI\HorizontalScrollMenu.cs" />
     <Compile Include="UI\HUD.cs" />
+    <Compile Include="UI\PopupMenu.cs" />
     <Compile Include="UI\SelectionCell.cs" />
   </ItemGroup>
   <ItemGroup>
