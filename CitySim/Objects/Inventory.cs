@@ -10,16 +10,67 @@ namespace CitySim.Objects
     public class Inventory
     {
         public static int ResourceMax = 99999;
-        public int Gold { get; set; } = 0;
-        public int Wood { get; set; } = 0;
+        public int Gold { get; set; } = 500;
+        public int Wood { get; set; } = 100;
         public int Coal { get; set; } = 0;
         public int Iron { get; set; } = 0;
-        public int Workers { get; set; } = 0;
-        public int Energy { get; set; } = 0;
-        public int Food { get; set; } = 0;
+        public int Workers { get; set; } = 50;
+        public int Energy { get; set; } = 20;
+        public int Food { get; set; } = 10;
+
+        public bool RemoveResource(string resource, int amount_requested)
+        {
+            if (amount_requested.Equals(0)) return true;
+
+            try
+            {
+                if (string.IsNullOrEmpty(resource))
+                    throw new NotSupportedException("Resource name cannot be null or empty.");
+
+                if (amount_requested <= 0)
+                    throw new NotSupportedException("Cannot request a resource amount equal or less than zero.");
+
+                // switch based on resource name
+                // try and subtract amount requested from resource
+                // return true on success, false otherwise
+                switch (resource.ToLower())
+                {
+                    case "gold":
+                        Gold -= amount_requested;
+                        return true;
+                    case "wood":
+                        Wood -= amount_requested;
+                        return true;
+                    case "coal":
+                        Coal -= amount_requested;
+                        return true;
+                    case "iron":
+                        Iron -= amount_requested;
+                        return true;
+                    case "workers":
+                        Workers -= amount_requested;
+                        return true;
+                    case "energy":
+                        Energy -= amount_requested;
+                        return true;
+                    case "food":
+                        Food -= amount_requested;
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error getting resource: " + e.Message);
+                return false;
+            }
+        }
 
         public bool RequestResource(string resource, int amount_requested)
         {
+            if (amount_requested.Equals(0)) return true;
+
             try
             {
                 if(string.IsNullOrEmpty(resource))
@@ -116,6 +167,8 @@ namespace CitySim.Objects
 
         public bool AddResource(string resource, int amount)
         {
+            if (amount.Equals(0)) return true;
+
             try
             {
                 if (string.IsNullOrEmpty(resource))

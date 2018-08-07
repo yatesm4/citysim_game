@@ -41,6 +41,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Content\BuildingData.cs" />
     <Compile Include="Content\GameContent.cs" />
     <Compile Include="GameInstance.cs" />
     <Compile Include="Objects\Inventory.cs" />
@@ -56,12 +57,11 @@
     <Compile Include="States\SplashScreenState.cs" />
     <Compile Include="States\State.cs" />
     <Compile Include="UI\Button.cs" />
+    <Compile Include="UI\CellButton.cs" />
     <Compile Include="UI\Component.cs" />
-    <Compile Include="UI\GridCell.cs" />
-    <Compile Include="UI\HorizontalScrollMenu.cs" />
     <Compile Include="UI\HUD.cs" />
+    <Compile Include="UI\OldHUD.cs" />
     <Compile Include="UI\PopupMenu.cs" />
-    <Compile Include="UI\SelectionCell.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Comora, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CitySim.Content;
+using CitySim.Objects;
 using CitySim.States;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -40,20 +42,37 @@ namespace CitySim.UI
 
         public bool IsFlipped { get; set; } = false;
 
+        public int ID { get; set; } = 0;
+
+        // enabling this extra property will lock the button if the resources needed arent available for the object provided by the button
+        public bool ResourceLocked = false;
+        public bool Locked = false;
+
         // used for collision
         public Rectangle Rectangle
         {
             get
             {
-                return new Rectangle((int)Position.X, (int)Position.Y, _texture.Width, _texture.Height);
+                return CustomRect.IsEmpty ? new Rectangle((int)Position.X, (int)Position.Y, _texture.Width, _texture.Height) : CustomRect;
             }
         }
+
+        public Rectangle CustomRect { get; set; } = new Rectangle();
 
         public string Text { get; set; }
 
         public Button(Texture2D texture, SpriteFont font)
         {
             _texture = texture;
+            _font = font;
+            PenColor = Color.Black;
+            HoverColor = Color.DarkGray;
+        }
+
+        public Button(Texture2D texture, SpriteFont font, Rectangle customRect)
+        {
+            _texture = texture;
+            CustomRect = customRect;
             _font = font;
             PenColor = Color.Black;
             HoverColor = Color.DarkGray;
@@ -66,6 +85,11 @@ namespace CitySim.UI
             if (_isHovering)
             {
                 color = HoverColor;
+            }
+
+            if (Locked.Equals(true))
+            {
+                color = Color.DarkGray;
             }
 
             if (IsFlipped.Equals(true))
@@ -91,18 +115,55 @@ namespace CitySim.UI
         {
             _previousMouse = _currentMouse;
             _currentMouse = Mouse.GetState();
-
             var mouseRectangle = new Rectangle(_currentMouse.X, _currentMouse.Y, 1, 1);
+
+            if (ResourceLocked.Equals(true))
+            {
+                var prev_inv = new Inventory()
+                {
+                    Gold = state.GSData.PlayerInventory.Gold,
+                    Wood = state.GSData.PlayerInventory.Wood,
+                    Coal = state.GSData.PlayerInventory.Coal,
+                    Iron = state.GSData.PlayerInventory.Iron,
+                    Workers = state.GSData.PlayerInventory.Workers,
+                    Energy = state.GSData.PlayerInventory.Energy,
+                    Food = state.GSData.PlayerInventory.Food
+                };
+
+                if (BuildingData.Dict_BuildingKeys.ContainsKey(ID))
+                {
+                    var b = BuildingData.Dict_BuildingKeys[ID];
+                    bool canBuild = true;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("gold", b.GoldCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("wood", b.WoodCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("coal", b.CoalCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("iron", b.IronCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("stone", b.StoneCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("workers", b.WorkersCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("energy", b.EnergyCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("food", b.FoodCost);
+                    Locked = !canBuild;
+                    Console.WriteLine($"{b.Name} Button Avail: {Locked.ToString()}");
+                }
+                else
+                {
+                    Locked = true;
+                }
+                state.GSData.PlayerInventory = prev_inv;
+            }
 
             _isHovering = false;
 
-            if (mouseRectangle.Intersects(Rectangle))
+            if (Locked.Equals(false))
             {
-                _isHovering = true;
-
-                if (_currentMouse.LeftButton == ButtonState.Released && _previousMouse.LeftButton == ButtonState.Pressed)
+                if (mouseRectangle.Intersects(Rectangle))
                 {
-                    Click?.Invoke(this, new EventArgs());
+                    _isHovering = true;
+
+                    if (_currentMouse.LeftButton == ButtonState.Released && _previousMouse.LeftButton == ButtonState.Pressed)
+                    {
+                        Click?.Invoke(this, new EventArgs());
+                    }
                 }
             }
         }

@@ -26,10 +26,7 @@ namespace CitySim.Objects
         public float CycleTime { get; set; } = 10.0f;
         // time passed in cycle
         public float Time { get; set; } = 0;
-    }
 
-    public class Building : TileObject
-    {
         #region MAINTENANCE COSTS
         // cost(s) per cycle
         public int GoldCost { get; set; } = 0;
@@ -65,6 +62,13 @@ namespace CitySim.Objects
         public int EnergyOutput { get; set; } = 0;
         public int FoodOutput { get; set; } = 0;
         #endregion
+    }
+
+    public class Building : TileObject
+    {
+        public string Name { get; set; } = "Base Building";
+
+        public int Range { get; private set; } = 1;
 
         // building constructor
         // - takes list of settings for tileobject
@@ -79,6 +83,7 @@ namespace CitySim.Objects
             ObjectId = (int)settings_[2];
             TextureIndex = (int) settings_[3];
             CycleTime = settings_[4];
+            Range = (int)settings_[5];
 
             // set costs per cycle
             GoldCost = costs_[0];
@@ -119,27 +124,28 @@ namespace CitySim.Objects
                 201, // id = random identifier i have yet to assess how to use
                 2, // type id: 2 = building
                 1, // object id: 1 = log cabin
-                12, // texture indnex
-                30 // cycle time: 30 seconds
+                14, // texture indnex
+                30, // cycle time: 30 seconds
+                3, // Range (Visib/Active)
             };
 
             // set costs per cycle
             var costs = new List<int>()
             {
-                0, // gold
+                15, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
-                2, // workers
+                5, // workers
                 1, // energy
                 0 // food
             };
 
             var outputs = new List<int>()
             {
-                0, // gold
-                5, // wood
+                5, // gold
+                10, // wood
                 0, // coal
                 0, // iron
                 0, // stone
@@ -151,16 +157,75 @@ namespace CitySim.Objects
             var upfronts = new List<int>()
             {
                 30, // gold
-                0, // woood
+                15, // woood
                 0, // coal
                 0, // iron
                 0, // stone
-                2, // workers
+                5, // workers
                 1, // energy
                 0 // food
             };
 
-            return new Building(settings, costs, outputs, upfronts);
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Log Cabin"
+            };
+        }
+
+        // construct a log cabin
+        public static Building Farm()
+        {
+            var settings = new List<float>()
+            {
+                202, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                2, // object id: 2 = log cabin
+                12, // texture indnex
+                30, // cycle time: 30 seconds
+                3, // Range (Visib/Active)
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                20, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                10, // workers
+                2, // energy
+                0 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                5, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                0, // energy
+                30, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                80, // gold
+                40, // woood
+                0, // coal
+                0, // iron
+                0, // stone
+                10, // workers
+                2, // energy
+                0 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Farm"
+            };
         }
 
         // construct a low level house
@@ -168,30 +233,31 @@ namespace CitySim.Objects
         {
             var settings = new List<float>()
             {
-                202, // id = random identifier i have yet to assess how to use
+                203, // id = random identifier i have yet to assess how to use
                 2, // type id: 2 = building
-                2, // object id: 2 = low level house
+                3, // object id: 3 = low level house
                 11, // texture index
-                30 // cycle time: 30 seconds
+                30, // cycle time: 30 seconds
+                2, 
             };
 
             // set costs per cycle
             var costs = new List<int>()
             {
-                0, // gold
+                5, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
                 0, // workers
                 1, // energy
-                2 // food
+                5 // food
             };
 
             var outputs = new List<int>()
             {
-                0, // gold
-                5, // wood
+                10, // gold
+                0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
@@ -202,17 +268,20 @@ namespace CitySim.Objects
 
             var upfronts = new List<int>()
             {
-                0, // gold
-                0, // wood
+                15, // gold
+                10, // wood
                 0, // coal
                 0, // iron
                 0, // stone
                 0, // workers
                 1, // energy
-                2 // food
+                5 // food
             };
 
-            return new Building(settings, costs, outputs, upfronts);
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Low Residential Home"
+            };
         }
 
         // construct a town hall
@@ -224,47 +293,51 @@ namespace CitySim.Objects
                 2, // type id: 2 = building
                 10, // object id: 10 = town hall
                 10, // texture indnex
-                30 // cycle time: 60 seconds
+                30, // cycle time: 60 seconds
+                5, 
             };
 
             // set costs per cycle
             var costs = new List<int>()
             {
-                0, // gold
+                75, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
-                0, // workers
+                20, // workers
                 0, // energy
-                0 // food
+                25 // food
             };
 
             var outputs = new List<int>()
             {
-                30, // gold
-                10, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                10, // workers
+                120, // gold
+                5, // wood
+                5, // coal
+                1, // iron
+                5, // stone
+                0, // workers
                 25, // energy
-                10, // food
+                0, // food
             };
 
             var upfronts = new List<int>()
             {
-                0, // gold
-                0, // woood
+                500, // gold
+                250, // woood
                 0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
+                100, // iron
+                250, // stone
+                20, // workers
                 0, // energy
-                0 // food
+                25 // food
             };
 
-            return new Building(settings, costs, outputs, upfronts);
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Town Hall"
+            };
         }
 
         public void Update(GameTime gameTime)

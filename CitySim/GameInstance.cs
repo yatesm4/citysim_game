@@ -1,4 +1,5 @@
-﻿using CitySim.States;
+﻿using System.Threading.Tasks;
+using CitySim.States;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -68,8 +69,13 @@ namespace CitySim
         {
             if (!(_currentState is MenuState))
             {
-                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
+                    Keyboard.GetState().IsKeyDown(Keys.Escape))
+                {
+                    var state = (GameState) _currentState;
+                    Task.Run(() => state.SaveGame());
                     _nextState = new MenuState(this, GraphicsDevice, Content);
+                }
             }
 
             if (_nextState != null)

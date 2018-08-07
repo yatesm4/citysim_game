@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CitySim.Content;
 using CitySim.States;
+using CitySim.UI;
 using Comora;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -59,7 +60,7 @@ namespace CitySim.Objects
         public Color DrawColor { get; set; } = Color.White;
 
         public bool IsVisible { get; set; } = false;
-        public bool IsActive { get; set; } = false;
+        public bool IsGlowing { get; set; } = false;
 
         private MouseState _previousMouseState { get; set; }
 
@@ -67,6 +68,7 @@ namespace CitySim.Objects
 
         // used to determine when clicked
         public event EventHandler Click;
+        public event EventHandler RightClick;
 
         // hitbox for mouse touch
         public Rectangle TouchHitbox
@@ -91,7 +93,7 @@ namespace CitySim.Objects
         {
             Content = content_;
             GraphicsDevice_ = graphicsDevice_;
-
+            TileData = tileData_;
             Position = tileData_.Position;
             TileIndex = tileData_.TileIndex;
             TerrainId = tileData_.TerrainId;
@@ -115,7 +117,6 @@ namespace CitySim.Objects
 
             Texture = content_.GetTileTexture(texture_for_terrain);
 
-            IsActive = tileData_.IsActive;
             IsVisible = tileData_.IsVisible;
 
             // set DebugRect data (optional w debug options)
@@ -133,7 +134,6 @@ namespace CitySim.Objects
                 TileIndex = this.TileIndex,
                 Position = this.Position,
                 TerrainId = this.TerrainId,
-                IsActive = this.IsActive,
                 IsVisible = this.IsVisible,
                 Object = this.Object
             };
@@ -144,6 +144,7 @@ namespace CitySim.Objects
         public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera, GameState state)
         {
             // update tile?
+            IsGlowing = false;
 
             var currentMouse = Mouse.GetState();
 
@@ -162,12 +163,10 @@ namespace CitySim.Objects
             // get bounds for mouse world position
             var mouseRectangle = new Rectangle((int)m_worldPosition.X, (int)m_worldPosition.Y, 1, 1);
 
-            IsHovered = false;
-
             // check if mouse bounds intersects with tile touchbox bounds
-            if (mouseRectangle.Intersects(TouchHitbox))
+            if (mouseRectangle.Intersects(TouchHitbox) && IsVisible.Equals(true))
             {
-                IsHovered = true;
+                state.CurrentlyHoveredTile = this;
                 state.CurrentlySelectedTile = this;
                 //Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
                 //Console.WriteLine($"Hovering Over Tile: {TileIndex.ToString()}");
@@ -175,6 +174,12 @@ namespace CitySim.Objects
                 if (currentMouse.LeftButton == ButtonState.Released && _previousMouseState.LeftButton == ButtonState.Pressed)
                 {
                     Click?.Invoke(this, new EventArgs());
+                }
+
+                if (currentMouse.RightButton == ButtonState.Released && _previousMouseState.RightButton == ButtonState.Pressed)
+                {
+                    camera.Position = Position + new Vector2(0, 150);
+                    RightClick?.Invoke(this, new EventArgs());
                 }
             }
 
@@ -192,9 +197,16 @@ namespace CitySim.Objects
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
             // set draw color to orange red if hovered by mouse, otherwise draw normal color
-            DrawColor = IsHovered && (_gameState.CurrentlySelectedTile == this) ? Color.OrangeRed : Color.White;
-            // but set drawcolor to greyed out if not visible
-            DrawColor = (IsVisible || IsActive) ? DrawColor : Color.DarkGray;
+            if (_gameState.CurrentlyHoveredTile == this)
+            {
+                // but set drawcolor to greyed out if not visible
+                DrawColor = (IsVisible) ? Color.OrangeRed : Color.DarkGray;
+            }
+            else
+            {
+                DrawColor = (IsVisible) ? Color.White : Color.DarkGray;
+                DrawColor = (IsGlowing) ? new Color(Color.Yellow, 0.5f) : DrawColor;
+            }
 
             spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor); 
 

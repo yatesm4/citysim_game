@@ -48,6 +48,9 @@ namespace CitySim.States
 
         #region LOADING
 
+        // if the game is currently saving
+        protected bool IsSaving = false;
+
         // how much of the load pool is remaining (gets subtracted from with every milestone)
         private int _remainingLoad = 100;
 
@@ -115,7 +118,7 @@ namespace CitySim.States
 
         public GameStateData GSData { get; set; }
 
-        private const float _timeCycleDelay = 15; // seconds
+        private const float _timeCycleDelay = 30; // seconds
         private float _remainingDelay = _timeCycleDelay;
 
         // some extra building information
@@ -126,7 +129,11 @@ namespace CitySim.States
         #endregion
 
         #region COMPONENTS
-        private List<Component> _components { get; set; } = new List<Component>();
+        public List<Component> Components { get; set; } = new List<Component>();
+
+        public TileObject SelectedObject { get; set; } = new TileObject();
+
+        public Tile CurrentlyHoveredTile { get; set; }
         #endregion
 
         #endregion
@@ -209,7 +216,7 @@ namespace CitySim.States
 
         public async void LoadHUD()
         {
-            _components.Add(new HUD(_graphicsDevice, _gameContent));
+            Components.Add(new HUD(_graphicsDevice, _gameContent));
         }
 
         public void InitGameStateData()
@@ -255,6 +262,7 @@ namespace CitySim.States
                 using (var streamReader = new System.IO.StreamReader($"GAMEDATA.json"))
                 {
                     data = streamReader.ReadToEnd();
+                    streamReader.Close();
                 }
                 // if the data read isn't null or empty, load the map | else, throw exception
                 if (string.IsNullOrEmpty(data).Equals(true))
@@ -286,7 +294,7 @@ namespace CitySim.States
 
                         // create new tile and pass gamecontent instance and _tileData
                         tileArr_[x, y] = new Tile(_gameContent, _graphicsDevice, t);
-
+                        tileArr_[x, y].Click += Tile_OnClick;
                         if (tileArr_[x, y].Object.TypeId.Equals(2) && tileArr_[x, y].Object.ObjectId.Equals(10))
                             _camera.Position = tileArr_[x, y].Position;
                     }
@@ -308,9 +316,126 @@ namespace CitySim.States
             }
         }
 
+        private void Tile_OnClick(object sender, EventArgs e)
+        {
+            // get selected object and clear it
+            var sel_obj = SelectedObject;
+            SelectedObject = new TileObject();
+
+            var prev_inv = new Inventory()
+            {
+                Gold = GSData.PlayerInventory.Gold,
+                Wood = GSData.PlayerInventory.Wood,
+                Coal = GSData.PlayerInventory.Coal,
+                Iron = GSData.PlayerInventory.Iron,
+                Workers = GSData.PlayerInventory.Workers,
+                Energy = GSData.PlayerInventory.Energy,
+                Food = GSData.PlayerInventory.Food
+            };
+
+            try
+            {
+                Tile t = (Tile) sender;
+                Console.WriteLine($"Tile clicked: {t.TileIndex}");
+                if (t.IsVisible.Equals(true))
+                {
+                    if (sel_obj.ObjectId > 0 && sel_obj.TypeId.Equals(2))
+                    {
+                        var obj = (Building) sel_obj;
+
+                        // check balance to see if player can afford building
+                        bool canBuild = true;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("gold", obj.GoldCost);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("wood", obj.WoodCost);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("coal", obj.CoalCost);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("iron", obj.IronCost);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("stone", obj.StoneCost);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("workers", obj.WorkersCost);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("energy", obj.EnergyCost);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("food", obj.FoodCost);
+                        if(canBuild.Equals(false)) throw new Exception("Can't afford to place!");
+
+                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].Object = obj;
+                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].ObjectTexture =
+                            _gameContent.GetTileTexture(obj.TextureIndex);
+                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].TileData.Object = obj;
+
+                        // activate surrounding area
+                        for (int x = ((int) t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
+                        {
+                            for (int y = ((int) t.TileIndex.Y - obj.Range); y < (t.TileIndex.Y + (obj.Range + 1)); y++)
+                            {
+                                try
+                                {
+                                    _currentMap.Tiles[x, y].IsVisible = true;
+                                    _currentMap.Tiles[x, y].TileData.IsVisible = true;
+                                }
+                                catch (Exception exc)
+                                {
+                                    Console.WriteLine($"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
+                                }
+                            }
+                        }
+
+                        if (obj.ObjectId.Equals(2))
+                        {
+                            // is farm, apply crops around farm
+                            for (int x = ((int) t.TileIndex.X - 1); x < (t.TileIndex.X + 2); x++)
+                            {
+                                for (int y = ((int) t.TileIndex.Y - 1); y < (t.TileIndex.Y + 2); y++)
+                                {
+                                    if (new Vector2(x, y).Equals(t.TileIndex))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (_currentMap.Tiles[x, y].Object.ObjectId > 0)
+                                    {
+                                        continue;
+                                    }
+
+                                    try
+                                    {
+                                        var farmobj = new TileObject()
+                                        {
+                                            Id = Convert.ToInt32($"{x}{y}"),
+                                            TypeId = 1,
+                                            ObjectId = 10,
+                                            TextureIndex = 13
+                                        };
+                                        _currentMap.Tiles[x, y].Object = farmobj;
+                                        _currentMap.Tiles[x, y].ObjectTexture =
+                                            _gameContent.GetTileTexture(farmobj.TextureIndex);
+                                        _currentMap.Tiles[x, y].TileData.Object = farmobj;
+                                    }
+                                    catch (Exception exc)
+                                    {
+                                        Console.WriteLine(
+                                            $"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine(
+                        $"Tile {new Vector2(t.TileIndex.X, t.TileIndex.Y)} is outside of the active area.");
+                }
+            }
+            catch (Exception exception)
+            {
+                SelectedObject = sel_obj;
+                GSData.PlayerInventory = prev_inv;
+            }
+        }
+
         // save map data
         public async void SaveGame()
         {
+            if (IsSaving.Equals(true)) return;
+
             // create list to hold tile data
             GSData.TileData = new List<TileData>();
 
@@ -319,6 +444,16 @@ namespace CitySim.States
             {
                 // add its tile data to list
                 GSData.TileData.Add(t.GetTileData());
+            }
+
+            try
+            {
+                // delete previous backups
+                System.IO.File.Delete("GAMEDATA_BACKUP.json");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
 
             // backup old map data first
@@ -332,12 +467,16 @@ namespace CitySim.States
                 Console.WriteLine("Error backing up previous map data: " + e.Message);
             }
 
+            IsSaving = true;
             // get current data_map file
             using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json"))
             {
                 // overwrite data with list of _tileData
                 streamWriter.WriteLine(JsonConvert.SerializeObject(GSData, Formatting.Indented));
+                streamWriter.Close();
             }
+
+            IsSaving = false;
             Console.WriteLine("Finished Saving Map.");
         }
 
@@ -651,9 +790,9 @@ namespace CitySim.States
 
             LoadingText = $"Lighting up the area...";
             // loop thru the tiles around the town hall and add them/ give them visibility
-            for (int x = ((int)_townHallIndex.X - 5); x < (_townHallIndex.X + 6); x++)
+            for (int x = ((int)_townHallIndex.X - townHall.Range); x < (_townHallIndex.X + (townHall.Range + 1)); x++)
             {
-                for (int y = ((int)_townHallIndex.Y - 5); y < (_townHallIndex.Y + 6); y++)
+                for (int y = ((int)_townHallIndex.Y - townHall.Range); y < (_townHallIndex.Y + (townHall.Range + 1)); y++)
                 {
                     LoadingScreen_CurrentCell = new Vector2(x, y);
 
@@ -663,9 +802,6 @@ namespace CitySim.States
 
                     if(!(found_tile is null))
                     {
-                        if (found_tile.IsActive || found_tile.IsVisible)
-                            continue;
-
                         found_tile.IsVisible = true;
                     }
                 }
@@ -690,7 +826,7 @@ namespace CitySim.States
 
             LoadingText = $"Wrapping things up...";
 
-            _camera.Position = _currentMap.Tiles[(int)_townHallIndex.X, (int)_townHallIndex.Y].Position;
+            _camera.Position = _currentMap.Tiles[(int)_townHallIndex.X, (int)_townHallIndex.Y].Position + new Vector2(0, 150);
 
             _remainingLoad -= 10;
         }
@@ -1003,16 +1139,10 @@ namespace CitySim.States
                 // update gamestate data
                 var timer = (float)gameTime.ElapsedGameTime.TotalSeconds;
                 _remainingDelay -= timer;
-                if(_remainingDelay <= 0)
+                if (_remainingDelay <= 0)
                 {
-                    // cycle finished
-                    Console.WriteLine($"Advancing cycle to day: {GSData.Day}");
-
-                    GSData.Day += 1;
-
+                    Task.Run(() => UpdateGameState(gameTime));
                     _remainingDelay = _timeCycleDelay;
-
-                    Task.Run(() => SaveGame());
                 }
             }
             else
@@ -1021,9 +1151,75 @@ namespace CitySim.States
             }
         }
 
+        public async void UpdateGameState(GameTime gameTime)
+        {
+            // cycle finished
+            Console.WriteLine($"Advancing cycle to day: {GSData.Day}");
+
+            ProcessBuildings();
+
+            GSData.Day += 1;
+            var day = GSData.Day;
+
+            if ((day % 10).Equals(0)) SaveGame();
+        }
+
+        public void ProcessBuildings()
+        {
+            // reset current ammount inv values
+            GSData.PlayerInventory.Energy = 20;
+            GSData.PlayerInventory.Workers = 50;
+            GSData.PlayerInventory.Food = 10;
+
+            foreach (var t in _currentMap.Tiles)
+            {
+                if (t.Object.ObjectId > 0)
+                {
+                    if (t.Object.TypeId.Equals(1))
+                    {
+                        // resouce tile
+                    } else if (t.Object.TypeId.Equals(2))
+                    {
+                        // building tile
+                        var b = t.Object;
+                        GSData.PlayerInventory.RemoveResource("gold", b.GoldCost);
+                        GSData.PlayerInventory.RemoveResource("wood", b.WoodCost);
+                        GSData.PlayerInventory.RemoveResource("coal", b.CoalCost);
+                        GSData.PlayerInventory.RemoveResource("iron", b.IronCost);
+                        GSData.PlayerInventory.RemoveResource("stone", b.StoneCost);
+                        GSData.PlayerInventory.RemoveResource("workers", b.WorkersCost);
+                        GSData.PlayerInventory.RemoveResource("energy", b.EnergyCost);
+                        GSData.PlayerInventory.RemoveResource("food", b.FoodCost);
+
+                        GSData.PlayerInventory.AddResource("gold", b.GoldOutput);
+                        GSData.PlayerInventory.AddResource("wood", b.WoodOutput);
+                        GSData.PlayerInventory.AddResource("coal", b.CoalOutput);
+                        GSData.PlayerInventory.AddResource("iron", b.IronOutput);
+                        GSData.PlayerInventory.AddResource("stone", b.StoneOutput);
+                        GSData.PlayerInventory.AddResource("workers", b.WorkersOutput);
+                        GSData.PlayerInventory.AddResource("energy", b.EnergyOutput);
+                        GSData.PlayerInventory.AddResource("food", b.FoodOutput);
+
+                        
+                    }
+                }
+            }
+        }
+
+        public async void ExitGame()
+        {
+            // on escape, go back to menu state
+            _remainingLoad = 100;
+            SaveGame();
+            Console.WriteLine("Exiting game...");
+            _game.ChangeState(new MenuState(_game, _graphicsDevice, _content));
+        }
+
         // post update (called after update)
         public override void PostUpdate(GameTime gameTime)
         {
+            CurrentlyHoveredTile = null;
+
             if (IsLoaded)
             {
                 // game state is loaded
@@ -1040,8 +1236,37 @@ namespace CitySim.States
                     //Console.WriteLine("Error drawing map: " + e.Message);
                 }
 
+                if (!(CurrentlyHoveredTile is null))
+                {
+                    if (SelectedObject.ObjectId > 0)
+                    {
+                        var sel_obj = SelectedObject;
+                        if (sel_obj.TypeId.Equals(2))
+                        {
+                            var bldg = (Building)SelectedObject;
+                            var rng = bldg.Range;
+
+
+                            for (int x = ((int)CurrentlyHoveredTile.TileIndex.X - rng); x < (CurrentlyHoveredTile.TileIndex.X + (rng + 1)); x++)
+                            {
+                                for (int y = ((int)CurrentlyHoveredTile.TileIndex.Y - rng); y < (CurrentlyHoveredTile.TileIndex.Y + (rng + 1)); y++)
+                                {
+                                    try
+                                    {
+                                        _currentMap.Tiles[x, y].IsGlowing = true;
+                                    }
+                                    catch (Exception exc)
+                                    {
+                                        Console.WriteLine($"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // also update ui components
-                foreach (var c in _components)
+                foreach (var c in Components)
                 {
                     c.Update(gameTime, this);
                 }
@@ -1072,10 +1297,8 @@ namespace CitySim.States
             // if esc is held down, go back to main menu
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
-                // on escape, go back to menu state
-                _remainingLoad = 100;
-                SaveGame();
-                _game.ChangeState(new MenuState(_game, _graphicsDevice, _content));
+                Console.WriteLine("ESCAPE clicked...");
+                //Task.Run(() => ExitGame());
             }
 
             // if WASD, move camera accordingly and mutiply by shift multiplier
@@ -1147,9 +1370,17 @@ namespace CitySim.States
 
                 spriteBatch.Begin();
                 // draw UI / HUD here 
-                foreach (var c in _components)
+                foreach (var c in Components)
                 {
                     c.Draw(gameTime, spriteBatch);
+                }
+
+                if (SelectedObject.ObjectId > 0)
+                {
+                    var txt = _gameContent.GetTileTexture(SelectedObject.TextureIndex);
+                    var pos = mp - new Vector2((txt.Width * 2) / 2, (txt.Height * 2) - ((txt.Height * 2) * 0.25f));
+                    var rct = new Rectangle((int)pos.X, (int)pos.Y, txt.Width * 2, txt.Height * 2);
+                    spriteBatch.Draw(txt, destinationRectangle: rct, color: Color.White);
                 }
 
                 // draw cursor over UI elements !!
