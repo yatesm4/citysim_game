@@ -143,7 +143,6 @@ namespace CitySim.UI
                     if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("energy", b.EnergyCost);
                     if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("food", b.FoodCost);
                     Locked = !canBuild;
-                    Console.WriteLine($"{b.Name} Button Avail: {Locked.ToString()}");
                 }
                 else
                 {

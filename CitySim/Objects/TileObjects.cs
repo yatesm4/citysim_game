@@ -132,7 +132,7 @@ namespace CitySim.Objects
             // set costs per cycle
             var costs = new List<int>()
             {
-                15, // gold
+                10, // gold
                 0, // wood
                 0, // coal
                 0, // iron
@@ -144,7 +144,7 @@ namespace CitySim.Objects
 
             var outputs = new List<int>()
             {
-                5, // gold
+                0, // gold
                 10, // wood
                 0, // coal
                 0, // iron
@@ -156,7 +156,7 @@ namespace CitySim.Objects
 
             var upfronts = new List<int>()
             {
-                30, // gold
+                40, // gold
                 15, // woood
                 0, // coal
                 0, // iron
@@ -188,7 +188,7 @@ namespace CitySim.Objects
             // set costs per cycle
             var costs = new List<int>()
             {
-                20, // gold
+                30, // gold
                 0, // wood
                 0, // coal
                 0, // iron
@@ -200,7 +200,7 @@ namespace CitySim.Objects
 
             var outputs = new List<int>()
             {
-                5, // gold
+                0, // gold
                 0, // wood
                 0, // coal
                 0, // iron
@@ -212,7 +212,7 @@ namespace CitySim.Objects
 
             var upfronts = new List<int>()
             {
-                80, // gold
+                100, // gold
                 40, // woood
                 0, // coal
                 0, // iron
@@ -244,7 +244,7 @@ namespace CitySim.Objects
             // set costs per cycle
             var costs = new List<int>()
             {
-                5, // gold
+                0, // gold
                 0, // wood
                 0, // coal
                 0, // iron
@@ -268,7 +268,7 @@ namespace CitySim.Objects
 
             var upfronts = new List<int>()
             {
-                15, // gold
+                20, // gold
                 10, // wood
                 0, // coal
                 0, // iron
@@ -281,6 +281,116 @@ namespace CitySim.Objects
             return new Building(settings, costs, outputs, upfronts)
             {
                 Name = "Low Residential Home"
+            };
+        }
+
+        public static Building Quarry()
+        {
+            var settings = new List<float>()
+            {
+                204, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                4, // object id: 1 = log cabin
+                15, // texture indnex
+                30, // cycle time: 30 seconds
+                3, // Range (Visib/Active)
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                20, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                15, // workers
+                2, // energy
+                0 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                2, // coal
+                2, // iron
+                2, // stone
+                0, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                80, // gold
+                50, // woood
+                0, // coal
+                0, // iron
+                0, // stone
+                15, // workers
+                2, // energy
+                0 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Quarry"
+            };
+        }
+
+        public static Building PowerLine()
+        {
+            var settings = new List<float>()
+            {
+                205, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                5, // object id: 1 = log cabin
+                16, // texture indnex
+                30, // cycle time: 30 seconds
+                4, // Range (Visib/Active)
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                15, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                5, // workers
+                0, // energy
+                0 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                30, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                50, // gold
+                30, // woood
+                0, // coal
+                10, // iron
+                30, // stone
+                5, // workers
+                0, // energy
+                0 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Power Line"
             };
         }
 
@@ -300,25 +410,25 @@ namespace CitySim.Objects
             // set costs per cycle
             var costs = new List<int>()
             {
-                75, // gold
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                5, // energy
+                0 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                15, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
                 20, // workers
                 0, // energy
-                25 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                120, // gold
-                5, // wood
-                5, // coal
-                1, // iron
-                5, // stone
-                0, // workers
-                25, // energy
                 0, // food
             };
 
@@ -329,9 +439,9 @@ namespace CitySim.Objects
                 0, // coal
                 100, // iron
                 250, // stone
-                20, // workers
-                0, // energy
-                25 // food
+                0, // workers
+                5, // energy
+                0 // food
             };
 
             return new Building(settings, costs, outputs, upfronts)

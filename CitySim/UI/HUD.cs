@@ -58,7 +58,7 @@ namespace CitySim.UI
             (SelectionCellsSection_Dimensions.Y * SelectionCellsSection_GridSpacePercents.Y) /
             (SelectionCell_GridDimensions.Y + 1));
 
-        protected Vector2 SelectionCells_BuildingIndexes => new Vector2(12, 17); // Y is max + 1
+        protected Vector2 SelectionCells_BuildingIndexes => new Vector2(12, 19); // Y is max + 1
         protected List<Texture2D> SelectionCells_BuildingTextures { get; set; } = new List<Texture2D>();
 
         // INFOGRAPHIC SECTION (MIDDLE MENU)

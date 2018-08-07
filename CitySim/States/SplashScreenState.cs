@@ -9,6 +9,8 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 using CitySim.Objects;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace CitySim.States
 {
@@ -17,6 +19,7 @@ namespace CitySim.States
         // set splash-image sprite and sprite player
         private Sprite _sprSplash;
         private SpritePlayer _sprPlayer;
+        private Song _glimmerSound;
 
         // set animation-playback countdown (till end)
         private int _countdown = 200;
@@ -32,6 +35,7 @@ namespace CitySim.States
             // set scale of sprite player and play splash-image sprite
             _sprPlayer.Scale = 3.0f;
             _sprPlayer.PlaySprite(_sprSplash);
+            _glimmerSound = content.Load<Song>("Sounds/FX/Glimmer");
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -57,6 +61,7 @@ namespace CitySim.States
             if(_countdown > 0)
             {
                 // subtract countdown
+                if(_countdown.Equals(100)) MediaPlayer.Play(_glimmerSound);
                 _countdown--;
             }
             if (_countdown.Equals(0))

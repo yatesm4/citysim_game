@@ -18,7 +18,9 @@ namespace CitySim.Content
                     { 1, Building.TownHall() },
                     { 2, Building.LowHouse() },
                     { 3, Building.Farm() },
-                    { 4, Building.LogCabin() }
+                    { 4, Building.LogCabin() },
+                    { 5, Building.Quarry() },
+                    { 6, Building.PowerLine() }
                 };
             }
         }

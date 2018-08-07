@@ -3,6 +3,7 @@ using CitySim.States;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 
 namespace CitySim
 {
@@ -82,6 +83,11 @@ namespace CitySim
             {
                 _currentState = _nextState;
                 _nextState = null;
+                if (_currentState is MenuState)
+                {
+                    MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
+                    MediaPlayer.IsRepeating = true;
+                }
             }
 
             _currentState.Update(gameTime);

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Media;
 
 namespace CitySim.Content
 {
@@ -45,7 +46,7 @@ namespace CitySim.Content
         private List<ContentData<Texture2D>> _uiTexturesList { get; set; } = new List<ContentData<Texture2D>>();
         private List<ContentData<SpriteFont>> _fontsList { get; set; } = new List<ContentData<SpriteFont>>();
         private List<ContentData<Texture2D>> _tileTexturesList { get; set; } = new List<ContentData<Texture2D>>();
-        private List<ContentData<SoundEffect>> _soundEffectsList { get; set; } = new List<ContentData<SoundEffect>>();
+        private List<ContentData<Song>> _soundEffectsList { get; set; } = new List<ContentData<Song>>();
 
         // list accessors
         public List<ContentData<Texture2D>> UiTextures
@@ -66,7 +67,7 @@ namespace CitySim.Content
             set { _tileTexturesList = value; }
         }
 
-        public List<ContentData<SoundEffect>> SoundEffects
+        public List<ContentData<Song>> SoundEffects
         {
             get { return _soundEffectsList; }
             set { _soundEffectsList = value; }
@@ -94,11 +95,11 @@ namespace CitySim.Content
                 select a.Data).SingleOrDefault<Texture2D>();
         }
 
-        public SoundEffect GetSoundEffect(int id)
+        public Song GetSoundEffect(int id)
         {
             return (from a in SoundEffects
                 where a.Id.Equals(id)
-                select a.Data).SingleOrDefault<SoundEffect>();
+                select a.Data).SingleOrDefault<Song>();
         }
 
         // constructor
@@ -140,6 +141,8 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_House", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Farm", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Logs", _content));
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Ore", _content));
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Power", _content)); // 18
 
             Console.WriteLine($"Ui Textures: {i}");
         }
@@ -173,6 +176,8 @@ namespace CitySim.Content
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Farm/01", _content));
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Farm/02", _content));
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Wood/01", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Ore/01", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Power/01", _content)); // 16
 
             Console.WriteLine($"Tile Textures: {i}");
         }
@@ -182,7 +187,7 @@ namespace CitySim.Content
         {
             // total: 1
             var i = 1;
-            //SoundEffects.Add(new ContentData<SoundEffect>(i++, "Sounds/Effects/footstep", _content));
+            SoundEffects.Add(new ContentData<Song>(i++, "Sounds/FX/Glimmer", _content));
 
             Console.WriteLine($"Sound Effects: {i}");
         }

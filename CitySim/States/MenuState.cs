@@ -13,6 +13,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 
 namespace CitySim.States
 {
@@ -34,6 +35,7 @@ namespace CitySim.States
         // construct state
         public MenuState(GameInstance game, GraphicsDevice graphicsDevice, ContentManager content) : base(game, graphicsDevice, content)
         {
+
             // variables to hold button texture and font
             var buttonTexture = _content.Load<Texture2D>("Sprites/UI/UI_Button");
             var buttonFont = _content.Load<SpriteFont>("Fonts/Font_01");
