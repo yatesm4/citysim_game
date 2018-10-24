@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using CitySim.States;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
@@ -12,11 +13,17 @@ namespace CitySim
     /// </summary>
     public class GameInstance : Game
     {
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
         private State _currentState;
         private State _nextState;
+
+        private MouseState _currentMouseState;
+        private MouseState _previousMouseState;
+
+        private SoundEffect ClickSound;
 
         public GameInstance()
         {
@@ -50,6 +57,8 @@ namespace CitySim
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             _currentState = new SplashScreenState(this, GraphicsDevice, Content);
+
+            ClickSound = Content.Load<SoundEffect>("Sounds/FX/Click");
         }
 
         /// <summary>
@@ -68,14 +77,27 @@ namespace CitySim
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            _previousMouseState = _currentMouseState;
+            _currentMouseState = Mouse.GetState();
+
             if (!(_currentState is MenuState))
             {
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
                     Keyboard.GetState().IsKeyDown(Keys.Escape))
                 {
-                    var state = (GameState) _currentState;
-                    Task.Run(() => state.SaveGame());
+                    if (_currentState is GameState state) Task.Run(() => state.SaveGame());
                     _nextState = new MenuState(this, GraphicsDevice, Content);
+                }
+            }
+
+            if (_currentMouseState.LeftButton == ButtonState.Released &&
+                _previousMouseState.LeftButton == ButtonState.Pressed)
+            {
+                if (IsMouseInsideWindow())
+                {
+                    var mk_snd = true;
+                    if (_currentState is GameState s) { if (!s.IsLoaded) mk_snd = false; }
+                    if(mk_snd.Equals(true)) ClickSound.Play(0.2f, -0.3f, 0.0f);
                 }
             }
 
@@ -85,8 +107,8 @@ namespace CitySim
                 _nextState = null;
                 if (_currentState is MenuState)
                 {
-                    MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
-                    MediaPlayer.IsRepeating = true;
+                    //MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
+                    //MediaPlayer.IsRepeating = true;
                 }
             }
 
@@ -112,6 +134,13 @@ namespace CitySim
         public void ChangeState(State state)
         {
             _nextState = state;
+        }
+
+        private bool IsMouseInsideWindow()
+        {
+            MouseState ms = Mouse.GetState();
+            Point pos = new Point(ms.X, ms.Y);
+            return GraphicsDevice.Viewport.Bounds.Contains(pos);
         }
     }
 }

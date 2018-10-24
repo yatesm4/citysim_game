@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 using CitySim.Content;
@@ -17,11 +18,15 @@ namespace CitySim.UI
         // current and prev mouse used to determine where user is clicking
         private MouseState _currentMouse;
 
+        private GameState _state;
+
         // font for the button
         private SpriteFont _font;
 
         // for when mouse is over the button
         private bool _isHovering;
+
+        public bool IsHovering => _isHovering;
 
         private MouseState _previousMouse;
 
@@ -48,18 +53,17 @@ namespace CitySim.UI
         public bool ResourceLocked = false;
         public bool Locked = false;
 
+        private string _baseString = "+0 +0 +0 +0 +0 +0 +0";
+        protected Vector2 Tooltip_Dimensions => new Vector2(_font.MeasureString(_baseString).X * 1.2f, _font.MeasureString(_baseString).Y * 1.2f);
+
         // used for collision
-        public Rectangle Rectangle
-        {
-            get
-            {
-                return CustomRect.IsEmpty ? new Rectangle((int)Position.X, (int)Position.Y, _texture.Width, _texture.Height) : CustomRect;
-            }
-        }
+        public Rectangle Rectangle => CustomRect.IsEmpty ? new Rectangle((int)Position.X, (int)Position.Y, (!string.IsNullOrEmpty(Text) ? (((int)_font.MeasureString(Text).X + TextPadding) > _texture.Width ? (int)_font.MeasureString(Text).X + TextPadding : _texture.Width) : _texture.Width), _texture.Height) : CustomRect;
 
         public Rectangle CustomRect { get; set; } = new Rectangle();
 
         public string Text { get; set; }
+
+        public int TextPadding = 4;
 
         public Button(Texture2D texture, SpriteFont font)
         {
@@ -109,10 +113,13 @@ namespace CitySim.UI
 
                 spriteBatch.DrawString(_font, Text, new Vector2(Rectangle.X + (Rectangle.Width - Rectangle.Width / 2), Rectangle.Y + (Rectangle.Height - Rectangle.Height / 2)), PenColor, 0, origin, Scale, SpriteEffects.None, 1);
             }
+
+            
         }
 
         public override void Update(GameTime gameTime, GameState state)
         {
+            _state = state;
             _previousMouse = _currentMouse;
             _currentMouse = Mouse.GetState();
             var mouseRectangle = new Rectangle(_currentMouse.X, _currentMouse.Y, 1, 1);
@@ -134,14 +141,14 @@ namespace CitySim.UI
                 {
                     var b = BuildingData.Dict_BuildingKeys[ID];
                     bool canBuild = true;
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("gold", b.GoldCost);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("wood", b.WoodCost);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("coal", b.CoalCost);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("iron", b.IronCost);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("stone", b.StoneCost);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("workers", b.WorkersCost);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("energy", b.EnergyCost);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("food", b.FoodCost);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("gold", b.GoldUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("wood", b.WoodUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("coal", b.CoalUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("iron", b.IronUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("stone", b.StoneUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("workers", b.WorkersUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("energy", b.EnergyUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("food", b.FoodUpfront);
                     Locked = !canBuild;
                 }
                 else
@@ -153,12 +160,12 @@ namespace CitySim.UI
 
             _isHovering = false;
 
-            if (Locked.Equals(false))
+            if (mouseRectangle.Intersects(Rectangle))
             {
-                if (mouseRectangle.Intersects(Rectangle))
-                {
-                    _isHovering = true;
+                _isHovering = true;
 
+                if (Locked.Equals(false))
+                {
                     if (_currentMouse.LeftButton == ButtonState.Released && _previousMouse.LeftButton == ButtonState.Pressed)
                     {
                         Click?.Invoke(this, new EventArgs());

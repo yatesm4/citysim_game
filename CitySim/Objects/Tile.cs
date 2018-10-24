@@ -178,7 +178,7 @@ namespace CitySim.Objects
 
                 if (currentMouse.RightButton == ButtonState.Released && _previousMouseState.RightButton == ButtonState.Pressed)
                 {
-                    camera.Position = Position + new Vector2(0, 150);
+                    //camera.Position = Position + new Vector2(0, 150);
                     RightClick?.Invoke(this, new EventArgs());
                 }
             }

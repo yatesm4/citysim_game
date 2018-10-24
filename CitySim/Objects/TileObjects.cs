@@ -132,12 +132,12 @@ namespace CitySim.Objects
             // set costs per cycle
             var costs = new List<int>()
             {
-                10, // gold
+                5, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
-                5, // workers
+                10, // workers
                 1, // energy
                 0 // food
             };
@@ -145,7 +145,7 @@ namespace CitySim.Objects
             var outputs = new List<int>()
             {
                 0, // gold
-                10, // wood
+                0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
@@ -157,11 +157,11 @@ namespace CitySim.Objects
             var upfronts = new List<int>()
             {
                 40, // gold
-                15, // woood
+                0, // woood
                 0, // coal
                 0, // iron
                 0, // stone
-                5, // workers
+                10, // workers
                 1, // energy
                 0 // food
             };
@@ -182,7 +182,7 @@ namespace CitySim.Objects
                 2, // object id: 2 = log cabin
                 12, // texture indnex
                 30, // cycle time: 30 seconds
-                3, // Range (Visib/Active)
+                2, // Range (Visib/Active)
             };
 
             // set costs per cycle
@@ -193,8 +193,8 @@ namespace CitySim.Objects
                 0, // coal
                 0, // iron
                 0, // stone
-                10, // workers
-                2, // energy
+                15, // workers
+                5, // energy
                 0 // food
             };
 
@@ -207,7 +207,7 @@ namespace CitySim.Objects
                 0, // stone
                 0, // workers
                 0, // energy
-                30, // food
+                10, // food
             };
 
             var upfronts = new List<int>()
@@ -217,8 +217,8 @@ namespace CitySim.Objects
                 0, // coal
                 0, // iron
                 0, // stone
-                10, // workers
-                2, // energy
+                15, // workers
+                5, // energy
                 0 // food
             };
 
@@ -251,7 +251,7 @@ namespace CitySim.Objects
                 0, // stone
                 0, // workers
                 1, // energy
-                5 // food
+                4 // food
             };
 
             var outputs = new List<int>()
@@ -261,7 +261,7 @@ namespace CitySim.Objects
                 0, // coal
                 0, // iron
                 0, // stone
-                2, // workers
+                4, // workers
                 0, // energy
                 0, // food
             };
@@ -275,7 +275,7 @@ namespace CitySim.Objects
                 0, // stone
                 0, // workers
                 1, // energy
-                5 // food
+                4 // food
             };
 
             return new Building(settings, costs, outputs, upfronts)
@@ -293,18 +293,18 @@ namespace CitySim.Objects
                 4, // object id: 1 = log cabin
                 15, // texture indnex
                 30, // cycle time: 30 seconds
-                3, // Range (Visib/Active)
+                2, // Range (Visib/Active)
             };
 
             // set costs per cycle
             var costs = new List<int>()
             {
-                20, // gold
+                15, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
-                15, // workers
+                10, // workers
                 2, // energy
                 0 // food
             };
@@ -313,9 +313,9 @@ namespace CitySim.Objects
             {
                 0, // gold
                 0, // wood
-                2, // coal
-                2, // iron
-                2, // stone
+                0, // coal
+                0, // iron
+                0, // stone
                 0, // workers
                 0, // energy
                 0, // food
@@ -324,11 +324,11 @@ namespace CitySim.Objects
             var upfronts = new List<int>()
             {
                 80, // gold
-                50, // woood
+                30, // woood
                 0, // coal
                 0, // iron
                 0, // stone
-                15, // workers
+                10, // workers
                 2, // energy
                 0 // food
             };
@@ -354,12 +354,67 @@ namespace CitySim.Objects
             // set costs per cycle
             var costs = new List<int>()
             {
-                15, // gold
+                10, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
-                5, // workers
+                2, // workers
+                1, // energy
+                0 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                50, // gold
+                30, // woood
+                0, // coal
+                0, // iron
+                0, // stone
+                2, // workers
+                1, // energy
+                0 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Power Line"
+            };
+        }
+
+        public static Building Windmill()
+        {
+            var settings = new List<float>()
+            {
+                206, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                6, // object id: 1 = log cabin
+                17, // texture indnex
+                30, // cycle time: 30 seconds
+                2, // Range (Visib/Active)
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                25, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                10, // workers
                 0, // energy
                 0 // food
             };
@@ -372,25 +427,25 @@ namespace CitySim.Objects
                 0, // iron
                 0, // stone
                 0, // workers
-                30, // energy
+                25, // energy
                 0, // food
             };
 
             var upfronts = new List<int>()
             {
-                50, // gold
+                80, // gold
                 30, // woood
                 0, // coal
-                10, // iron
-                30, // stone
-                5, // workers
+                5, // iron
+                20, // stone
+                10, // workers
                 0, // energy
                 0 // food
             };
 
             return new Building(settings, costs, outputs, upfronts)
             {
-                Name = "Power Line"
+                Name = "Windmill"
             };
         }
 
@@ -422,12 +477,12 @@ namespace CitySim.Objects
 
             var outputs = new List<int>()
             {
-                15, // gold
+                20, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
-                20, // workers
+                0, // workers
                 0, // energy
                 0, // food
             };
@@ -492,9 +547,65 @@ namespace CitySim.Objects
             FoodOutput = outputs_[7];
         }
 
+        public static TileObject Farmland()
+        {
+            return new TileObject
+            {
+                Id = 206,
+                TypeId = 1,
+                ObjectId = 10,
+                TextureIndex = 13
+            };
+        }
+
         public void Update(GameTime gameTime)
         {
 
+        }
+
+        public static TileData Water()
+        {
+            return new TileData()
+            {
+                TerrainId = 2,
+                Object = new TileObject()
+                {
+                    Id = 0,
+                    TypeId = 1,
+                    ObjectId = 3,
+                    TextureIndex = 4
+                }
+            };
+        }
+
+        public static TileData Tree()
+        {
+            return new TileData()
+            {
+                TerrainId = 0,
+                Object = new TileObject()
+                {
+                    Id = 0,
+                    TypeId = 1,
+                    ObjectId = 2,
+                    TextureIndex = 9
+                }
+            };
+        }
+
+        public static TileData Ore(int obj_id, int txt_id)
+        {
+            return new TileData()
+            {
+                TerrainId = 1,
+                Object = new TileObject()
+                {
+                    Id = 0,
+                    TypeId = 1,
+                    ObjectId = obj_id,
+                    TextureIndex = txt_id
+                }
+            };
         }
     }
 }

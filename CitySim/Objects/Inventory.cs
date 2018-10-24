@@ -10,13 +10,19 @@ namespace CitySim.Objects
     public class Inventory
     {
         public static int ResourceMax = 99999;
-        public int Gold { get; set; } = 500;
-        public int Wood { get; set; } = 100;
+        public int Gold { get; set; } = 50;
+        public int Wood { get; set; } = 20;
         public int Coal { get; set; } = 0;
         public int Iron { get; set; } = 0;
-        public int Workers { get; set; } = 50;
-        public int Energy { get; set; } = 20;
-        public int Food { get; set; } = 10;
+
+        public int Stone
+        {
+            get;
+            set; 
+        } = 0;
+        public int Workers { get; set; } = 20;
+        public int Energy { get; set; } = 30;
+        public int Food { get; set; } = 20;
 
         public bool RemoveResource(string resource, int amount_requested)
         {
@@ -43,6 +49,9 @@ namespace CitySim.Objects
                         return true;
                     case "coal":
                         Coal -= amount_requested;
+                        return true;
+                    case "stone":
+                        Stone -= amount_requested;
                         return true;
                     case "iron":
                         Iron -= amount_requested;
@@ -118,6 +127,16 @@ namespace CitySim.Objects
                         if (amount_requested <= Iron)
                         {
                             Iron -= amount_requested;
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    case "stone":
+                        if (amount_requested <= Stone)
+                        {
+                            Stone -= amount_requested;
                             return true;
                         }
                         else
@@ -216,6 +235,16 @@ namespace CitySim.Objects
                         if (amount + Iron <= ResourceMax)
                         {
                             Iron += amount;
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    case "stone":
+                        if (amount + Stone <= ResourceMax)
+                        {
+                            Stone += amount;
                             return true;
                         }
                         else

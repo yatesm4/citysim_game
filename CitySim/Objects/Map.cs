@@ -13,6 +13,72 @@ using Microsoft.Xna.Framework.Input;
 
 namespace CitySim.Objects
 {
+    public class IncomeReport
+    {
+        public int TotalGoldLoss = 0;
+        public int TotalWoodLoss = 0;
+        public int TotalCoalLoss = 0;
+        public int TotalIronLoss = 0;
+        public int TotalStoneLoss = 0;
+        public int TotalWorkersLoss = 0;
+        public int TotalEnergyLoss = 0;
+        public int TotalFoodLoss = 0;
+
+        public int[] TotalLoss => new int[]
+        {
+            TotalGoldLoss,
+            TotalWoodLoss,
+            TotalCoalLoss,
+            TotalIronLoss,
+            TotalStoneLoss,
+            TotalFoodLoss,
+            TotalEnergyLoss,
+            TotalWorkersLoss
+        };
+
+        public int TotalGoldGain = 0;
+        public int TotalWoodGain = 0;
+        public int TotalCoalGain = 0;
+        public int TotalIronGain = 0;
+        public int TotalStoneGain = 0;
+        public int TotalWorkersGain = 0;
+        public int TotalEnergyGain = 0;
+        public int TotalFoodGain = 0;
+
+        public int[] TotalGain => new int[]
+        {
+            TotalGoldGain,
+            TotalWoodGain,
+            TotalCoalGain,
+            TotalIronGain,
+            TotalStoneGain,
+            TotalFoodGain + 20,
+            TotalEnergyGain + 30,
+            TotalWorkersGain + 20
+        };
+
+        public int TotalGoldRevenue = 0;
+        public int TotalWoodRevenue = 0;
+        public int TotalCoalRevenue = 0;
+        public int TotalIronRevenue = 0;
+        public int TotalStoneRevenue = 0;
+        public int TotalWorkersRevenue = 0;
+        public int TotalEnergyRevenue = 0;
+        public int TotalFoodRevenue = 0;
+
+        public int[] TotalRevenue => new int[]
+        {
+            TotalGoldRevenue,
+            TotalWoodRevenue,
+            TotalCoalRevenue,
+            TotalIronRevenue,
+            TotalStoneRevenue,
+            TotalFoodRevenue + 20,
+            TotalEnergyRevenue + 30,
+            TotalWorkersRevenue + 20
+        };
+    }
+
     public class Map
     {
         // array to hold tiles
@@ -21,6 +87,46 @@ namespace CitySim.Objects
         {
             get { return _tiles; }
             set { _tiles = value; }
+        }
+
+        // properties to hold current revenue information
+        public IncomeReport GetIncomeReport
+        {
+            get
+            {
+                var r = new IncomeReport();
+                foreach (var t in Tiles)
+                {
+                    r.TotalGoldLoss += t.Object.GoldCost;
+                    r.TotalWoodLoss += t.Object.WoodCost;
+                    r.TotalCoalLoss += t.Object.CoalCost;
+                    r.TotalIronLoss += t.Object.IronCost;
+                    r.TotalStoneLoss += t.Object.StoneCost;
+                    r.TotalWorkersLoss += t.Object.WorkersCost;
+                    r.TotalEnergyLoss += t.Object.EnergyCost;
+                    r.TotalFoodLoss += t.Object.FoodCost;
+
+                    r.TotalGoldGain += t.Object.GoldOutput;
+                    r.TotalWoodGain += t.Object.WoodOutput;
+                    r.TotalCoalGain += t.Object.CoalOutput;
+                    r.TotalIronGain += t.Object.IronOutput;
+                    r.TotalStoneGain += t.Object.StoneOutput;
+                    r.TotalWorkersGain += t.Object.WorkersOutput;
+                    r.TotalEnergyGain += t.Object.EnergyOutput;
+                    r.TotalFoodGain += t.Object.FoodOutput;
+                }
+
+                r.TotalGoldRevenue = r.TotalGoldGain - r.TotalGoldLoss;
+                r.TotalWoodRevenue = r.TotalWoodGain - r.TotalWoodLoss;
+                r.TotalCoalRevenue = r.TotalCoalGain - r.TotalCoalLoss;
+                r.TotalIronRevenue = r.TotalIronGain - r.TotalIronLoss;
+                r.TotalStoneRevenue = r.TotalStoneGain - r.TotalStoneLoss;
+                r.TotalWorkersRevenue = r.TotalWorkersGain - r.TotalWorkersLoss;
+                r.TotalEnergyRevenue = r.TotalEnergyGain - r.TotalEnergyLoss;
+                r.TotalFoodRevenue = r.TotalFoodGain - r.TotalFoodLoss;
+
+                return r;
+            }
         }
 
         // tile dimensions (NOT USED CURRENTLY)

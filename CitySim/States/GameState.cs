@@ -97,6 +97,8 @@ namespace CitySim.States
         // current map rendering
         private Map _currentMap { get; set; }
 
+        public Map CurrentMap => _currentMap;
+
         // game camera
         private Camera _camera { get; set; }
         #endregion
@@ -118,7 +120,7 @@ namespace CitySim.States
 
         public GameStateData GSData { get; set; }
 
-        private const float _timeCycleDelay = 30; // seconds
+        private const float _timeCycleDelay = 8; // seconds
         private float _remainingDelay = _timeCycleDelay;
 
         // some extra building information
@@ -223,16 +225,7 @@ namespace CitySim.States
         {
             GSData = new GameStateData();
 
-            GSData.PlayerInventory = new Inventory()
-            {
-                Gold = 500,
-                Wood = 100,
-                Coal = 50,
-                Iron = 20,
-                Food = 50,
-                Workers = 10,
-                Energy = 10
-            };
+            GSData.PlayerInventory = new Inventory();
         }
         #endregion
 
@@ -316,198 +309,23 @@ namespace CitySim.States
             }
         }
 
-        private void Tile_OnClick(object sender, EventArgs e)
-        {
-            // get selected object and clear it
-            var sel_obj = SelectedObject;
-            SelectedObject = new TileObject();
-
-            var prev_inv = new Inventory()
-            {
-                Gold = GSData.PlayerInventory.Gold,
-                Wood = GSData.PlayerInventory.Wood,
-                Coal = GSData.PlayerInventory.Coal,
-                Iron = GSData.PlayerInventory.Iron,
-                Workers = GSData.PlayerInventory.Workers,
-                Energy = GSData.PlayerInventory.Energy,
-                Food = GSData.PlayerInventory.Food
-            };
-
-            try
-            {
-                Tile t = (Tile) sender;
-                Console.WriteLine($"Tile clicked: {t.TileIndex}");
-                if (t.IsVisible.Equals(true))
-                {
-                    if (sel_obj.ObjectId > 0 && sel_obj.TypeId.Equals(2))
-                    {
-                        var obj = (Building) sel_obj;
-
-                        // check balance to see if player can afford building
-                        bool canBuild = true;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("gold", obj.GoldCost);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("wood", obj.WoodCost);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("coal", obj.CoalCost);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("iron", obj.IronCost);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("stone", obj.StoneCost);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("workers", obj.WorkersCost);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("energy", obj.EnergyCost);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("food", obj.FoodCost);
-                        if(canBuild.Equals(false)) throw new Exception("Can't afford to place!");
-
-                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].Object = obj;
-                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].ObjectTexture =
-                            _gameContent.GetTileTexture(obj.TextureIndex);
-                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].TileData.Object = obj;
-
-                        // activate surrounding area
-                        for (int x = ((int) t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
-                        {
-                            for (int y = ((int) t.TileIndex.Y - obj.Range); y < (t.TileIndex.Y + (obj.Range + 1)); y++)
-                            {
-                                try
-                                {
-                                    _currentMap.Tiles[x, y].IsVisible = true;
-                                    _currentMap.Tiles[x, y].TileData.IsVisible = true;
-                                }
-                                catch (Exception exc)
-                                {
-                                    Console.WriteLine($"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
-                                }
-                            }
-                        }
-
-                        if (obj.ObjectId.Equals(2))
-                        {
-                            // is farm, apply crops around farm
-                            for (int x = ((int) t.TileIndex.X - 1); x < (t.TileIndex.X + 2); x++)
-                            {
-                                for (int y = ((int) t.TileIndex.Y - 1); y < (t.TileIndex.Y + 2); y++)
-                                {
-                                    if (new Vector2(x, y).Equals(t.TileIndex))
-                                    {
-                                        continue;
-                                    }
-
-                                    if (_currentMap.Tiles[x, y].Object.ObjectId > 0)
-                                    {
-                                        continue;
-                                    }
-
-                                    try
-                                    {
-                                        var farmobj = new TileObject()
-                                        {
-                                            Id = Convert.ToInt32($"{x}{y}"),
-                                            TypeId = 1,
-                                            ObjectId = 10,
-                                            TextureIndex = 13
-                                        };
-                                        _currentMap.Tiles[x, y].Object = farmobj;
-                                        _currentMap.Tiles[x, y].ObjectTexture =
-                                            _gameContent.GetTileTexture(farmobj.TextureIndex);
-                                        _currentMap.Tiles[x, y].TileData.Object = farmobj;
-                                    }
-                                    catch (Exception exc)
-                                    {
-                                        Console.WriteLine(
-                                            $"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    Console.WriteLine(
-                        $"Tile {new Vector2(t.TileIndex.X, t.TileIndex.Y)} is outside of the active area.");
-                }
-            }
-            catch (Exception exception)
-            {
-                SelectedObject = sel_obj;
-                GSData.PlayerInventory = prev_inv;
-            }
-        }
-
-        // save map data
-        public async void SaveGame()
-        {
-            if (IsSaving.Equals(true)) return;
-
-            // create list to hold tile data
-            GSData.TileData = new List<TileData>();
-
-            // for each tile in current map,
-            foreach(Tile t in _currentMap.Tiles)
-            {
-                // add its tile data to list
-                GSData.TileData.Add(t.GetTileData());
-            }
-
-            try
-            {
-                // delete previous backups
-                System.IO.File.Delete("GAMEDATA_BACKUP.json");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            // backup old map data first
-            try
-            {
-                // change filename to backup format
-                System.IO.File.Move($"GAMEDATA.json", "GAMEDATA_BACKUP.json");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error backing up previous map data: " + e.Message);
-            }
-
-            IsSaving = true;
-            // get current data_map file
-            using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json"))
-            {
-                // overwrite data with list of _tileData
-                streamWriter.WriteLine(JsonConvert.SerializeObject(GSData, Formatting.Indented));
-                streamWriter.Close();
-            }
-
-            IsSaving = false;
-            Console.WriteLine("Finished Saving Map.");
-        }
-
         // generate map
         public async void GenerateMap()
         {
             LoadingText = $"Generating map...";
-
-            LoadingText = $"...";
-
             Console.WriteLine(LoadingText);
-            // create list to hold tile data
 
+            // create list to hold tile data
             _tileData = new List<TileData>();
 
-            int currentCell = 0;
-
-            // loop through and generate each tile in the map (default them to grass/empty) (50, 50 is default now)
+            // ------------------------------------------   GENERATE TILES  ------------------------------------------
+            /**
+             * Recursively generate all of the tiles of the map. At first, they will be made as empty tiles to be populated in the below logic.
+             */
             for (var x = 0; x < _mapBounds; x++)
             {
                 for (var y = 0; y < _mapBounds; y++)
                 {
-                    // variables for debuging purposes
-                    currentCell++;
-
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                    float mapTotal = _mapBounds * _mapBounds;
-                    float per = currentCell / mapTotal;
-                    float pcent = per * 100f;
-                    Console.WriteLine($"Map generated: {pcent}%");
 
                     // calculate position based on tile dimensions and row index (Width / 2 = 17, Height = 9 (Middle Offset))
                     // the position is calculated so that the tile will be placed in a fashion that it will render isometrically
@@ -530,132 +348,31 @@ namespace CitySim.States
             LoadingScreen_HighlightedCells = new List<Vector2>();
             _remainingLoad -= 10;
 
+            // ------------------------------------------   GENERATE WATER  ------------------------------------------
             LoadingText = $"Filling lakes with water...";
+            _remainingLoad -= GenerateResource( Resource.Water(), new int[,] { {700000, 800000, 900000, 990000}, {1000000, 0, 0, 0} }, 20 );
 
-            currentCell = 0;
-            // loop through tiles and generate unique map
-            for (var x = 0; x < _mapBounds; x++)
-            {
-                for (var y = 0; y < _mapBounds; y++)
-                {
-                    // variables for debuging purposes
-                    currentCell++;
-
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                    float mapTotal = _mapBounds * _mapBounds;
-                    float per = currentCell / mapTotal;
-                    float pcent = per * 100f;
-                    Console.WriteLine($"Water generated: {pcent}%");
-
-                    // this function will run a chance roll on the tile for spawning resources / terrain
-                    // and will also do the same for adjacent tiles
-                    RunTileAndAdjacentsForWater(_tileData, x, y);
-                }
-            }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
-            _remainingLoad -= 20;
-
-            currentCell = 0;
+            // ------------------------------------------   GENERATE TREES  ------------------------------------------
             LoadingText = $"Growing some trees...";
-            for (var x = 0; x < _mapBounds; x++)
-            {
-                for (var y = 0; y < _mapBounds; y++)
-                {
-                    // variables for debuging purposes
-                    currentCell++;
+            _remainingLoad -= GenerateResource( Resource.Tree(), new int[,] { {700000, 800000, 900000, 990000}, {1000000, 0, 0, 0} }, 20 );
 
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                    float mapTotal = _mapBounds * _mapBounds;
-                    float per = currentCell / mapTotal;
-                    float pcent = per * 100f;
-                    Console.WriteLine($"Trees generated: {pcent}%");
-
-                    RunTileAndAdjacentsForTrees(_tileData, x, y);
-                }
-            }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
-            _remainingLoad -= 20;
-
-            currentCell = 0;
+            // ------------------------------------------   GENERATE ORES   ------------------------------------------
+            /**
+             * At first, an array is made to hold the object and texture id's of the ores, and also a loading progress int is used as well to determine the progress of the loading bar after that resources is finished generating
+             */
             LoadingText = $"Creating ores...";
-            for (var x = 0; x < _mapBounds; x++)
-            {
-                for (var y = 0; y < _mapBounds; y++)
-                {
-                    // variables for debuging purposes
-                    currentCell++;
+            int[,] gen_ore_vals = new int[,] { {4, 5, 20}, {5, 6, 0}, {6, 7, 20} };
+            for (int e = 0; e < 3; e++) { _remainingLoad -= GenerateResource( Resource.Ore(gen_ore_vals[e, 0], gen_ore_vals[e, 1]), new int[,] { {900000, 950000, 975000, 995000}, {1000000, 0, 0, 0} }, gen_ore_vals[e, 2] ); }
 
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                    float mapTotal = _mapBounds * _mapBounds;
-                    float per = currentCell / mapTotal;
-                    float pcent = per * 100f;
-                    Console.WriteLine($"Ore generated: {pcent}%");
-
-                    RunTileAndAdjacentsForOre(_tileData, x, y, 5, 4);
-                }
-            }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
-            _remainingLoad -= 20;
-            currentCell = 0;
-            for (var x = 0; x < _mapBounds; x++)
-            {
-                for (var y = 0; y < _mapBounds; y++)
-                {
-                    // variables for debuging purposes
-                    currentCell++;
-
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                    float mapTotal = _mapBounds * _mapBounds;
-                    float per = currentCell / mapTotal;
-                    float pcent = per * 100f;
-                    Console.WriteLine($"Ore generated: {pcent}%");
-
-                    RunTileAndAdjacentsForOre(_tileData, x, y, 6, 5);
-                }
-            }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
-            currentCell = 0;
-            for (var x = 0; x < _mapBounds; x++)
-            {
-                for (var y = 0; y < _mapBounds; y++)
-                {
-                    // variables for debuging purposes
-                    currentCell++;
-
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                    float mapTotal = _mapBounds * _mapBounds;
-                    float per = currentCell / mapTotal;
-                    float pcent = per * 100f;
-                    Console.WriteLine($"Ore generated: {pcent}%");
-
-                    RunTileAndAdjacentsForOre(_tileData, x, y, 7, 6);
-                }
-            }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
-            _remainingLoad -= 20;
-
-            currentCell = 0;
+            // ------------------------------------------   CLEAN UP MAP    ------------------------------------------
+            /**
+             * For example, fill in water tiles so that splotches of random water tile placement fill in to look more like lakes - do similar cleaning up to other resources as well
+             */
             LoadingText = $"Cleaning up map...";
-            // run through tiles and check if 50% of surrounding tiles are water, if so - fill in the middle
             for (var x = 0; x < _mapBounds; x++)
             {
                 for (var y = 0; y < _mapBounds; y++)
                 {
-                    // variables for debuging purposes
-                    currentCell++;
-
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                    float mapTotal = _mapBounds * _mapBounds;
-                    float per = currentCell / mapTotal;
-                    float pcent = per * 100f;
-                    Console.WriteLine($"Map cleaned up: {pcent}%");
-
                     var index = new Vector2(x,y);
                     var tile = from t in _tileData where t.TileIndex == index select t;
                     if (!tile.Any()) continue;
@@ -711,9 +428,8 @@ namespace CitySim.States
                     }
                 }
             }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
 
-            // spawn a town hall
+            // ------------------------------------------   GEN START AREA  ------------------------------------------ 
             var townHall = Building.TownHall();
             bool townHallMade = false;
 
@@ -722,7 +438,6 @@ namespace CitySim.States
             {
                 for(int y = 0; y < _mapBounds; y++)
                 {
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
 
                     if (townHallMade is true)
                         continue;
@@ -765,7 +480,6 @@ namespace CitySim.States
                         var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
                         if (adj_tiles.Any())
                         {
-                            LoadingScreen_CurrentCell = dir;
                             adj_grass_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId < 1 && adj_tile.Object.ObjectId < 1 && adj_tile.TerrainId < 1);
                         }
                     }
@@ -786,15 +500,19 @@ namespace CitySim.States
                     }
                 }
             }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
 
-            LoadingText = $"Lighting up the area...";
+            // sum of resources in starting area
+            var starting_tree_cnt = 0;
+            var starting_stone_cnt = 0;
+
+            List<TileData> starting_area_tiles = new List<TileData>();
+
             // loop thru the tiles around the town hall and add them/ give them visibility
+            LoadingText = $"Lighting up the area...";
             for (int x = ((int)_townHallIndex.X - townHall.Range); x < (_townHallIndex.X + (townHall.Range + 1)); x++)
             {
                 for (int y = ((int)_townHallIndex.Y - townHall.Range); y < (_townHallIndex.Y + (townHall.Range + 1)); y++)
                 {
-                    LoadingScreen_CurrentCell = new Vector2(x, y);
 
                     var sel_index = new Vector2(x, y);
                     var sel_tile = from t in _tileData where t.TileIndex == sel_index select t;
@@ -802,64 +520,113 @@ namespace CitySim.States
 
                     if(!(found_tile is null))
                     {
+                        // there is a tile in this index
                         found_tile.IsVisible = true;
+
+                        if (found_tile.Object.ObjectId.Equals(Resource.Tree().Object.ObjectId) &&
+                            found_tile.Object.TypeId.Equals(Resource.Tree().Object.TypeId)) starting_tree_cnt++;
+                        else if (found_tile.Object.ObjectId.Equals(Resource.Ore(4, 5).Object.ObjectId) &&
+                                 found_tile.Object.TypeId.Equals(Resource.Ore(4, 5).Object.TypeId)) starting_stone_cnt++;
+                        else
+                        {
+                            if(!(found_tile.Object.ObjectId > 0 || found_tile.Object.TypeId > 0)) starting_area_tiles.Add(found_tile);
+                        }
                     }
                 }
             }
-            LoadingScreen_HighlightedCells = new List<Vector2>();
+
+            if (starting_tree_cnt < 4)
+            {
+                var trees_to_spawn = 4 - starting_tree_cnt;
+                while (trees_to_spawn > 0)
+                {
+                    var rnd_tile = starting_area_tiles.OrderBy(x => _rndGen.Next()).Take(1).FirstOrDefault();
+                    var sel_index = new Vector2(rnd_tile.TileIndex.X, rnd_tile.TileIndex.Y);
+                    var sel_tile = from t in _tileData where t.TileIndex == sel_index select t;
+                    var found_tile = sel_tile.FirstOrDefault();
+                    found_tile.TerrainId = 0;
+                    found_tile.Object = Resource.Tree().Object;
+                    trees_to_spawn--;
+                }
+            }
+
+            if (starting_stone_cnt.Equals(0))
+            {
+                var stone_to_spawn = 3;
+                var rnd_tiles = starting_area_tiles.OrderBy(x => _rndGen.Next()).Take(stone_to_spawn);
+                foreach (var rnd_tile in rnd_tiles)
+                {
+                    var sel_index = new Vector2(rnd_tile.TileIndex.X, rnd_tile.TileIndex.Y);
+                    var sel_tile = from t in _tileData where t.TileIndex == sel_index select t;
+                    var found_tile = sel_tile.FirstOrDefault();
+                    found_tile.TerrainId = 1;
+                    found_tile.Object = Resource.Ore(4, 5).Object;
+                }
+            }
 
             // generate newgame data and set tiledata to generated map
-            GameStateData newgame = new GameStateData()
-            {
-                TileData = _tileData
-            };
+            GameStateData newgame = new GameStateData(){ TileData = _tileData };
 
-            // get data_map.json file
-            using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json"))
-            {
-                // write _tileData to file (overwrite any)
-                streamWriter.WriteLine(JsonConvert.SerializeObject(newgame, Formatting.Indented));
-            }
+            // get data_map.json file & write _tileData to file (overwrite any)
+            using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json")){ streamWriter.WriteLine(JsonConvert.SerializeObject(newgame, Formatting.Indented)); }
             Console.WriteLine("Map finished generating.");
 
+            // now, load the map
             await LoadMap();
-
             LoadingText = $"Wrapping things up...";
 
+            // set the camera's initial position
             _camera.Position = _currentMap.Tiles[(int)_townHallIndex.X, (int)_townHallIndex.Y].Position + new Vector2(0, 150);
 
+            // top off the remaining load
             _remainingLoad -= 10;
         }
 
-        public void RunTileAndAdjacentsForWater(List<TileData> tileData, int x, int y)
+        /// <summary>
+        /// Generates a resource (recursively). Will loop through game tiles and populate them randomly with the specificed resource.
+        /// </summary>
+        /// <param name="gen_resource">The TileData to be applied to selected tiles. Primarily will use the supplied TileObject of the TileData.</param>
+        /// <param name="gen_range_vals">The generation values for RNG spawning.</param>
+        /// <param name="rem_load_reduc">The amount to be reduced from the remaining load percentage upon completion of the recursion call.</param>
+        /// <returns></returns>
+        public int GenerateResource(TileData gen_resource, int[,] gen_range_vals, int rem_load_reduc = 0)
+        {
+            for (var x = 0; x < _mapBounds; x++)
+            {
+                for (var y = 0; y < _mapBounds; y++)
+                {
+                    RecursiveResourceSpawn(x, y, gen_resource, gen_range_vals);
+                }
+            }
+            return rem_load_reduc;
+        }
+
+        public void RecursiveResourceSpawn(int x, int y, TileData resource, int[,] range_vals)
         {
             var index = new Vector2(x, y);
             var td = from a in _tileData where a.TileIndex == index select a;
             if (!td.Any()) return; // theres no tile so just skip
             foreach (var t in td)
             {
-                // if the tile is already water - dont even bother
-                if (t.TerrainId.Equals(2))
+                // (if the tile is water || if the tile is already a resource/building)- end
+                if ((t.TerrainId.Equals(2)) || (t.Object.TypeId.Equals(1) || t.Object.TypeId.Equals(2)))
                 {
                     return;
                 }
 
-                // if the tile is already a resource/building - dont even bother
-                if (t.Object.TypeId.Equals(1) || t.Object.TypeId.Equals(2))
-                {
-                    return;
-                }
+                // rng resource chance
+                int i = _rndGen.Next(0, range_vals[1,0]);
 
-                LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                int i = _rndGen.Next(0, 1000000);
-
-                int adj_water_tiles = 0;
+                // current amount of similar adjacent tiles
+                int similar_adj_tiles = 0;
 
                 // check to see if any adjacent tiles are already water
                 for (int o = 0; o < 4; o++)
                 {
-                    Vector2 dir = new Vector2(0,0);
+                    // direction being checked
+                    Vector2 dir = new Vector2(0, 0);
+
+                    // for each dir (each in 4)
                     switch (o)
                     {
                         case 0:
@@ -876,34 +643,44 @@ namespace CitySim.States
                             break;
                     }
 
+                    // get tile where index matches the index of tile being faced
                     var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
                     if (adj_tiles.Any())
                     {
-                        LoadingScreen_CurrentCell = dir;
-                        foreach (var adj_tile in adj_tiles)
+                        // if resource being applied is water
+                        if (resource.TerrainId.Equals(2))
                         {
-                            if (adj_tile.TerrainId.Equals(2))
-                                adj_water_tiles++;
+                            similar_adj_tiles += adj_tiles.Count(adj_tile => adj_tile.TerrainId.Equals(2));
+                        }
+                        else
+                        {
+                            if (resource.Object.ObjectId.Equals(1) || resource.Object.ObjectId.Equals(2))
+                            {
+                                similar_adj_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(resource.Object.TypeId) && (adj_tile.Object.ObjectId.Equals(1) || adj_tile.Object.ObjectId.Equals(2)));
+                            }
+                            else
+                            {
+                                similar_adj_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(resource.Object.TypeId) && adj_tile.Object.ObjectId.Equals(resource.Object.ObjectId));
+                            }
                         }
                     }
                 }
                 // if random chance
-                if (i > (adj_water_tiles > 0 ? (adj_water_tiles < 2 ? 700000 : (adj_water_tiles < 3 ? 800000 : 900000)) : 990000))
+                if (i > (similar_adj_tiles > 0 ? (similar_adj_tiles  < 2 ? range_vals[0,0] : (similar_adj_tiles < 3 ? range_vals[0,1] : range_vals[0,2])) : range_vals[0,3]))
                 {
                     // generate water tile
-                    t.TerrainId = 2;
+                    t.TerrainId = resource.TerrainId;
                     t.Object = new TileObject()
                     {
                         Id = Convert.ToInt32($"{index.X}{index.Y}"),
-                        TypeId = 1,
-                        ObjectId = 3,
-                        TextureIndex = 4
+                        TypeId = resource.Object.TypeId,
+                        ObjectId = resource.Object.ObjectId,
+                        TextureIndex = resource.Object.TextureIndex
                     };
                     // for each adjacent direction
                     for (var loop_dir = 0; loop_dir < 4; loop_dir++)
                     {
                         Vector2 ref_tile = new Vector2(0, 0);
-                        var adj_chance = 0.0f;
                         // set the tile index offset for the direction
                         switch (loop_dir)
                         {
@@ -920,197 +697,8 @@ namespace CitySim.States
                                 ref_tile = new Vector2(0, -1);
                                 break;
                         }
-                        LoadingScreen_CurrentCell = ref_tile;
                         ref_tile = index += ref_tile;
-                        RunTileAndAdjacentsForWater(_tileData, (int)ref_tile.X, (int)ref_tile.Y);
-                    }
-                }
-            }
-        }
-
-        public void RunTileAndAdjacentsForTrees(List<TileData> tileData, int x, int y)
-        {
-            var index = new Vector2(x, y);
-            var td = from a in _tileData where a.TileIndex == index select a;
-            if (!td.Any()) return; // theres no tile so just skip
-            foreach (var t in td)
-            {
-                // if the tile is already water - dont even bother
-                if (t.TerrainId.Equals(2))
-                {
-                    return;
-                }
-
-                // if the tile is already a resource - dont even bother
-                if (t.Object.TypeId.Equals(1) || t.Object.TypeId.Equals(2))
-                {
-                    return;
-                }
-
-                LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                int i = _rndGen.Next(0, 1000000);
-
-                int adj_tree_tiles = 0;
-
-                // check to see if any adjacent tiles are already water
-                for (int o = 0; o < 4; o++)
-                {
-                    Vector2 dir = new Vector2(0, 0);
-                    switch (o)
-                    {
-                        case 0:
-                            dir = index + new Vector2(1, 0);
-                            break;
-                        case 1:
-                            dir = index + new Vector2(0, 1);
-                            break;
-                        case 2:
-                            dir = index + new Vector2(-1, 0);
-                            break;
-                        case 3:
-                            dir = index + new Vector2(0, -1);
-                            break;
-                    }
-
-                    var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
-                    if (adj_tiles.Any())
-                    {
-                        LoadingScreen_CurrentCell = dir;
-                        adj_tree_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(1) && (adj_tile.Object.ObjectId.Equals(1) || adj_tile.Object.ObjectId.Equals(2)));
-                    }
-                }
-
-                // if random chance
-                if (i > (adj_tree_tiles > 0 ? (adj_tree_tiles < 2 ? 700000 : (adj_tree_tiles < 3 ? 800000 : 900000)) : 990000))
-                {
-                    // generate tree tile
-                    t.TerrainId = 0;
-                    t.Object = new TileObject()
-                    {
-                        Id = Convert.ToInt32($"{index.X}{index.Y}"),
-                        TypeId = 1,
-                        ObjectId = 2,
-                        TextureIndex = 9
-                    };
-                    // for each adjacent direction
-                    for (var loop_dir = 0; loop_dir < 4; loop_dir++)
-                    {
-                        Vector2 ref_tile = new Vector2(0, 0);
-                        var adj_chance = 0.0f;
-                        // set the tile index offset for the direction
-                        switch (loop_dir)
-                        {
-                            case 0:
-                                ref_tile = new Vector2(1, 0);
-                                break;
-                            case 1:
-                                ref_tile = new Vector2(0, 1);
-                                break;
-                            case 2:
-                                ref_tile = new Vector2(-1, 0);
-                                break;
-                            case 3:
-                                ref_tile = new Vector2(0, -1);
-                                break;
-                        }
-                        LoadingScreen_CurrentCell = ref_tile;
-                        ref_tile = index += ref_tile;
-                        RunTileAndAdjacentsForTrees(_tileData, (int)ref_tile.X, (int)ref_tile.Y);
-                    }
-                }
-            }
-        }
-
-        public void RunTileAndAdjacentsForOre(List<TileData> tileData, int x, int y, int textureid, int objectid)
-        {
-            var index = new Vector2(x, y);
-            var td = from a in _tileData where a.TileIndex == index select a;
-            if (!td.Any()) return; // theres no tile so just skip
-            foreach (var t in td)
-            {
-                // if the tile is already water - dont even bother
-                if (t.TerrainId.Equals(2))
-                {
-                    return;
-                }
-
-                // if the tile is already a resource - dont even bother
-                if (t.Object.TypeId.Equals(1) || t.Object.TypeId.Equals(2))
-                {
-                    return;
-                }
-
-                LoadingScreen_CurrentCell = new Vector2(x, y);
-
-                int i = _rndGen.Next(0, 1000000);
-
-                int adj_stone_tiles = 0;
-
-                // check to see if any adjacent tiles are already water
-                for (int o = 0; o < 4; o++)
-                {
-                    Vector2 dir = new Vector2(0, 0);
-                    switch (o)
-                    {
-                        case 0:
-                            dir = index + new Vector2(1, 0);
-                            break;
-                        case 1:
-                            dir = index + new Vector2(0, 1);
-                            break;
-                        case 2:
-                            dir = index + new Vector2(-1, 0);
-                            break;
-                        case 3:
-                            dir = index + new Vector2(0, -1);
-                            break;
-                    }
-
-                    var adj_tiles = from tiles in _tileData where tiles.TileIndex == dir select tiles;
-                    if (adj_tiles.Any())
-                    {
-                        LoadingScreen_CurrentCell = dir;
-                        adj_stone_tiles += adj_tiles.Count(adj_tile => adj_tile.Object.TypeId.Equals(1) && adj_tile.Object.ObjectId.Equals(objectid));
-                    }
-                }
-
-                // if random chance
-                if (i > (adj_stone_tiles > 0 ? (adj_stone_tiles < 2 ? 900000 : (adj_stone_tiles < 3 ? 950000 : 975000)) : 995000))
-                {
-                    // generate tree tile
-                    t.TerrainId = 0; // add random chance for dirt or grass?
-                    t.Object = new TileObject()
-                    {
-                        Id = Convert.ToInt32($"{index.X}{index.Y}"),
-                        TypeId = 1,
-                        ObjectId = objectid,
-                        TextureIndex = textureid
-                    };
-                    // for each adjacent direction
-                    for (var loop_dir = 0; loop_dir < 4; loop_dir++)
-                    {
-                        Vector2 ref_tile = new Vector2(0, 0);
-                        var adj_chance = 0.0f;
-                        // set the tile index offset for the direction
-                        switch (loop_dir)
-                        {
-                            case 0:
-                                ref_tile = new Vector2(1, 0);
-                                break;
-                            case 1:
-                                ref_tile = new Vector2(0, 1);
-                                break;
-                            case 2:
-                                ref_tile = new Vector2(-1, 0);
-                                break;
-                            case 3:
-                                ref_tile = new Vector2(0, -1);
-                                break;
-                        }
-                        LoadingScreen_CurrentCell = ref_tile;
-                        ref_tile = index += ref_tile;
-                        RunTileAndAdjacentsForOre(_tileData, (int)ref_tile.X, (int)ref_tile.Y, textureid, objectid);
+                        RecursiveResourceSpawn((int)ref_tile.X, (int)ref_tile.Y, resource, range_vals);
                     }
                 }
             }
@@ -1167,9 +755,9 @@ namespace CitySim.States
         public void ProcessBuildings()
         {
             // reset current ammount inv values
-            GSData.PlayerInventory.Energy = 20;
-            GSData.PlayerInventory.Workers = 50;
-            GSData.PlayerInventory.Food = 10;
+            GSData.PlayerInventory.Energy = 30;
+            GSData.PlayerInventory.Workers = 20;
+            GSData.PlayerInventory.Food = 20;
 
             foreach (var t in _currentMap.Tiles)
             {
@@ -1181,26 +769,15 @@ namespace CitySim.States
                     } else if (t.Object.TypeId.Equals(2))
                     {
                         // building tile
-                        var b = t.Object;
-                        GSData.PlayerInventory.RemoveResource("gold", b.GoldCost);
-                        GSData.PlayerInventory.RemoveResource("wood", b.WoodCost);
-                        GSData.PlayerInventory.RemoveResource("coal", b.CoalCost);
-                        GSData.PlayerInventory.RemoveResource("iron", b.IronCost);
-                        GSData.PlayerInventory.RemoveResource("stone", b.StoneCost);
-                        GSData.PlayerInventory.RemoveResource("workers", b.WorkersCost);
-                        GSData.PlayerInventory.RemoveResource("energy", b.EnergyCost);
-                        GSData.PlayerInventory.RemoveResource("food", b.FoodCost);
-
-                        GSData.PlayerInventory.AddResource("gold", b.GoldOutput);
-                        GSData.PlayerInventory.AddResource("wood", b.WoodOutput);
-                        GSData.PlayerInventory.AddResource("coal", b.CoalOutput);
-                        GSData.PlayerInventory.AddResource("iron", b.IronOutput);
-                        GSData.PlayerInventory.AddResource("stone", b.StoneOutput);
-                        GSData.PlayerInventory.AddResource("workers", b.WorkersOutput);
-                        GSData.PlayerInventory.AddResource("energy", b.EnergyOutput);
-                        GSData.PlayerInventory.AddResource("food", b.FoodOutput);
-
-                        
+                        //var b = BuildingData.Dict_BuildingFromObjectID[t.Object.ObjectId];
+                        GSData.PlayerInventory.Gold += t.Object.GoldCost + t.Object.GoldOutput;
+                        GSData.PlayerInventory.Wood += t.Object.WoodCost + t.Object.WoodOutput;
+                        GSData.PlayerInventory.Coal += t.Object.CoalCost + t.Object.CoalOutput;
+                        GSData.PlayerInventory.Iron += t.Object.IronCost + t.Object.IronOutput;
+                        GSData.PlayerInventory.Stone += t.Object.StoneCost + t.Object.StoneOutput;
+                        GSData.PlayerInventory.Workers += t.Object.WorkersCost + t.Object.WorkersOutput;
+                        GSData.PlayerInventory.Energy += t.Object.EnergyCost + t.Object.EnergyOutput;
+                        GSData.PlayerInventory.Food += t.Object.FoodCost + t.Object.FoodCost;
                     }
                 }
             }
@@ -1213,6 +790,55 @@ namespace CitySim.States
             SaveGame();
             Console.WriteLine("Exiting game...");
             _game.ChangeState(new MenuState(_game, _graphicsDevice, _content));
+        }
+
+        // save map data
+        public async void SaveGame()
+        {
+            if (IsSaving.Equals(true)) return;
+
+            // create list to hold tile data
+            GSData.TileData = new List<TileData>();
+
+            // for each tile in current map,
+            foreach (Tile t in _currentMap.Tiles)
+            {
+                // add its tile data to list
+                GSData.TileData.Add(t.GetTileData());
+            }
+
+            try
+            {
+                // delete previous backups
+                System.IO.File.Delete("GAMEDATA_BACKUP.json");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            // backup old map data first
+            try
+            {
+                // change filename to backup format
+                System.IO.File.Move($"GAMEDATA.json", "GAMEDATA_BACKUP.json");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error backing up previous map data: " + e.Message);
+            }
+
+            IsSaving = true;
+            // get current data_map file
+            using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json"))
+            {
+                // overwrite data with list of _tileData
+                streamWriter.WriteLine(JsonConvert.SerializeObject(GSData, Formatting.Indented));
+                streamWriter.Close();
+            }
+
+            IsSaving = false;
+            Console.WriteLine("Finished Saving Map.");
         }
 
         // post update (called after update)
@@ -1278,6 +904,180 @@ namespace CitySim.States
                 // game state is still loading
             }
         }
+
+        private void Tile_OnClick(object sender, EventArgs e)
+        {
+            // get selected object and clear it
+            var sel_obj = SelectedObject;
+            SelectedObject = new TileObject();
+
+            var prev_inv = new Inventory()
+            {
+                Gold = GSData.PlayerInventory.Gold,
+                Wood = GSData.PlayerInventory.Wood,
+                Coal = GSData.PlayerInventory.Coal,
+                Iron = GSData.PlayerInventory.Iron,
+                Workers = GSData.PlayerInventory.Workers,
+                Energy = GSData.PlayerInventory.Energy,
+                Food = GSData.PlayerInventory.Food
+            };
+
+            try
+            {
+                Tile t = (Tile)sender;
+                Console.WriteLine($"Tile clicked: {t.TileIndex}");
+                if (t.IsVisible.Equals(true))
+                {
+                    if (sel_obj.ObjectId > 0 && sel_obj.TypeId.Equals(2) && t.Object.ObjectId <= 0)
+                    {
+                        var obj = (Building)sel_obj;
+
+                        if (BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(obj.ObjectId))
+                        {
+                            for (int x = ((int)t.TileIndex.X - obj.Range);
+                                x < (t.TileIndex.X + (obj.Range + 1));
+                                x++)
+                            {
+                                for (int y = ((int)t.TileIndex.Y - obj.Range);
+                                    y < (t.TileIndex.Y + (obj.Range + 1));
+                                    y++)
+                                {
+                                    if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(obj.ObjectId) && _currentMap.Tiles[x, y].Object.TypeId.Equals(2))
+                                        throw new Exception(
+                                            "There is already a building of that type collecting resources in this area.");
+                                }
+                            }
+                        }
+
+                        // check balance to see if player can afford building
+                        bool canBuild = true;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("gold", obj.GoldUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("wood", obj.WoodUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("coal", obj.CoalUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("iron", obj.IronUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("stone", obj.StoneUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("workers", obj.WorkersUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("energy", obj.EnergyUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("food", obj.FoodUpfront);
+                        if (canBuild.Equals(false)) throw new Exception("Can't afford to place!");
+
+                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object = obj;
+                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].ObjectTexture =
+                            _gameContent.GetTileTexture(obj.TextureIndex);
+                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object = obj;
+
+                        for (int x = ((int)t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
+                        {
+                            for (int y = ((int)t.TileIndex.Y - obj.Range); y < (t.TileIndex.Y + (obj.Range + 1)); y++)
+                            {
+                                if (obj.ObjectId.Equals(5))
+                                {
+                                    try
+                                    {
+                                        _currentMap.Tiles[x, y].IsVisible = true;
+                                        _currentMap.Tiles[x, y].TileData.IsVisible = true;
+                                    }
+                                    catch (Exception exc)
+                                    {
+                                        Console.WriteLine($"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
+                                    }
+                                }
+
+                                if (BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(obj.ObjectId))
+                                {
+                                    foreach (var k in BuildingData.Dict_BuildingResourceLinkKeys[obj.ObjectId])
+                                    {
+                                        if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(k) && _currentMap.Tiles[x, y].Object.TypeId.Equals(1))
+                                        {
+                                            Console.WriteLine("Adding " + BuildingData.Dic_ResourceCollectionKeys[k][0]);
+                                            switch (BuildingData.Dic_ResourceCollectionKeys[k][0])
+                                            {
+                                                case "Wood":
+                                                    _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    break;
+                                                case "Food":
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    break;
+                                                case "Stone":
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    break;
+                                                case "Coal":
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    break;
+                                                case "Iron":
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (obj.ObjectId.Equals(2))
+                        {
+                            // is farm, apply crops around farm
+                            for (int x = ((int)t.TileIndex.X - 1); x < (t.TileIndex.X + 2); x++)
+                            {
+                                for (int y = ((int)t.TileIndex.Y - 1); y < (t.TileIndex.Y + 2); y++)
+                                {
+                                    if (new Vector2(x, y).Equals(t.TileIndex))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (_currentMap.Tiles[x, y].Object.ObjectId > 0)
+                                    {
+                                        continue;
+                                    }
+
+                                    if (_currentMap.Tiles[x, y].IsVisible)
+                                    {
+                                        try
+                                        {
+                                            var farmobj = Resource.Farmland();
+                                            _currentMap.Tiles[x, y].Object = farmobj;
+                                            _currentMap.Tiles[x, y].ObjectTexture =
+                                                _gameContent.GetTileTexture(farmobj.TextureIndex);
+                                            _currentMap.Tiles[x, y].TileData.Object = farmobj;
+                                        }
+                                        catch (Exception exc)
+                                        {
+                                            Console.WriteLine(
+                                                $"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        GSData.TileData = new List<TileData>();
+
+                        // for each tile in current map,
+                        foreach (Tile cmt in _currentMap.Tiles)
+                        {
+                            // add its tile data to list
+                            GSData.TileData.Add(cmt.GetTileData());
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine(
+                        $"Tile {new Vector2(t.TileIndex.X, t.TileIndex.Y)} is outside of the active area.");
+                }
+            }
+            catch (Exception exception)
+            {
+                SelectedObject = sel_obj;
+                GSData.PlayerInventory = prev_inv;
+            }
+        }
         #endregion
 
         #region HANDLE INPUTS
@@ -1299,6 +1099,11 @@ namespace CitySim.States
             {
                 Console.WriteLine("ESCAPE clicked...");
                 //Task.Run(() => ExitGame());
+            }
+
+            if (mouseState.RightButton == ButtonState.Released && _previousMouseState.RightButton == ButtonState.Pressed)
+            {
+                SelectedObject = new TileObject();
             }
 
             // if WASD, move camera accordingly and mutiply by shift multiplier
@@ -1377,10 +1182,73 @@ namespace CitySim.States
 
                 if (SelectedObject.ObjectId > 0)
                 {
+
                     var txt = _gameContent.GetTileTexture(SelectedObject.TextureIndex);
                     var pos = mp - new Vector2((txt.Width * 2) / 2, (txt.Height * 2) - ((txt.Height * 2) * 0.25f));
                     var rct = new Rectangle((int)pos.X, (int)pos.Y, txt.Width * 2, txt.Height * 2);
                     spriteBatch.Draw(txt, destinationRectangle: rct, color: Color.White);
+
+                    if (!(CurrentlyHoveredTile is null))
+                    {
+                        var t = CurrentlyHoveredTile;
+                        var obj = (Building)SelectedObject;
+
+                        if (BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(SelectedObject.ObjectId))
+                        {
+                            var count = 0;
+                            var resource_ids = BuildingData.Dict_BuildingResourceLinkKeys[SelectedObject.ObjectId];
+                            var counts = new Dictionary<int, int>();
+
+                            foreach (var r in resource_ids)
+                            {
+                                counts.Add(r, 0);
+                            }
+
+                            try
+                            {
+                                for (int x = ((int) t.TileIndex.X - obj.Range);
+                                    x < (t.TileIndex.X + (obj.Range + 1));
+                                    x++)
+                                {
+                                    for (int y = ((int) t.TileIndex.Y - obj.Range);
+                                        y < (t.TileIndex.Y + (obj.Range + 1));
+                                        y++)
+                                    {
+                                        foreach (var r in resource_ids)
+                                        {
+                                            if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(obj.ObjectId) && _currentMap.Tiles[x, y].Object.TypeId.Equals(2))
+                                                throw new Exception(
+                                                    "There is already a building of that type collecting resources in this area.");
+
+                                            if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(r))
+                                            {
+                                                counts[r] = counts[r] + 1;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                int indent = 0;
+                                foreach (var r in resource_ids)
+                                {
+                                    var res_str = $"{BuildingData.Dic_ResourceNameKeys[r]}: {(counts[r] * (int)BuildingData.Dic_ResourceCollectionKeys[r][1])}";
+                                    var str_x = ((_gameContent.GetFont(1).MeasureString(res_str).X * 1.3f) / 2);
+                                    var str_y = ((_gameContent.GetFont(1).MeasureString(res_str).Y * 1.3f) / 2);
+
+                                    spriteBatch.DrawString(_gameContent.GetFont(1), res_str, mp + new Vector2(0, -50 + (15 * indent)), Color.Black, 0.0f, new Vector2(str_x, str_y), 1.3f, SpriteEffects.None, 1.0f);
+                                    indent++;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                var print_str = $"{e.Message}";
+                                var str_x = ((_gameContent.GetFont(1).MeasureString(print_str).X) / 2);
+                                var str_y = ((_gameContent.GetFont(1).MeasureString(print_str).Y) / 2);
+
+                                spriteBatch.DrawString(_gameContent.GetFont(1), print_str, mp + new Vector2(0, -50), Color.Black, 0.0f, new Vector2(str_x, str_y), 1.0f, SpriteEffects.None, 1.0f);
+                            }
+                        }
+                    }
                 }
 
                 // draw cursor over UI elements !!
@@ -1395,59 +1263,7 @@ namespace CitySim.States
                 // most of whats drawn in here is strictly UI so only one spritebatch should be needed
                 spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-                //      DRAW MAP REPRESENTATION
-
-                var CellStartPos = new Vector2((_graphicsDevice.Viewport.Width / 2) - (_mapBounds / 2) * 4, (_graphicsDevice.Viewport.Height / 4) - (_mapBounds / 2) * 4);
-
-                for(int i = 0; i < _mapBounds; i++)
-                {
-                    for(int j = 0; j < _mapBounds; j++)
-                    {
-                        var CellPos = CellStartPos + new Vector2(4 * i, 4 * j);
-                        var CellRectangle = new Rectangle((int)CellPos.X, (int)CellPos.Y, 4, 4);
-                        var Cell = new Vector2(i, j);
-                        var highlighted = false;
-
-                        if (LoadingScreen_CurrentCell.Equals(Cell))
-                        {
-                            highlighted = true;
-                        }
-
-                        var CellOrigin = new Vector2(0, 1);
-
-                        if(highlighted is true)
-                        {
-                            spriteBatch.Draw(LoadingScreen_MapCellHighlightedTexture, destinationRectangle: CellRectangle, color: Color.Blue, origin: CellOrigin);
-                        } else
-                        {
-                            var drawn = false;
-                            foreach (var c in LoadingScreen_HighlightedCells)
-                            {
-                                if (drawn is true) continue;
-                                if (c.Equals(Cell))
-                                {
-                                    drawn = true;
-                                    spriteBatch.Draw(LoadingScreen_MapCellHighlightedTexture, destinationRectangle: CellRectangle, color: Color.White, origin: CellOrigin);
-                                }
-                            }
-                            if(!drawn is true) {
-                                if(Cell.X < LoadingScreen_CurrentCell.X)
-                                {
-                                    spriteBatch.Draw(LoadingScreen_MapCellTexture, destinationRectangle: CellRectangle, color: Color.LightBlue, origin: CellOrigin);
-                                } else
-                                {
-                                    spriteBatch.Draw(LoadingScreen_MapCellTexture, destinationRectangle: CellRectangle, color: Color.White, origin: CellOrigin);
-
-                                }
-                            }
-                        }
-
-                        if (highlighted is true) LoadingScreen_HighlightedCells.Add(Cell);
-                    }
-
-                }
-
-                //      DRAW LOADING BAR AND TEXT
+                // draw loading bar and text
 
                 var scale = new Vector2
                 {
