@@ -1085,13 +1085,13 @@ namespace CitySim.States
                             {
                                 for (int y = ((int)t.TileIndex.Y - 1); y < (t.TileIndex.Y + 2); y++)
                                 {
+                                    // tile is same tile of farm
                                     if (new Vector2(x, y).Equals(t.TileIndex)) continue;
 
-                                    if (_currentMap.Tiles[x, y].Object.ObjectId > 0)
-                                    {
-                                        continue;
-                                    }
+                                    // the tile is already an object, don't apply farmland
+                                    if (_currentMap.Tiles[x, y].Object.ObjectId > 0) continue;
 
+                                    // if the tile is visible (part of player's territory
                                     if (_currentMap.Tiles[x, y].IsVisible)
                                     {
                                         try
