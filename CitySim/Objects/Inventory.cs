@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -7,22 +8,50 @@ using System.Threading.Tasks;
 
 namespace CitySim.Objects
 {
-    public class Inventory
+    public class Inventory : ObjectTracking, INotifyPropertyChanged
     {
+
         public static int ResourceMax = 99999;
-        public int Gold { get; set; } = 50;
-        public int Wood { get; set; } = 20;
-        public int Coal { get; set; } = 0;
-        public int Iron { get; set; } = 0;
+
+        public int Gold { get; set; }
+        public int Wood { get; set; }
+        public int Coal { get; set; }
+        public int Iron { get; set; }
 
         public int Stone
         {
-            get;
-            set; 
-        } = 0;
-        public int Workers { get; set; } = 20;
-        public int Energy { get; set; } = 30;
-        public int Food { get; set; } = 20;
+            get => Stone;
+            set { Stone = value; OnPropertyChanged("Stone"); }
+        }
+        public int Workers { get; set; }
+        public int Energy { get; set; }
+        public int Food { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            PropertyChanged?.Invoke(this, e);
+        }
+
+        protected void OnPropertyChanged(string propName)
+        {
+            OnPropertyChanged(new PropertyChangedEventArgs(propName));
+        }
+
+        public Inventory()
+        {
+            Initialize();
+
+            Gold = 50;
+            Wood = 20;
+            Coal = 0;
+            Iron = 0;
+            Stone = 0;
+            Workers = 20;
+            Energy = 30;
+            Food = 20;
+        }
 
         public bool RemoveResource(string resource, int amount_requested)
         {
