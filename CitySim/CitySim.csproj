@@ -74,6 +74,7 @@
     <Compile Include="GameInstance.cs" />
     <Compile Include="Objects\Inventory.cs" />
     <Compile Include="Objects\Map.cs" />
+    <Compile Include="Objects\ObjectTracking.cs" />
     <Compile Include="Objects\Sprite.cs" />
     <Compile Include="Objects\SpritePlayer.cs" />
     <Compile Include="Objects\Tile.cs" />

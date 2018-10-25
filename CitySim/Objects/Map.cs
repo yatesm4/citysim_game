@@ -52,9 +52,9 @@ namespace CitySim.Objects
             TotalCoalGain,
             TotalIronGain,
             TotalStoneGain,
-            TotalFoodGain + 20,
-            TotalEnergyGain + 30,
-            TotalWorkersGain + 20
+            TotalFoodGain,
+            TotalEnergyGain,
+            TotalWorkersGain
         };
 
         public int TotalGoldRevenue = 0;
@@ -73,9 +73,9 @@ namespace CitySim.Objects
             TotalCoalRevenue,
             TotalIronRevenue,
             TotalStoneRevenue,
-            TotalFoodRevenue + 20,
-            TotalEnergyRevenue + 30,
-            TotalWorkersRevenue + 20
+            TotalFoodRevenue,
+            TotalEnergyRevenue,
+            TotalWorkersRevenue
         };
     }
 
@@ -89,7 +89,9 @@ namespace CitySim.Objects
             set { _tiles = value; }
         }
 
-        // properties to hold current revenue information
+        /// <summary>
+        /// Generate a report of the per-turn revenue (sum of a resource loss + gain per turn)
+        /// </summary>
         public IncomeReport GetIncomeReport
         {
             get
@@ -104,7 +106,7 @@ namespace CitySim.Objects
                     r.TotalStoneLoss += t.Object.StoneCost;
                     r.TotalWorkersLoss += t.Object.WorkersCost;
                     r.TotalEnergyLoss += t.Object.EnergyCost;
-                    r.TotalFoodLoss += t.Object.FoodCost;
+                    //r.TotalFoodLoss += t.Object.FoodCost;
 
                     r.TotalGoldGain += t.Object.GoldOutput;
                     r.TotalWoodGain += t.Object.WoodOutput;
@@ -116,14 +118,20 @@ namespace CitySim.Objects
                     r.TotalFoodGain += t.Object.FoodOutput;
                 }
 
-                r.TotalGoldRevenue = r.TotalGoldGain - r.TotalGoldLoss;
+                r.TotalWorkersGain += 20;
+                r.TotalEnergyGain += 30;
+                r.TotalFoodGain += 110;
+
+                r.TotalGoldRevenue =  r.TotalGoldGain - r.TotalGoldLoss;
                 r.TotalWoodRevenue = r.TotalWoodGain - r.TotalWoodLoss;
                 r.TotalCoalRevenue = r.TotalCoalGain - r.TotalCoalLoss;
                 r.TotalIronRevenue = r.TotalIronGain - r.TotalIronLoss;
                 r.TotalStoneRevenue = r.TotalStoneGain - r.TotalStoneLoss;
                 r.TotalWorkersRevenue = r.TotalWorkersGain - r.TotalWorkersLoss;
                 r.TotalEnergyRevenue = r.TotalEnergyGain - r.TotalEnergyLoss;
-                r.TotalFoodRevenue = r.TotalFoodGain - r.TotalFoodLoss;
+
+                r.TotalFoodLoss = (r.TotalWorkersRevenue * 2);
+                r.TotalFoodRevenue = r.TotalFoodGain - (r.TotalWorkersRevenue * 2);
 
                 return r;
             }

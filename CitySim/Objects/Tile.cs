@@ -167,7 +167,6 @@ namespace CitySim.Objects
             if (mouseRectangle.Intersects(TouchHitbox) && IsVisible.Equals(true))
             {
                 state.CurrentlyHoveredTile = this;
-                state.CurrentlySelectedTile = this;
                 //Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
                 //Console.WriteLine($"Hovering Over Tile: {TileIndex.ToString()}");
 
@@ -206,18 +205,18 @@ namespace CitySim.Objects
             {
                 DrawColor = (IsVisible) ? Color.White : Color.DarkGray;
                 DrawColor = (IsGlowing) ? new Color(Color.Yellow, 0.5f) : DrawColor;
-            }
-
-            spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor); 
+            } 
 
             if (Object.TypeId != 0)
             {
                 if (TerrainId.Equals(2))
                 {
                     // terrain is water => object is water, so dont render anything over the tile
+                    spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
                 }
-                else
+                else if (Object.TypeId.Equals(2) && !(BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(Object.ObjectId)) && !(Object.ObjectId.Equals(Building.PowerLine().ObjectId)) && !(Object.ObjectId.Equals(Building.Windmill().ObjectId)))
                 {
+                    spriteBatch_.Draw(Content.GetTileTexture(3), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
                     try
                     {
                         spriteBatch_.Draw(Content.GetTileTexture(Object.TextureIndex), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
@@ -227,6 +226,22 @@ namespace CitySim.Objects
                         Console.WriteLine("Error drawing object sprite: " + e.Message);
                     }
                 }
+                else
+                {
+                    spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                    try
+                    {
+                        spriteBatch_.Draw(Content.GetTileTexture(Object.TextureIndex), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Error drawing object sprite: " + e.Message);
+                    }
+                }
+            }
+            else
+            {
+                spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
             }
 
             // draw extras ?

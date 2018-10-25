@@ -21,6 +21,8 @@ namespace CitySim.Content
                     {4, Building.Quarry() },
                     {5, Building.PowerLine() },
                     {6, Building.Windmill() },
+                    {7, Building.MedHouse() },
+                    {8, Building.EliteHouse() },
                     {10, Building.TownHall() }
                 };
             }
@@ -38,7 +40,9 @@ namespace CitySim.Content
                     { 4, Building.LogCabin() },
                     { 5, Building.Quarry() },
                     { 6, Building.PowerLine() },
-                    { 7, Building.Windmill() }
+                    { 7, Building.Windmill() },
+                    { 8, Building.MedHouse() },
+                    { 9, Building.EliteHouse() }
                 };
             }
         }

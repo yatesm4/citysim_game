@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 using Newtonsoft.Json;
+using Component = CitySim.UI.Component;
 
 namespace CitySim.States
 {
@@ -136,6 +138,14 @@ namespace CitySim.States
         public TileObject SelectedObject { get; set; } = new TileObject();
 
         public Tile CurrentlyHoveredTile { get; set; }
+
+        public Button DeleteBldgButton { get; set; }
+        private const float _deleteButtonDelay = 10; // seconds
+        private float _remainingDeleteButtonDelay = _deleteButtonDelay;
+        private bool _isDeleteBldgBtnDisplayed = false;
+        private bool _displayDeleteBldgBtn = false;
+        private Vector2 _deleteBldgBtnPos;
+        private Tile DeleteBldgQueue { get; set; }
         #endregion
 
         #endregion
@@ -219,6 +229,13 @@ namespace CitySim.States
         public async void LoadHUD()
         {
             Components.Add(new HUD(_graphicsDevice, _gameContent));
+
+            DeleteBldgButton = new Button(_gameContent.GetUiTexture(23), _font)
+            {
+                Position = new Vector2(),
+                HoverColor = Color.Red
+            };
+            DeleteBldgButton.Click += DeleteBldgButton_Click;
         }
 
         public void InitGameStateData()
@@ -310,6 +327,7 @@ namespace CitySim.States
                 // create new map instance from loaded data
                 _currentMap = new Map(tileArr_, _mapBounds, _mapBounds, 34, 100, _gameContent);
 
+                GSData.PlayerInventory.PropertyChanged += PlayerInventoryOnPropertyChanged;
 
                 return true;
             }
@@ -318,6 +336,11 @@ namespace CitySim.States
                 Console.WriteLine($"Error Loading Map Data: {e.Message}.");
                 return false;
             }
+        }
+
+        private void PlayerInventoryOnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            Console.WriteLine($"{sender.GetType().Name} has changed a property in the inventory");
         }
 
         /// <summary>
@@ -583,7 +606,12 @@ namespace CitySim.States
             }
 
             // generate newgame data and set tiledata to generated map
-            GameStateData newgame = new GameStateData(){ TileData = _tileData };
+            GameStateData newgame = new GameStateData
+            {
+                TileData = _tileData,
+                PlayerInventory = {Wood = 50}
+            };
+
 
             // get data_map.json file & write _tileData to file (overwrite any)
             using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json")){ streamWriter.WriteLine(JsonConvert.SerializeObject(newgame, Formatting.Indented)); }
@@ -693,12 +721,18 @@ namespace CitySim.States
                 {
                     // generate water tile
                     t.TerrainId = resource.TerrainId;
+                    var applied_txt_index = resource.Object.TextureIndex;
+                    if (resource.Object.ObjectId.Equals(Resource.Tree().Object.ObjectId))
+                    {
+                        applied_txt_index = Enumerable.Range(0, 1)
+                            .Select(r => new int[] { new int[] { 8, 9 }[_rndGen.Next(2)], new int[] { 8, 9 }[_rndGen.Next(2)] }[_rndGen.Next(2)]).First();
+                    }
                     t.Object = new TileObject()
                     {
                         Id = Convert.ToInt32($"{index.X}{index.Y}"),
                         TypeId = resource.Object.TypeId,
                         ObjectId = resource.Object.ObjectId,
-                        TextureIndex = resource.Object.TextureIndex
+                        TextureIndex = applied_txt_index
                     };
                     // for each adjacent direction
                     for (var loop_dir = 0; loop_dir < 4; loop_dir++)
@@ -814,6 +848,7 @@ namespace CitySim.States
                 {
                     c.Update(gameTime, this);
                 }
+                if (_displayDeleteBldgBtn.Equals(true)) DeleteBldgButton.Update(gameTime, this);;
 
                 // update the camera (comora)
                 _camera.Update(gameTime);
@@ -827,6 +862,18 @@ namespace CitySim.States
                     // update gamestate data and reset timer
                     Task.Run(() => UpdateGameState(gameTime));
                     _remainingDelay = _timeCycleDelay;
+                }
+
+                if (_displayDeleteBldgBtn)
+                {
+                    _remainingDeleteButtonDelay -= timer;
+
+                    if (_remainingDeleteButtonDelay <= 0)
+                    {
+                        _displayDeleteBldgBtn = false;
+                        _remainingDeleteButtonDelay = _deleteButtonDelay;
+                        CurrentlySelectedTile = null;
+                    }
                 }
             }
             else
@@ -858,10 +905,19 @@ namespace CitySim.States
 
         public void ProcessBuildings()
         {
-            // reset current ammount inv values
-            //GSData.PlayerInventory.Energy = 30;
-            //GSData.PlayerInventory.Workers = 20;
-            //GSData.PlayerInventory.Food = 20;
+            // hold variables to calculate total amount of workers
+            var total_workers = 0;
+
+            // reset specific vals
+            GSData.PlayerInventory.Workers = 0;
+            GSData.PlayerInventory.Energy = 0;
+            GSData.PlayerInventory.Food = 0;
+
+            foreach (Tile t in _currentMap.Tiles)
+            {
+                t.IsVisible = false;
+                t.TileData.IsVisible = false;
+            }
 
             foreach (var t in _currentMap.Tiles)
             {
@@ -876,19 +932,140 @@ namespace CitySim.States
                     {
                         // building tile
 
+                        // if a resource is linked to this building's objectid, add that resource's output to this building's income
+                        if (BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(t.Object.ObjectId))
+                        {
+                            // get the building default data from dict
+                            Building obj = BuildingData.Dict_BuildingFromObjectID[t.Object.ObjectId];
+
+                            // reset inventory values to default (before adding calculated resources from proxim)
+                            t.Object.GoldOutput = obj.GoldOutput;
+                            t.Object.WoodOutput = obj.WoodOutput;
+                            t.Object.CoalOutput = obj.CoalOutput;
+                            t.Object.IronOutput = obj.IronOutput;
+                            t.Object.StoneOutput = obj.StoneOutput;
+                            t.Object.WorkersOutput = obj.WorkersOutput;
+                            t.Object.EnergyOutput = obj.EnergyOutput;
+                            t.Object.FoodOutput = obj.FoodOutput;
+
+                            // loop thru all tiles within range for resources to add to output
+                            for (int x = ((int)t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
+                            {
+                                for (int y = ((int)t.TileIndex.Y - obj.Range); y < (t.TileIndex.Y + (obj.Range + 1)); y++)
+                                {
+                                    if (!(_currentMap.Tiles[x, y].Object.ObjectId.Equals(t.Object.ObjectId) &&
+                                          _currentMap.Tiles[x, y].Object.TypeId.Equals(t.Object.TypeId)))
+                                    {
+                                        // for each linked resource to this building
+                                        foreach (var k in BuildingData.Dict_BuildingResourceLinkKeys[t.Object.ObjectId])
+                                        {
+                                            // if the current tile is the linked resource
+                                            if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(k) && _currentMap.Tiles[x, y].Object.TypeId.Equals(1))
+                                            {
+                                                Console.WriteLine("Adding " + BuildingData.Dic_ResourceCollectionKeys[k][0]);
+                                                // add the resource output to this buildings output
+                                                switch (BuildingData.Dic_ResourceCollectionKeys[k][0])
+                                                {
+                                                    case "Wood":
+                                                        Console.WriteLine(
+                                                            $"Adding {(int) BuildingData.Dic_ResourceCollectionKeys[k][1]} wood to the building");
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        break;
+                                                    case "Food":
+                                                        Console.WriteLine(
+                                                            $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} Food to the building");
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        break;
+                                                    case "Stone":
+                                                        Console.WriteLine(
+                                                            $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} stone to the building");
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        break;
+                                                    case "Coal":
+                                                        Console.WriteLine(
+                                                            $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} coal to the building");
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        break;
+                                                    case "Iron":
+                                                        Console.WriteLine(
+                                                            $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} iron to the building");
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
+                                                        break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        var make_light = false;
+                        var light_rng = 0;
+                        if (t.Object.ObjectId == Building.PowerLine().ObjectId)
+                        {
+                            make_light = true;
+                            light_rng = Building.PowerLine().Range;
+                        } else if (t.Object.ObjectId == Building.TownHall().ObjectId)
+                        {
+                            make_light = true;
+                            light_rng = Building.TownHall().Range;
+                        }
+
+                        if (make_light.Equals(true))
+                        {
+                            for (int x = ((int)t.TileIndex.X - light_rng); x < (t.TileIndex.X + (light_rng + 1)); x++)
+                            {
+                                for (int y = ((int)t.TileIndex.Y - light_rng); y < (t.TileIndex.Y + (light_rng + 1)); y++)
+                                {
+                                    _currentMap.Tiles[x, y].IsVisible = true;
+                                    _currentMap.Tiles[x, y].TileData.IsVisible = true;
+                                }
+                            }
+                        }
+
                         //var b = BuildingData.Dict_BuildingFromObjectID[t.Object.ObjectId];
 
-                        //GSData.PlayerInventory.Gold += t.Object.GoldCost + t.Object.GoldOutput;
-                        //GSData.PlayerInventory.Wood += t.Object.WoodCost + t.Object.WoodOutput;
-                        //GSData.PlayerInventory.Coal += t.Object.CoalCost + t.Object.CoalOutput;
-                        //GSData.PlayerInventory.Iron += t.Object.IronCost + t.Object.IronOutput;
-                        //GSData.PlayerInventory.Stone += t.Object.StoneCost + t.Object.StoneOutput;
-                        //GSData.PlayerInventory.Workers += t.Object.WorkersCost + t.Object.WorkersOutput;
-                        //GSData.PlayerInventory.Energy += t.Object.EnergyCost + t.Object.EnergyOutput;
-                        //GSData.PlayerInventory.Food += t.Object.FoodCost + t.Object.FoodCost;
+                            // TODO
+                            // figure out why stone specifically isn't incrementing at each turn, and
+                            // keeps resetting to zero.
+
+                            // what. the fuck. is wrong.
+
+                            // TODO
+                            // add logic for:
+                            // if required resources aren't met, don't output resources
+
+                        GSData.PlayerInventory.Gold -= t.Object.GoldCost; GSData.PlayerInventory.Gold += t.Object.GoldOutput;
+                        GSData.PlayerInventory.Wood -= t.Object.WoodCost; GSData.PlayerInventory.Wood += + t.Object.WoodOutput;
+                        GSData.PlayerInventory.Coal -= t.Object.CoalCost; GSData.PlayerInventory.Coal += t.Object.CoalOutput;
+                        GSData.PlayerInventory.Iron -= t.Object.IronCost; GSData.PlayerInventory.Iron += t.Object.IronOutput;
+                        GSData.PlayerInventory.SetStone(GSData.PlayerInventory.Stone - t.Object.StoneCost, this, "ProcessBuildings_>StoneCost"); GSData.PlayerInventory.SetStone((GSData.PlayerInventory.Stone + t.Object.StoneOutput), this, "ProcessBuildings_>StoneOutput");
+                        GSData.PlayerInventory.Workers -= t.Object.WorkersCost;
+                        GSData.PlayerInventory.Workers += t.Object.WorkersOutput;
+                        GSData.PlayerInventory.Energy -= t.Object.EnergyCost; GSData.PlayerInventory.Energy += t.Object.EnergyOutput;
+                        //GSData.PlayerInventory.Food -= t.Object.FoodCost;
+                        GSData.PlayerInventory.Food += t.Object.FoodOutput;
+
+                        total_workers += t.Object.WorkersOutput;
                     }
                 }
             }
+
+            // add default incomes to inventory
+            GSData.PlayerInventory.Workers += 20;
+            total_workers += 20;
+            GSData.PlayerInventory.Energy += 30;
+            GSData.PlayerInventory.Food += 110;
+            // subtract from food the amount of food per worker in total buildings
+            Console.WriteLine($"Calc Food: {total_workers} * 2 = {2 * total_workers}");
+            Console.WriteLine($"Food: {GSData.PlayerInventory.Food} - {2 * total_workers} = ");
+            GSData.PlayerInventory.Food -= (2 * total_workers);
+            Console.WriteLine($"{GSData.PlayerInventory.Food}");
         }
 
         /// <summary>
@@ -951,25 +1128,24 @@ namespace CitySim.States
             var sel_obj = SelectedObject;
             SelectedObject = new TileObject();
 
-            // create backup of inventory state rn
-            var prev_inv = new Inventory()
-            {
-                Gold = GSData.PlayerInventory.Gold,
-                Wood = GSData.PlayerInventory.Wood,
-                Coal = GSData.PlayerInventory.Coal,
-                Iron = GSData.PlayerInventory.Iron,
-                Workers = GSData.PlayerInventory.Workers,
-                Energy = GSData.PlayerInventory.Energy,
-                Food = GSData.PlayerInventory.Food
-            };
+            // get mouse data
+            var msp = Mouse.GetState().Position;
+            var mp = new Vector2(msp.X, msp.Y);
+
+            // get the tile clicked on
+            Tile t = (Tile)sender;
+            Console.WriteLine($"Tile clicked: {t.TileIndex}");
+
+            // reset delete bldg button due to click
+            _displayDeleteBldgBtn = false;
+            _remainingDeleteButtonDelay = _deleteButtonDelay;
+            CurrentlySelectedTile = null;
+
+            DeleteBldgQueue = null;
 
             // try to place/construct a building
             try
             {
-                // get the tile clicked on
-                Tile t = (Tile)sender;
-                Console.WriteLine($"Tile clicked: {t.TileIndex}");
-
                 // is the tile visibile?
                 if (t.IsVisible.Equals(true))
                 {
@@ -982,6 +1158,7 @@ namespace CitySim.States
                         var obj = (Building)sel_obj;
 
                         // does the building's objectid have a matching resource objectid linked to it?
+                        // if so, only one building of this type can be within it's range.
                         if (BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(obj.ObjectId))
                         {
                             // for each tile within the buildings range (from the clicked tile's position)
@@ -1005,21 +1182,56 @@ namespace CitySim.States
 
                         // check balance to see if player can afford building
                         bool canBuild = true;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("gold", obj.GoldUpfront);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("wood", obj.WoodUpfront);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("coal", obj.CoalUpfront);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("iron", obj.IronUpfront);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("stone", obj.StoneUpfront);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("workers", obj.WorkersUpfront);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("energy", obj.EnergyUpfront);
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.RequestResource("food", obj.FoodUpfront);
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Gold >= obj.GoldUpfront;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Wood >= obj.WoodUpfront;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Coal >= obj.CoalUpfront;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Iron >= obj.IronUpfront;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Stone >= obj.StoneUpfront;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Workers >= obj.WorkersUpfront;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Energy >= obj.EnergyUpfront;
+                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Food >= obj.FoodUpfront;
                         if (canBuild.Equals(false)) throw new Exception("Can't afford to place!");
+
+                        // do random skin math
+                        var applied_txt_index = obj.TextureIndex;
+
+                        if (obj.ObjectId.Equals(Building.LowHouse().ObjectId))
+                        {
+                            applied_txt_index = Enumerable.Range(0, 1)
+                                .Select(r => new int[] { new int[] { 11, 18, 19 }[_rndGen.Next(3)], new int[] { 11, 18, 19 }[_rndGen.Next(3)], new int[] { 11, 18, 19 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
+                            Console.WriteLine($"Applying random texture to low house: id{applied_txt_index}");
+                        }
+                        else if (obj.ObjectId.Equals(Building.MedHouse().ObjectId))
+                        {
+                            applied_txt_index = Enumerable.Range(0, 1)
+                                .Select(r => new int[] { new int[] { 20, 21, 22 }[_rndGen.Next(3)], new int[] { 20, 21, 22 }[_rndGen.Next(3)], new int[] { 20, 21, 22 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
+                            Console.WriteLine($"Applying random texture to med house: id{applied_txt_index}");
+                        }
+                        else if (obj.ObjectId.Equals(Building.EliteHouse().ObjectId))
+                        {
+                            applied_txt_index = Enumerable.Range(0, 1)
+                                .Select(r => new int[] { new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
+                            Console.WriteLine($"Applying random texture to elite house: id{applied_txt_index}");
+                        }
 
                         // if exception wasn't thrown by now, apply the building the to the tile
                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object = obj;
-                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].ObjectTexture =
-                            _gameContent.GetTileTexture(obj.TextureIndex);
                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object = obj;
+                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
+                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].Object.TextureIndex =
+                            applied_txt_index;
+                        _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].TileData.Object.TextureIndex =
+                            applied_txt_index;
+
+                        // take away values from inventory
+                        GSData.PlayerInventory.Gold -= obj.GoldUpfront;
+                        GSData.PlayerInventory.Wood -= obj.WoodUpfront;
+                        GSData.PlayerInventory.Coal -= obj.CoalUpfront;
+                        GSData.PlayerInventory.Iron -= obj.IronUpfront;
+                        GSData.PlayerInventory.SetStone((GSData.PlayerInventory.Stone -= obj.StoneUpfront), this, "Tile_OnClick");
+                        GSData.PlayerInventory.Workers -= obj.WorkersUpfront;
+                        GSData.PlayerInventory.Energy -= obj.EnergyUpfront;
+                        GSData.PlayerInventory.Food -= obj.FoodUpfront;
 
                         // now that building is built, loop back through tiles in range
                         for (int x = ((int)t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
@@ -1039,47 +1251,13 @@ namespace CitySim.States
                                         Console.WriteLine($"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
                                     }
                                 }
-
-                                // if a resource is linked to this building's objectid, add that resource's output to this building's income
-                                if (BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(obj.ObjectId))
-                                {
-                                    foreach (var k in BuildingData.Dict_BuildingResourceLinkKeys[obj.ObjectId])
-                                    {
-                                        if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(k) && _currentMap.Tiles[x, y].Object.TypeId.Equals(1))
-                                        {
-                                            Console.WriteLine("Adding " + BuildingData.Dic_ResourceCollectionKeys[k][0]);
-                                            switch (BuildingData.Dic_ResourceCollectionKeys[k][0])
-                                            {
-                                                case "Wood":
-                                                    _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    break;
-                                                case "Food":
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    break;
-                                                case "Stone":
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    break;
-                                                case "Coal":
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    break;
-                                                case "Iron":
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
-                                                    break;
-                                            }
-                                        }
-                                    }
-                                }
                             }
                         }
 
                         // if building is a farm
                         if (obj.ObjectId.Equals(Building.Farm().ObjectId))
                         {
+                            var farmland_placed = 0;
                             // is farm, apply crops around farm within limited range
                             for (int x = ((int)t.TileIndex.X - 1); x < (t.TileIndex.X + 2); x++)
                             {
@@ -1101,6 +1279,7 @@ namespace CitySim.States
                                             _currentMap.Tiles[x, y].ObjectTexture =
                                                 _gameContent.GetTileTexture(farmobj.TextureIndex);
                                             _currentMap.Tiles[x, y].TileData.Object = farmobj;
+                                            farmland_placed++;
                                         }
                                         catch (Exception exc)
                                         {
@@ -1110,6 +1289,11 @@ namespace CitySim.States
                                     }
                                 }
                             }
+
+                            // calculate foodoutput gain based one farmland placed
+                            var foodoutput = 5 * farmland_placed;
+                            _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.FoodOutput += foodoutput;
+                            _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.FoodOutput += foodoutput;
                         }
 
                         GSData.TileData = new List<TileData>();
@@ -1119,6 +1303,21 @@ namespace CitySim.States
                         {
                             // add its tile data to list
                             GSData.TileData.Add(cmt.GetTileData());
+                        }
+                    }
+                    // else, if there isn't a selected object but a tile with a building was clicked on
+                    else if(sel_obj.ObjectId.Equals(0) && t.Object.ObjectId >= 0 & t.Object.TypeId.Equals(2))
+                    {
+                        if (CurrentlySelectedTile != null)
+                        {
+                            if (CurrentlySelectedTile.TileIndex != t.TileIndex)
+                            {
+                                _displayDeleteBldgBtn = true;
+                            }
+                        }
+                        else
+                        {
+                            _displayDeleteBldgBtn = true;
                         }
                     }
                 }
@@ -1131,8 +1330,44 @@ namespace CitySim.States
             catch (Exception exception)
             {
                 SelectedObject = sel_obj;
-                GSData.PlayerInventory = prev_inv;
+                //GSData.PlayerInventory = prev_inv;
             }
+
+            if (_displayDeleteBldgBtn.Equals(true))
+            {
+                _deleteBldgBtnPos = mp + new Vector2(-(DeleteBldgButton.Rectangle.Width / 2), -(DeleteBldgButton.Rectangle.Height));
+                CurrentlySelectedTile = t;
+                DeleteBldgQueue = t;
+                _remainingDeleteButtonDelay = _deleteButtonDelay;
+            }
+        }
+
+        private void DeleteBldgButton_Click(object sender, EventArgs e)
+        {
+            if (DeleteBldgQueue is null) return;
+
+            // reset delete bldg btn
+            _displayDeleteBldgBtn = false;
+            _remainingDeleteButtonDelay = _deleteButtonDelay;
+            CurrentlySelectedTile = null;
+
+            // delete a building
+            foreach (Tile t in _currentMap.Tiles)
+            {
+                if (t.TileIndex == DeleteBldgQueue.TileIndex)
+                {
+                    t.Object = new TileObject();
+                    t.TileData.Object = new TileObject();
+
+                    GSData.PlayerInventory.Gold += (t.Object.GoldOutput / 2);
+                    GSData.PlayerInventory.Wood += (t.Object.WoodCost / 2);
+                    GSData.PlayerInventory.Coal += (t.Object.CoalCost / 2);
+                    GSData.PlayerInventory.Iron += (t.Object.IronCost / 2);
+                    GSData.PlayerInventory.Stone += (t.Object.StoneCost / 2);
+                }
+            }
+
+            DeleteBldgQueue = null;
         }
         #endregion
 
@@ -1253,6 +1488,8 @@ namespace CitySim.States
                         {
                             var count = 0;
                             var resource_ids = BuildingData.Dict_BuildingResourceLinkKeys[SelectedObject.ObjectId];
+
+                            // create dictionary to hold counts for each resource
                             var counts = new Dictionary<int, int>();
 
                             foreach (var r in resource_ids)
@@ -1262,29 +1499,58 @@ namespace CitySim.States
 
                             try
                             {
-                                for (int x = ((int) t.TileIndex.X - obj.Range);
-                                    x < (t.TileIndex.X + (obj.Range + 1));
-                                    x++)
+                                if (obj.ObjectId.Equals(Building.Farm().ObjectId))
                                 {
-                                    for (int y = ((int) t.TileIndex.Y - obj.Range);
-                                        y < (t.TileIndex.Y + (obj.Range + 1));
-                                        y++)
+                                    for (int x = ((int)t.TileIndex.X - 1); x < (t.TileIndex.X + 2); x++)
                                     {
-                                        foreach (var r in resource_ids)
+                                        for (int y = ((int)t.TileIndex.Y - 1); y < (t.TileIndex.Y + 2); y++)
                                         {
-                                            if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(obj.ObjectId) && _currentMap.Tiles[x, y].Object.TypeId.Equals(2))
-                                                throw new Exception(
-                                                    "There is already a building of that type collecting resources in this area.");
-
-                                            if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(r))
+                                            // for each resource linked to this bldg
+                                            foreach (var r in resource_ids)
                                             {
-                                                counts[r] = counts[r] + 1;
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(obj.ObjectId) && _currentMap.Tiles[x, y].Object.TypeId.Equals(2))
+                                                    throw new Exception(
+                                                        "There is already a building of that type collecting resources in this area.");
+
+                                                // if the tile matches the resource for the bldg
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(0) & !(_currentMap.Tiles[x, y].TerrainId.Equals(Resource.Water().TerrainId)))
+                                                {
+                                                    counts[r] = counts[r] + 1;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    // for each tile within the building's range
+                                    for (int x = ((int)t.TileIndex.X - obj.Range);
+                                        x < (t.TileIndex.X + (obj.Range + 1));
+                                        x++)
+                                    {
+                                        for (int y = ((int)t.TileIndex.Y - obj.Range);
+                                            y < (t.TileIndex.Y + (obj.Range + 1));
+                                            y++)
+                                        {
+                                            // for each resource linked to this bldg
+                                            foreach (var r in resource_ids)
+                                            {
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(obj.ObjectId) && _currentMap.Tiles[x, y].Object.TypeId.Equals(2))
+                                                    throw new Exception(
+                                                        "There is already a building of that type collecting resources in this area.");
+
+                                                // if the tile matches the resource for the bldg
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(r))
+                                                {
+                                                    counts[r] = counts[r] + 1;
+                                                }
                                             }
                                         }
                                     }
                                 }
 
                                 int indent = 0;
+
                                 foreach (var r in resource_ids)
                                 {
                                     var res_str = $"{BuildingData.Dic_ResourceNameKeys[r]}: {(counts[r] * (int)BuildingData.Dic_ResourceCollectionKeys[r][1])}";
@@ -1297,7 +1563,7 @@ namespace CitySim.States
                             }
                             catch (Exception e)
                             {
-                                var print_str = $"{e.Message}";
+                                var print_str = $"Error: {e.Message}";
                                 var str_x = ((_gameContent.GetFont(1).MeasureString(print_str).X) / 2);
                                 var str_y = ((_gameContent.GetFont(1).MeasureString(print_str).Y) / 2);
 
@@ -1305,6 +1571,13 @@ namespace CitySim.States
                             }
                         }
                     }
+                }
+
+                if (_displayDeleteBldgBtn.Equals(true))
+                {
+                    DeleteBldgButton.Position = _deleteBldgBtnPos;
+                    Console.WriteLine($"Displaying delete btn at {DeleteBldgButton.Position}");
+                    DeleteBldgButton.Draw(gameTime, spriteBatch);
                 }
 
                 // draw cursor over UI elements !!

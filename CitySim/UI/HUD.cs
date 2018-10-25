@@ -122,6 +122,8 @@ namespace CitySim.UI
             {
                 SelectionCells_BuildingTextures.Add(content_.GetUiTexture(i));
             }
+            SelectionCells_BuildingTextures.Add(content_.GetUiTexture(24));
+            SelectionCells_BuildingTextures.Add(content_.GetUiTexture(25));
 
             if (SelectionCells_BuildingTextures.Count <
                 (SelectionCell_GridDimensions.X * SelectionCell_GridDimensions.Y))
@@ -329,17 +331,6 @@ namespace CitySim.UI
             if (show_tooltip)
             {
                 var b = ref_b;
-                var prev_inv = new Inventory()
-                {
-                    Gold = State.GSData.PlayerInventory.Gold,
-                    Wood = State.GSData.PlayerInventory.Wood,
-                    Coal = State.GSData.PlayerInventory.Coal,
-                    Iron = State.GSData.PlayerInventory.Iron,
-                    Stone = State.GSData.PlayerInventory.Stone,
-                    Workers = State.GSData.PlayerInventory.Workers,
-                    Energy = State.GSData.PlayerInventory.Energy,
-                    Food = State.GSData.PlayerInventory.Food
-                };
                 var bld = BuildingData.Dict_BuildingKeys[b.ID];
                 var cost_vals = new Dictionary<int, int>()
                                 {
@@ -398,10 +389,34 @@ namespace CitySim.UI
                                 };
                 foreach (var d in cost_vals)
                 {
-                    bool_vals[d.Key] = State.GSData.PlayerInventory.RequestResource(str_vals[d.Key], d.Value);
+                    switch (str_vals[d.Key])
+                    {
+                        case "gold":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Gold >= d.Value;
+                            break;
+                        case "wood":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Wood >= d.Value;
+                            break;
+                        case "coal":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Coal >= d.Value;
+                            break;
+                        case "iron":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Iron >= d.Value;
+                            break;
+                        case "stone":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Stone >= d.Value;
+                            break;
+                        case "workers":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Workers >= d.Value;
+                            break;
+                        case "energy":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Energy >= d.Value;
+                            break;
+                        case "food":
+                            bool_vals[d.Key] = State.GSData.PlayerInventory.Food >= d.Value;
+                            break;
+                    }
                 }
-                // reset player inventory
-                State.GSData.PlayerInventory = prev_inv;
 
                 // set dimensions of tooltip
                 var tooltip_rect = new Rectangle((int)_currentMouse.X, (int)(_currentMouse.Y - Tooltip_Dimensions.Y),

@@ -11,21 +11,57 @@ namespace CitySim.Objects
     public class Inventory : ObjectTracking, INotifyPropertyChanged
     {
 
-        public static int ResourceMax = 99999;
+        public static int ResourceMax = 500;
 
-        public int Gold { get; set; }
-        public int Wood { get; set; }
-        public int Coal { get; set; }
-        public int Iron { get; set; }
-
+        public int Gold
+        {
+            get => _gold;
+            set { _gold = value > ResourceMax ? ResourceMax : value; }
+        }
+        public int Wood
+        {
+            get => _wood;
+            set { _wood = value > ResourceMax ? ResourceMax : value; }
+        }
+        public int Coal
+        {
+            get => _coal;
+            set { _coal = value > ResourceMax ? ResourceMax : value; }
+        }
+        public int Iron
+        {
+            get => _iron;
+            set { _iron = value > ResourceMax ? ResourceMax : value; }
+        }
         public int Stone
         {
-            get => Stone;
-            set { Stone = value; OnPropertyChanged("Stone"); }
+            get => _stone;
+            set { _stone = value > ResourceMax ? ResourceMax : value; }
         }
-        public int Workers { get; set; }
-        public int Energy { get; set; }
-        public int Food { get; set; }
+        public int Workers
+        {
+            get => _workers;
+            set { _workers = value > ResourceMax ? ResourceMax : value; }
+        }
+        public int Energy
+        {
+            get => _energy;
+            set { _energy = value > ResourceMax ? ResourceMax : value; }
+        }
+        public int Food
+        {
+            get => _food;
+            set { _food = value > ResourceMax ? ResourceMax : value; }
+        }
+
+        private int _gold;
+        private int _wood;
+        private int _coal;
+        private int _iron;
+        private int _stone;
+        private int _workers;
+        private int _energy;
+        private int _food;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -42,15 +78,26 @@ namespace CitySim.Objects
         public Inventory()
         {
             Initialize();
+            //ResetInventoryToBase();
+        }
 
-            Gold = 50;
-            Wood = 20;
+        // from debugging
+        public void SetStone(int i, object sender, string function_name)
+        {
+            Console.WriteLine($"{sender.GetType().Name} called func. {function_name} to set stone to {i}");
+            Stone = i;
+        }
+
+        public void ResetInventoryToBase()
+        {
+            Gold = 0;
+            Wood = 0;
             Coal = 0;
             Iron = 0;
-            Stone = 0;
-            Workers = 20;
-            Energy = 30;
-            Food = 20;
+            SetStone(0, this, "ResetInventoryToBase");
+            Workers = 0;
+            Energy = 0;
+            Food = 0;
         }
 
         public bool RemoveResource(string resource, int amount_requested)
@@ -111,10 +158,10 @@ namespace CitySim.Objects
 
             try
             {
-                if(string.IsNullOrEmpty(resource))
+                if (string.IsNullOrEmpty(resource))
                     throw new NotSupportedException("Resource name cannot be null or empty.");
 
-                if(amount_requested <= 0)
+                if (amount_requested <= 0)
                     throw new NotSupportedException("Cannot request a resource amount equal or less than zero.");
 
                 // switch based on resource name

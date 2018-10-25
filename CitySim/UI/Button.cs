@@ -54,7 +54,6 @@ namespace CitySim.UI
         public bool Locked = false;
 
         private string _baseString = "+0 +0 +0 +0 +0 +0 +0";
-        protected Vector2 Tooltip_Dimensions => new Vector2(_font.MeasureString(_baseString).X * 1.2f, _font.MeasureString(_baseString).Y * 1.2f);
 
         // used for collision
         public Rectangle Rectangle => CustomRect.IsEmpty ? new Rectangle((int)Position.X, (int)Position.Y, (!string.IsNullOrEmpty(Text) ? (((int)_font.MeasureString(Text).X + TextPadding) > _texture.Width ? (int)_font.MeasureString(Text).X + TextPadding : _texture.Width) : _texture.Width), _texture.Height) : CustomRect;
@@ -126,36 +125,25 @@ namespace CitySim.UI
 
             if (ResourceLocked.Equals(true))
             {
-                var prev_inv = new Inventory()
-                {
-                    Gold = state.GSData.PlayerInventory.Gold,
-                    Wood = state.GSData.PlayerInventory.Wood,
-                    Coal = state.GSData.PlayerInventory.Coal,
-                    Iron = state.GSData.PlayerInventory.Iron,
-                    Workers = state.GSData.PlayerInventory.Workers,
-                    Energy = state.GSData.PlayerInventory.Energy,
-                    Food = state.GSData.PlayerInventory.Food
-                };
 
                 if (BuildingData.Dict_BuildingKeys.ContainsKey(ID))
                 {
                     var b = BuildingData.Dict_BuildingKeys[ID];
                     bool canBuild = true;
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("gold", b.GoldUpfront);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("wood", b.WoodUpfront);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("coal", b.CoalUpfront);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("iron", b.IronUpfront);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("stone", b.StoneUpfront);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("workers", b.WorkersUpfront);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("energy", b.EnergyUpfront);
-                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.RequestResource("food", b.FoodUpfront);
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Gold >= b.GoldUpfront;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Wood >= b.WoodUpfront;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Coal >= b.CoalUpfront;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Iron >= b.IronUpfront;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Stone >= b.StoneUpfront;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Workers >= b.WorkersUpfront;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Energy >= b.EnergyUpfront;
+                    if (canBuild.Equals(true)) canBuild = state.GSData.PlayerInventory.Food >= b.FoodUpfront;
                     Locked = !canBuild;
                 }
                 else
                 {
                     Locked = true;
                 }
-                state.GSData.PlayerInventory = prev_inv;
             }
 
             _isHovering = false;

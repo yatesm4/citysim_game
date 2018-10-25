@@ -146,6 +146,13 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Power", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Windmill", _content));// 20
 
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small", _content)); // 21
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Trash", _content)); // 22
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Delete", _content)); // 23
+
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_House_Med", _content));
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_House_Elite", _content));
+
             Console.WriteLine($"Ui Textures: {i}");
         }
 
@@ -181,6 +188,15 @@ namespace CitySim.Content
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Ore/01", _content));
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Power/01", _content)); // 16
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Power/02", _content)); // 17
+
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/02", _content)); // 18
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/03", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/04", _content)); // 20
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/05", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/06", _content)); // 22
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/07", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/08", _content)); // 24
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/09", _content)); // 25
 
             Console.WriteLine($"Tile Textures: {i}");
         }

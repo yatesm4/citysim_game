@@ -256,19 +256,19 @@ namespace CitySim.Objects
 
             var outputs = new List<int>()
             {
-                10, // gold
+                6, // gold
                 0, // wood
                 0, // coal
                 0, // iron
                 0, // stone
-                4, // workers
+                2, // workers
                 0, // energy
                 0, // food
             };
 
             var upfronts = new List<int>()
             {
-                20, // gold
+                15, // gold
                 10, // wood
                 0, // coal
                 0, // iron
@@ -281,6 +281,118 @@ namespace CitySim.Objects
             return new Building(settings, costs, outputs, upfronts)
             {
                 Name = "Low Residential Home"
+            };
+        }
+
+        // construct a medium level house
+        public static Building MedHouse()
+        {
+            var settings = new List<float>()
+            {
+                207, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                7, // object id: 7, mid level house
+                20, // texture index
+                30, // cycle time: 30 seconds
+                2,
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                4, // energy
+                12 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                8, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                6, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                40, // gold
+                20, // wood
+                0, // coal
+                0, // iron
+                10, // stone
+                0, // workers
+                4, // energy
+                12 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Med Residential Home"
+            };
+        }
+
+        // construct a medium level house
+        public static Building EliteHouse()
+        {
+            var settings = new List<float>()
+            {
+                208, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                8, // object id: 8, elite level house
+                23, // texture index
+                30, // cycle time: 30 seconds
+                2,
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                10, // energy
+                24 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                20, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                15, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                150, // gold
+                100, // wood
+                0, // coal
+                50, // iron
+                35, // stone
+                0, // workers
+                10, // energy
+                24 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Elite Residential Home"
             };
         }
 
@@ -345,7 +457,7 @@ namespace CitySim.Objects
             {
                 205, // id = random identifier i have yet to assess how to use
                 2, // type id: 2 = building
-                5, // object id: 1 = log cabin
+                5, // object id: 5, powerline
                 16, // texture indnex
                 30, // cycle time: 30 seconds
                 4, // Range (Visib/Active)
@@ -400,7 +512,7 @@ namespace CitySim.Objects
             {
                 206, // id = random identifier i have yet to assess how to use
                 2, // type id: 2 = building
-                6, // object id: 1 = log cabin
+                6, // object id: 6, Windmill
                 17, // texture indnex
                 30, // cycle time: 30 seconds
                 2, // Range (Visib/Active)
