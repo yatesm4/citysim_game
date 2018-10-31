@@ -54,6 +54,7 @@ namespace CitySim.UI
         protected Vector2 SelectionCell_GridDimensions => new Vector2(6,3);
         protected Vector2 SelectionCell_Dimensions => new Vector2((SelectionCellsSection_Dimensions.X * SelectionCellsSection_GridSpacePercents.X) / SelectionCell_GridDimensions.X,
             (SelectionCellsSection_Dimensions.Y * SelectionCellsSection_GridSpacePercents.X) / SelectionCell_GridDimensions.Y);
+
         protected Texture2D SelectionCell_Texture { get; set; }
 
         protected Vector2 SelectionCell_Spacing => new Vector2((SelectionCellsSection_Dimensions.X * SelectionCellsSection_GridSpacePercents.Y) /
@@ -62,6 +63,43 @@ namespace CitySim.UI
             (SelectionCell_GridDimensions.Y + 1));
 
         protected Vector2 SelectionCells_BuildingIndexes => new Vector2(13, 21); // Y is max + 1
+
+        protected int SelectionCell_BlankIndex = 13;
+        protected Texture2D SelectionCell_BlankTexture { get; set; }
+
+        protected List<int> SelectionCells_BldgHouses_Indexes => new List<int>()
+        {
+            15, 24, 25
+        };
+        protected List<Texture2D> SelectionCells_BldgHouses_Textures { get; set; } = new List<Texture2D>();
+        protected List<Button> SelectionCells_BldgHouses_Btns { get; set; } = new List<Button>();
+
+        protected List<int> SelectionCells_BldgReso_Indexes => new List<int>()
+        {
+            14,
+            16,
+            17,
+            18,
+            19,
+            20
+        };
+        protected List<Texture2D> SelectionCells_BldgReso_Textures { get; set; } = new List<Texture2D>();
+        protected List<Button> SelectionCells_BldgReso_Btns { get; set; } = new List<Button>();
+
+        protected List<int> SelectionCells_BldgDeco_Indexes => new List<int>()
+        {
+            30, 31, 32, 33, 34, 35, 36
+        };
+        protected List<Texture2D> SelectionCells_BldgDeco_Textures { get; set; } = new List<Texture2D>();
+        protected List<Button> SelectionCells_BldgDeco_Btns { get; set; } = new List<Button>();
+
+        protected List<List<Texture2D>> SelectionCells_AllBldgs_Textures => new List<List<Texture2D>>()
+        {
+            SelectionCells_BldgHouses_Textures, SelectionCells_BldgReso_Textures, SelectionCells_BldgDeco_Textures
+        };
+
+        protected int SelectionCells_ViewIndex = 800; // 800 = Houses, 801 = Resources, 802 = Decorations
+
         protected List<Texture2D> SelectionCells_BuildingTextures { get; set; } = new List<Texture2D>();
 
         // INFOGRAPHIC SECTION (MIDDLE MENU)
@@ -79,6 +117,20 @@ namespace CitySim.UI
         protected Texture2D ResourceBar_Texture { get; set; }
 
         protected Vector2 ResourceCell_Dimension => new Vector2(ResourceBar_Dimensions.X / 8, ResourceBar_Dimensions.Y);
+
+        protected Texture2D Btn_SelectHouses_Texture { get; set; }
+        protected const string Btn_SelectHouses_String = "View Residential Buildings";
+
+        protected Texture2D Btn_SelectDeco_Texture { get; set; }
+        protected const string Btn_SelectDeco_String = "View Decoration Buildings";
+
+        protected Texture2D Btn_SelectReso_Texture { get; set; }
+        protected const string Btn_SelectReso_String = "View Resource Buildings";
+
+        protected List<Button> BtnList_SelectBldgsView { get; set; } = new List<Button>();
+
+        protected bool ShowBldgBtnTooltip { get; set; } = false;
+        protected int ShowBldgBtnId { get; set; } = 0;
 
         private string _baseString = "WORKERS: ";
         private string _baseString_PerTurnRevenue = "-000";
@@ -136,7 +188,66 @@ namespace CitySim.UI
                 }
             }
 
+            SelectionCell_BlankTexture = content_.GetUiTexture(13);
+            foreach (var e in SelectionCells_BldgHouses_Indexes)
+            {
+                SelectionCells_BldgHouses_Textures.Add(content_.GetUiTexture(e));
+            }
+            foreach (var e in SelectionCells_BldgReso_Indexes)
+            {
+                SelectionCells_BldgReso_Textures.Add(content_.GetUiTexture(e));
+            }
+            foreach (var e in SelectionCells_BldgDeco_Indexes)
+            {
+                SelectionCells_BldgDeco_Textures.Add(content_.GetUiTexture(e));
+            }
+            foreach (var e in SelectionCells_AllBldgs_Textures)
+            {
+                if (e.Count < (SelectionCell_GridDimensions.X * SelectionCell_GridDimensions.Y))
+                {
+                    var dif = (SelectionCell_GridDimensions.X * SelectionCell_GridDimensions.Y) - e.Count;
+                    for (int i = 0; i < dif + 1; i++)
+                    {
+                        e.Add(SelectionCell_BlankTexture);
+                    }
+                }
+            }
+
             SetSelectionCellButtons();
+
+            // get textures for buttons that swap between building selections
+            Btn_SelectHouses_Texture = content_.GetUiTexture(26);
+            Btn_SelectReso_Texture = content_.GetUiTexture(27);
+            Btn_SelectDeco_Texture = content_.GetUiTexture(28);
+
+            var init_btn_bldg_pos = new Vector2();
+            init_btn_bldg_pos.X = (ResourceBar_Rectangle.X + ResourceBar_Rectangle.Width) - (Btn_SelectHouses_Texture.Width * 0.5f);
+            init_btn_bldg_pos.Y = (ResourceBar_Rectangle.Y - (Btn_SelectHouses_Texture.Height * 3.5f));
+
+            var btn_bldgs_house = new Button(Btn_SelectHouses_Texture, _font)
+            {
+                Position = init_btn_bldg_pos,
+                ID = 800
+            };
+            btn_bldgs_house.Click += ViewBldgsBtn_OnClick;
+            var btn_bldgs_reso = new Button(Btn_SelectReso_Texture, _font)
+            {
+                Position = init_btn_bldg_pos + new Vector2(0, Btn_SelectHouses_Texture.Height * 1.18f),
+                ID = 801
+            };
+            btn_bldgs_reso.Click += ViewBldgsBtn_OnClick;
+            var btn_bldgs_deco = new Button(Btn_SelectDeco_Texture, _font)
+            {
+                Position = init_btn_bldg_pos + new Vector2(0, ((Btn_SelectHouses_Texture.Height * 1.18f) * 2f)),
+                ID = 802
+            };
+            btn_bldgs_deco.Click += ViewBldgsBtn_OnClick;
+            _components.Add(btn_bldgs_house);
+            _components.Add(btn_bldgs_reso);
+            _components.Add(btn_bldgs_deco);
+            BtnList_SelectBldgsView.Add(btn_bldgs_house);
+            BtnList_SelectBldgsView.Add(btn_bldgs_reso);
+            BtnList_SelectBldgsView.Add(btn_bldgs_deco);
         }
 
         public void SetColorData(GraphicsDevice graphicsDevice_)
@@ -177,6 +288,9 @@ namespace CitySim.UI
             }
             ResourceBar_Texture.SetData(rbt_data);
 
+            ResourceBar_Texture = _content.GetUiTexture(29);
+            Console.WriteLine($"ResourceBar dimens: Width: {ResourceBar_Rectangle.Width} || Height: {ResourceBar_Rectangle.Height}");
+
             SelectionCell_Texture = new Texture2D(graphicsDevice_, (int)SelectionCell_Dimensions.X, (int)SelectionCell_Dimensions.Y);
             var sct_data = new Color[(int)SelectionCell_Dimensions.X * (int)SelectionCell_Dimensions.Y];
             for (int i = 0; i < sct_data.Length; i++)
@@ -184,13 +298,22 @@ namespace CitySim.UI
                 sct_data[i] = Color.Beige;
             }
             SelectionCell_Texture.SetData(sct_data);
+
+            // set color data of tooltip
+            var dta = new Color[(int)Tooltip_Dimensions.X * (int)Tooltip_Dimensions.Y];
+            for (int o = 0; o < dta.Length; o++)
+            {
+                dta[o] = Color.White;
+            }
+            Tooltip_Texture.SetData(dta);
         }
 
         public void SetSelectionCellButtons()
         {
             var initCellPos = new Vector2(SelectionCellsSection_Rectangle.X, SelectionCellsSection_Rectangle.Y) +
                               new Vector2(SelectionCell_Spacing.X, SelectionCell_Spacing.Y);
-            var b = 1;
+
+            var b = 0;
             for (int i = 0; i < (SelectionCell_GridDimensions.Y); i++)
             {
                 var cellRowPos = initCellPos;
@@ -199,16 +322,59 @@ namespace CitySim.UI
                 {
                     var cellColPos = cellRowPos + new Vector2(j * SelectionCell_Dimensions.X, 0) + new Vector2(j * SelectionCell_Spacing.X, 0);
                     var cellRect = new Rectangle((int)cellColPos.X, (int)cellColPos.Y, (int)SelectionCell_Dimensions.X, (int)SelectionCell_Dimensions.Y);
-                    var btn = new Button(SelectionCells_BuildingTextures[0], _font, cellRect);
-                    btn = new Button(SelectionCells_BuildingTextures[b], _font, cellRect)
+                    var btn = new Button(SelectionCells_BldgHouses_Textures[b], _font, cellRect)
                     {
                         Position = cellColPos,
                         HoverColor = Color.Yellow,
                         ResourceLocked = true
                     };
-                    btn.ID = b;
+                    btn.ID = b + 100;
                     btn.Click += BldgBtn_OnClick;
-                    _components.Add(btn);
+                    SelectionCells_BldgHouses_Btns.Add(btn);
+                    // increment which building is currently drawn
+                    b++;
+                }
+            }
+            b = 0;
+            for (int i = 0; i < (SelectionCell_GridDimensions.Y); i++)
+            {
+                var cellRowPos = initCellPos;
+                cellRowPos += new Vector2(0, SelectionCell_Dimensions.Y * i) + new Vector2(0, SelectionCell_Spacing.Y * i);
+                for (int j = 0; j < (SelectionCell_GridDimensions.X); j++)
+                {
+                    var cellColPos = cellRowPos + new Vector2(j * SelectionCell_Dimensions.X, 0) + new Vector2(j * SelectionCell_Spacing.X, 0);
+                    var cellRect = new Rectangle((int)cellColPos.X, (int)cellColPos.Y, (int)SelectionCell_Dimensions.X, (int)SelectionCell_Dimensions.Y);
+                    var btn = new Button(SelectionCells_BldgReso_Textures[b], _font, cellRect)
+                    {
+                        Position = cellColPos,
+                        HoverColor = Color.Yellow,
+                        ResourceLocked = true
+                    };
+                    btn.ID = b + 200;
+                    btn.Click += BldgBtn_OnClick;
+                    SelectionCells_BldgReso_Btns.Add(btn);
+                    // increment which building is currently drawn
+                    b++;
+                }
+            }
+            b = 0;
+            for (int i = 0; i < (SelectionCell_GridDimensions.Y); i++)
+            {
+                var cellRowPos = initCellPos;
+                cellRowPos += new Vector2(0, SelectionCell_Dimensions.Y * i) + new Vector2(0, SelectionCell_Spacing.Y * i);
+                for (int j = 0; j < (SelectionCell_GridDimensions.X); j++)
+                {
+                    var cellColPos = cellRowPos + new Vector2(j * SelectionCell_Dimensions.X, 0) + new Vector2(j * SelectionCell_Spacing.X, 0);
+                    var cellRect = new Rectangle((int)cellColPos.X, (int)cellColPos.Y, (int)SelectionCell_Dimensions.X, (int)SelectionCell_Dimensions.Y);
+                    var btn = new Button(SelectionCells_BldgDeco_Textures[b], _font, cellRect)
+                    {
+                        Position = cellColPos,
+                        HoverColor = Color.Yellow,
+                        ResourceLocked = true
+                    };
+                    btn.ID = b + 300;
+                    btn.Click += BldgBtn_OnClick;
+                    SelectionCells_BldgDeco_Btns.Add(btn);
                     // increment which building is currently drawn
                     b++;
                 }
@@ -221,6 +387,34 @@ namespace CitySim.UI
             {
                 Console.WriteLine($"Button clicked: {BuildingData.Dict_BuildingKeys[convSender.ID].Name}");
                 State.SelectedObject = BuildingData.Dict_BuildingKeys[convSender.ID];
+            }
+        }
+
+        private void ViewBldgsBtn_OnClick(object sender, EventArgs e)
+        {
+            foreach (var b in BtnList_SelectBldgsView)
+            {
+                b.IsSelected = false;
+            }
+            if (sender is Button convSender)
+            {
+                string name = string.Empty;
+                switch (convSender.ID)
+                {
+                    case 800:
+                        name = "View Residential Bldgs";
+                        break;
+                    case 801:
+                        name = "View Resource Bldgs";
+                        break;
+                    case 802:
+                        name = "View Decoration Bldgs";
+                        break;
+                }
+
+                SelectionCells_ViewIndex = convSender.ID;
+                convSender.IsSelected = true;
+                Console.WriteLine($"Button clicked: {name}");
             }
         }
 
@@ -237,7 +431,7 @@ namespace CitySim.UI
 
             spriteBatch.Draw(SelectionCellsSection_Texture, SelectionCellsSection_Rectangle, Color.DarkKhaki);
             spriteBatch.Draw(InfographicsSection_Texture, InfographicsSection_Rectangle, Color.DarkOliveGreen);
-            spriteBatch.Draw(ResourceBar_Texture, ResourceBar_Rectangle, Color.DarkSlateGray);
+            spriteBatch.Draw(ResourceBar_Texture, ResourceBar_Rectangle, Color.White);
 
             /**
              *      DRAW RESOURCE AND STATE DATA TO HUD
@@ -280,16 +474,19 @@ namespace CitySim.UI
 
             var icon_start_pos = new Vector2(ResourceBar_Rectangle.X, ResourceBar_Rectangle.Y);
             var icon_scale = new Vector2(2, 2);
+
             // display inventory icons in hud
-            for(int i = 0; i < HUDIconIDs.Length; i++)
+            for (int i = 0; i < HUDIconIDs.Length; i++)
             {
+                var e = CurrentIncomeReport.TotalGain[i] - CurrentIncomeReport.TotalLoss[i];
+
                 var icon_id = HUDIconIDs[i];
                 var icon_texture = _content.GetUiTexture(icon_id);
                 var icon_position = icon_start_pos + new Vector2(ResourceCell_Dimension.X * i, 0);
-                icon_position += new Vector2(ResourceCell_Dimension.X * 0.3f, ResourceCell_Dimension.Y * 0.3f);
+                icon_position += new Vector2(ResourceCell_Dimension.X * 0.4f, ResourceCell_Dimension.Y * 0.5f);
                 var icon_rect = new Rectangle((int)icon_position.X, (int)icon_position.Y, (int) (ResourceCell_Dimension
-                        .X * 0.6f), (int)
-                    (ResourceCell_Dimension.Y * 0.6f));
+                        .X * 0.4f), (int)
+                    (ResourceCell_Dimension.Y * 0.4f));
                 spriteBatch.Draw(icon_texture, icon_rect, Color.White);
 
                 if (icon_rect.Contains(_currentMouse.Position))
@@ -300,19 +497,51 @@ namespace CitySim.UI
 
                 var resource_text = $"{resource_vals[i]}";
                 var resource_text_origin = new Vector2(_font.MeasureString(resource_text).X / 2, _font.MeasureString(resource_text).Y / 2);
-                var resource_text_pos = icon_position + new Vector2(icon_rect.Width * 0.5f, -(icon_rect.Height * 0.25f));
+                var resource_text_pos = icon_position + new Vector2(icon_rect.Width * 0.5f, -(icon_rect.Height * 0.6f));
 
-                spriteBatch.DrawString(_font, resource_text, resource_text_pos, Color.White, 0.0f, resource_text_origin, 1.0f, SpriteEffects.None, 1.0f);
+                spriteBatch.DrawString(_font, resource_text, resource_text_pos, Color.Black, 0.0f, resource_text_origin, 1.0f, SpriteEffects.None, 1.0f);
             }
             #endregion
 
             var show_tooltip = false;
             Button ref_b = null;
+            ShowBldgBtnTooltip = false;
+            ShowBldgBtnId = 0;
 
             foreach (Component c in _components)
             {
                 c.Draw(gameTime, spriteBatch);
                 if (c is Button b)
+                {
+                    if (b.IsHovering)
+                    {
+                        if (b.ID.Equals(800) || b.ID.Equals(801) || b.ID.Equals(802))
+                        {
+                            ShowBldgBtnTooltip = true;
+                            ShowBldgBtnId = b.ID;
+                        }
+                    }
+                }
+            }
+
+            var list = SelectionCells_BldgHouses_Btns;
+            switch (SelectionCells_ViewIndex)
+            {
+                case 801:
+                    list = SelectionCells_BldgReso_Btns;
+                    break;
+                case 802:
+                    list = SelectionCells_BldgDeco_Btns;
+                    break;
+                default:
+                    list = SelectionCells_BldgHouses_Btns;
+                    break;
+            }
+
+            foreach (var e in list)
+            {
+                e.Draw(gameTime, spriteBatch);
+                if (e is Button b)
                 {
                     if (b.IsHovering)
                     {
@@ -440,20 +669,14 @@ namespace CitySim.UI
                     tooltip_rect.Y = _graphicsDevice.Viewport.Height - tooltip_rect.Height;
                 }
 
-                // set color data of tooltip
-                int res_strt = 0;
-                var dta = new Color[(int)Tooltip_Dimensions.X * (int)Tooltip_Dimensions.Y];
-                for (int o = 0; o < dta.Length; o++)
-                {
-                    dta[o] = Color.White;
-                }
-                Tooltip_Texture.SetData(dta);
+                var bldg_name = bld.Name;
 
                 // draw tooltip
                 spriteBatch.Draw(Tooltip_Texture, destinationRectangle: tooltip_rect, color: Color.LightSlateGray);
 
                 // draw resource strings in tooltip
                 var complete_str = "";
+                int res_strt = 0;
                 foreach (var val in str_vals)
                 {
                     var res_str = $"{val.Value}: ";
@@ -486,19 +709,26 @@ namespace CitySim.UI
                     res_strt++;
                 }
 
-                var xtra_tooltip_rect = new Rectangle((int)tooltip_rect.X, (int)((tooltip_rect.Y + tooltip_rect.Height) - (Tooltip_Dimensions.Y + ExtraTooltip_Dimensions.Y)),
-                    (int)Tooltip_Dimensions.X + (int)(ExtraTooltip_Dimensions.X * 3), (int)ExtraTooltip_Dimensions.Y);
+                var xtra_tooltip_rect = new Rectangle((int)tooltip_rect.X, (int)((tooltip_rect.Y + tooltip_rect.Height) - (Tooltip_Dimensions.Y + (ExtraTooltip_Dimensions.Y * 1.6f))),
+                    (int)Tooltip_Dimensions.X + (int)(ExtraTooltip_Dimensions.X * 3), (int)(ExtraTooltip_Dimensions.Y * 1.6f));
+
                 spriteBatch.Draw(Tooltip_Texture, destinationRectangle: xtra_tooltip_rect, color: Color.DarkSlateGray);
 
                 var head_str_pos = new Vector2(xtra_tooltip_rect.X, xtra_tooltip_rect.Y + xtra_tooltip_rect.Height);
                 var head_str_origin = new Vector2(0, _font.MeasureString(_baseString_Header).Y);
+
+                var name_str_pos = new Vector2(xtra_tooltip_rect.X + (xtra_tooltip_rect.Width / 2), xtra_tooltip_rect.Y + (_font.MeasureString(bldg_name).Y * 0.8f));
+                var name_str_origin =
+                    new Vector2(_font.MeasureString(bldg_name).X / 2, _font.MeasureString(bldg_name).Y / 2);
+
                 spriteBatch.DrawString(_font, _baseString_Header, head_str_pos, Color.White, 0f, head_str_origin, new Vector2(0.9f, 0.9f), SpriteEffects.None, 1);
+                spriteBatch.DrawString(_font, bldg_name, name_str_pos, Color.White, 0f, name_str_origin, new Vector2(0.9f, 0.9f), SpriteEffects.None, 1);
             }
 
             if (show_spec_resource_toolip)
             {
                 // build string
-                var spec_res_tooltip_txt = $"{resource_string_vals[show_spec_resource_tooltip_id]}'s current amount is {resource_vals[show_spec_resource_tooltip_id]} ({CurrentIncomeReport.TotalGain[show_spec_resource_tooltip_id]}-{CurrentIncomeReport.TotalLoss[show_spec_resource_tooltip_id]})";
+                var spec_res_tooltip_txt = $"{resource_string_vals[show_spec_resource_tooltip_id]}'s current amount is {resource_vals[show_spec_resource_tooltip_id]} (+{CurrentIncomeReport.TotalGain[show_spec_resource_tooltip_id]} -{CurrentIncomeReport.TotalLoss[show_spec_resource_tooltip_id]} / per turn)";
 
                 // calculate dimensions
                 var spec_res_tooltip_dimens = new Vector2(_font.MeasureString(spec_res_tooltip_txt).X, _font.MeasureString(spec_res_tooltip_txt).Y);
@@ -511,6 +741,32 @@ namespace CitySim.UI
                 spriteBatch.Draw(Tooltip_Texture, destinationRectangle: spec_res_tooltip_rect, color: Color.LightGray);
                 spriteBatch.DrawString(_font, spec_res_tooltip_txt, spec_res_tooltip_txt_pos, Color.Black, 0, new Vector2(_font.MeasureString(spec_res_tooltip_txt).X / 2, _font.MeasureString(spec_res_tooltip_txt).Y), new Vector2(0.9f, 0.9f), SpriteEffects.None, 1);
             }
+
+            if (ShowBldgBtnTooltip && ShowBldgBtnId != 0)
+            {
+                var str = string.Empty;
+                switch (ShowBldgBtnId)
+                {
+                    case 800:
+                        str = Btn_SelectHouses_String;
+                        break;
+                    case 801:
+                        str = Btn_SelectReso_String;
+                        break;
+                    case 802:
+                        str = Btn_SelectDeco_String;
+                        break;
+                }
+                var ref_tooltip_dimens = new Vector2(_font.MeasureString(str).X, _font.MeasureString(str).Y);
+                var ref_tooltip_rect = new Rectangle((int) _currentMouse.X,
+                    (int) (_currentMouse.Y - ref_tooltip_dimens.Y),
+                    (int) ref_tooltip_dimens.X, (int) ref_tooltip_dimens.Y);
+                ref_tooltip_rect.X = _currentMouse.X - (ref_tooltip_rect.Width / 2);
+                Vector2 ref_tooltip_txt_pos = new Vector2(ref_tooltip_rect.X + (ref_tooltip_rect.Width / 2), ref_tooltip_rect.Y + _font.MeasureString(str).Y);
+
+                spriteBatch.Draw(Tooltip_Texture, destinationRectangle: ref_tooltip_rect, color: Color.LightGray);
+                spriteBatch.DrawString(_font, str, ref_tooltip_txt_pos, Color.Black, 0, new Vector2(_font.MeasureString(str).X / 2, _font.MeasureString(str).Y), new Vector2(0.9f, 0.9f), SpriteEffects.None, 1);
+            }
         }
 
         public override void Update(GameTime gameTime, GameState state)
@@ -518,6 +774,25 @@ namespace CitySim.UI
             foreach (Component c in _components)
             {
                 c.Update(gameTime, state);
+            }
+
+            var list = SelectionCells_BldgHouses_Btns;
+            switch (SelectionCells_ViewIndex)
+            {
+                case 801:
+                    list = SelectionCells_BldgReso_Btns;
+                    break;
+                case 802:
+                    list = SelectionCells_BldgDeco_Btns;
+                    break;
+                default:
+                    list = SelectionCells_BldgHouses_Btns;
+                    break;
+            }
+
+            foreach (var e in list)
+            {
+                e.Update(gameTime, state);
             }
 
             // save gamestate

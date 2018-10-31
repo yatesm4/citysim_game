@@ -120,7 +120,7 @@ namespace CitySim.Objects
 
                 r.TotalWorkersGain += 20;
                 r.TotalEnergyGain += 30;
-                r.TotalFoodGain += 110;
+                r.TotalFoodGain += 60;
 
                 r.TotalGoldRevenue =  r.TotalGoldGain - r.TotalGoldLoss;
                 r.TotalWoodRevenue = r.TotalWoodGain - r.TotalWoodLoss;

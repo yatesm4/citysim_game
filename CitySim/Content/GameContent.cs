@@ -150,8 +150,22 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Trash", _content)); // 22
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Delete", _content)); // 23
 
-            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_House_Med", _content));
-            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_House_Elite", _content));
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_House_Med", _content)); // 24
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_House_Elite", _content)); // 25
+
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_House", _content)); // 26
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Money", _content)); // 27
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Tree", _content)); // 28
+
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Panel_ResourceBar", _content)); // 29
+
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Road_Left", _content)); // 30
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Road_Right", _content)); // 31
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_4_Way_Intersection", _content)); // 32
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_T_Intersection_1", _content)); // 33 
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_T_Intersection_2", _content)); // 34
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_T_Intersection_3", _content)); // 35
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_T_Intersection_4", _content)); // 36
 
             Console.WriteLine($"Ui Textures: {i}");
         }
@@ -197,6 +211,14 @@ namespace CitySim.Content
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/07", _content));
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/08", _content)); // 24
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/09", _content)); // 25
+
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Left", _content)); // 26
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Right", _content)); // 27
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/4_Way_Intersection", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_1", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_2", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_3", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_4", _content));
 
             Console.WriteLine($"Tile Textures: {i}");
         }

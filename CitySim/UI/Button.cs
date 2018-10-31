@@ -47,6 +47,8 @@ namespace CitySim.UI
 
         public bool IsFlipped { get; set; } = false;
 
+        public bool IsSelected { get; set; } = false;
+
         public int ID { get; set; } = 0;
 
         // enabling this extra property will lock the button if the resources needed arent available for the object provided by the button
@@ -91,6 +93,11 @@ namespace CitySim.UI
             }
 
             if (Locked.Equals(true))
+            {
+                color = Color.DarkGray;
+            }
+
+            if (IsSelected.Equals(true))
             {
                 color = Color.DarkGray;
             }

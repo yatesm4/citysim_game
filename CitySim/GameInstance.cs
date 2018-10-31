@@ -33,6 +33,8 @@ namespace CitySim
             graphics.PreferredBackBufferHeight = 270 * 3;
 
             Content.RootDirectory = "Content";
+
+            this.Window.AllowUserResizing = true;
         }
 
         /// <summary>

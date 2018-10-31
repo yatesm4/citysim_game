@@ -1060,7 +1060,7 @@ namespace CitySim.States
             GSData.PlayerInventory.Workers += 20;
             total_workers += 20;
             GSData.PlayerInventory.Energy += 30;
-            GSData.PlayerInventory.Food += 110;
+            GSData.PlayerInventory.Food += 60;
             // subtract from food the amount of food per worker in total buildings
             Console.WriteLine($"Calc Food: {total_workers} * 2 = {2 * total_workers}");
             Console.WriteLine($"Food: {GSData.PlayerInventory.Food} - {2 * total_workers} = ");
