@@ -130,6 +130,10 @@ namespace CitySim.States
 
         public Tile CurrentlySelectedTile { get; set; }
 
+        public Tile CurrentlyPressedTile { get; set; } = null;
+
+        public Tile RoadStartTile { get; set; } = null;
+
         #endregion
 
         #region COMPONENTS
@@ -314,6 +318,8 @@ namespace CitySim.States
                         // create new tile and pass gamecontent instance and _tileData
                         tileArr_[x, y] = new Tile(_gameContent, _graphicsDevice, t);
                         tileArr_[x, y].Click += Tile_OnClick;
+                        tileArr_[x, y].Pressed += Tile_OnPressed;
+                        tileArr_[x, y].Pressing += Tile_CurrentlyPressed;
 
                         // set the camera's position if this tile is a townhall
                         if (tileArr_[x, y].Object.TypeId.Equals(2) && tileArr_[x, y].Object.ObjectId.Equals(10))
@@ -812,8 +818,9 @@ namespace CitySim.States
                 // if currently hovering a tile (do logic for setting radius highlight for currently selected building, before placing)
                 if (!(CurrentlyHoveredTile is null))
                 {
+
                     // if an object (bld) has been selected from the build menu
-                    if (SelectedObject.ObjectId > 0)
+                    if (SelectedObject.ObjectId > 0 && RoadStartTile is null)
                     {
                         var sel_obj = SelectedObject;
                         // ensure the object selected is a building
@@ -840,6 +847,87 @@ namespace CitySim.States
                                 }
                             }
                         }
+                    }
+                    else if (!(RoadStartTile is null) && !(CurrentlyPressedTile is null) && SelectedObject.ObjectId.Equals(Building.Road_Left().ObjectId) && CurrentlyHoveredTile.TileIndex.Equals(CurrentlyPressedTile.TileIndex))
+                    {
+                        var x_offset = CurrentlyPressedTile.TileIndex.X - RoadStartTile.TileIndex.X;
+                        var y_offset = CurrentlyPressedTile.TileIndex.Y - RoadStartTile.TileIndex.Y;
+                        Console.WriteLine($"X off: {x_offset} | Y off: {y_offset}");
+                        if (x_offset >= 0)
+                        {
+                            for (int x = ((int)RoadStartTile.TileIndex.X);
+                                x < ((int)RoadStartTile.TileIndex.X + x_offset + 1);
+                                x++)
+                            {
+                                _currentMap.Tiles[x, (int) RoadStartTile.TileIndex.Y].IsPreviewingRoad =
+                                    _currentMap.Tiles[x, (int) RoadStartTile.TileIndex.Y].Object.ObjectId <= 0 &&
+                                    _currentMap.Tiles[x, (int)RoadStartTile.TileIndex.Y].IsVisible;
+                                if (x.Equals((int)(RoadStartTile.TileIndex.X + x_offset)))
+                                {
+                                    if (y_offset >= 0)
+                                    {
+                                        for (int y = (int)(RoadStartTile.TileIndex.Y);
+                                            y < (int)(RoadStartTile.TileIndex.Y + y_offset + 1);
+                                            y++)
+                                        {
+                                            _currentMap.Tiles[x, y].IsPreviewingRoad =
+                                                _currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                _currentMap.Tiles[x, y].IsVisible;
+                                        }
+                                    } else if (y_offset < 0)
+                                    {
+                                        for (int y = (int)(RoadStartTile.TileIndex.Y);
+                                            y > (int)(RoadStartTile.TileIndex.Y + y_offset - 1);
+                                            y--)
+                                        {
+                                            _currentMap.Tiles[x, y].IsPreviewingRoad =
+                                                _currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                _currentMap.Tiles[x, y].IsVisible;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if (x_offset < 0)
+                        {
+                            for (int x = ((int)RoadStartTile.TileIndex.X);
+                                x > ((int)RoadStartTile.TileIndex.X + x_offset - 1);
+                                x--)
+                            {
+                                _currentMap.Tiles[x, (int)RoadStartTile.TileIndex.Y].IsPreviewingRoad =
+                                    _currentMap.Tiles[x, (int)RoadStartTile.TileIndex.Y].Object.ObjectId <= 0 &&
+                                    _currentMap.Tiles[x, (int)RoadStartTile.TileIndex.Y].IsVisible;
+                                if (x.Equals((int)(RoadStartTile.TileIndex.X + x_offset)))
+                                {
+                                    if (y_offset >= 0)
+                                    {
+                                        for (int y = (int)(RoadStartTile.TileIndex.Y);
+                                            y < (int)(RoadStartTile.TileIndex.Y + y_offset + 1);
+                                            y++)
+                                        {
+                                            _currentMap.Tiles[x, y].IsPreviewingRoad =
+                                                _currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                _currentMap.Tiles[x, y].IsVisible;
+                                        }
+                                    }
+                                    else if (y_offset < 0)
+                                    {
+                                        for (int y = (int)(RoadStartTile.TileIndex.Y);
+                                            y > (int)(RoadStartTile.TileIndex.Y + y_offset - 1);
+                                            y--)
+                                        {
+                                            _currentMap.Tiles[x, y].IsPreviewingRoad =
+                                                _currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                _currentMap.Tiles[x, y].IsVisible;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        RoadStartTile = null;
                     }
                 }
 
@@ -1122,6 +1210,21 @@ namespace CitySim.States
             Console.WriteLine("Finished Saving Map.");
         }
 
+        private void Tile_CurrentlyPressed(object sender, EventArgs e)
+        {
+            CurrentlyPressedTile = (Tile) sender;
+        }
+
+        private void Tile_OnPressed(object sender, EventArgs e)
+        {
+            CurrentlyPressedTile = (Tile) sender;
+            var sel_obj = SelectedObject;
+            if (sel_obj.ObjectId.Equals(Building.Road_Left().ObjectId))
+            {
+                if(CurrentlyPressedTile.Object.ObjectId <= 0) RoadStartTile = (Tile)sender;
+            }
+        }
+
         private void Tile_OnClick(object sender, EventArgs e)
         {
             // get selected object and clear it
@@ -1141,7 +1244,15 @@ namespace CitySim.States
             _remainingDeleteButtonDelay = _deleteButtonDelay;
             CurrentlySelectedTile = null;
 
+            // reset building delete queue
             DeleteBldgQueue = null;
+
+            // reset road starting tile
+            var rst = RoadStartTile;
+            RoadStartTile = null;
+
+            // reset currently pressed tile
+            CurrentlyPressedTile = null;
 
             // try to place/construct a building
             try
@@ -1195,6 +1306,7 @@ namespace CitySim.States
                         // do random skin math
                         var applied_txt_index = obj.TextureIndex;
 
+                        // apply random skin for residential buildings
                         if (obj.ObjectId.Equals(Building.LowHouse().ObjectId))
                         {
                             applied_txt_index = Enumerable.Range(0, 1)
@@ -1213,8 +1325,11 @@ namespace CitySim.States
                                 .Select(r => new int[] { new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
                             Console.WriteLine($"Applying random texture to elite house: id{applied_txt_index}");
                         }
-
-                        // if exception wasn't thrown by now, apply the building the to the tile
+                        else if (obj.ObjectId.Equals(Building.Road().ObjectId))
+                        {
+                            applied_txt_index = _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y]
+                                .DecideTextureID_NearbyRoadsFactor();
+                        }
                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object = obj;
                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object = obj;
                         _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
@@ -1233,12 +1348,13 @@ namespace CitySim.States
                         GSData.PlayerInventory.Energy -= obj.EnergyUpfront;
                         GSData.PlayerInventory.Food -= obj.FoodUpfront;
 
-                        // now that building is built, loop back through tiles in range
-                        for (int x = ((int)t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
+                        // light up area around powerline
+                        if (obj.ObjectId.Equals(Building.PowerLine().ObjectId))
                         {
-                            for (int y = ((int)t.TileIndex.Y - obj.Range); y < (t.TileIndex.Y + (obj.Range + 1)); y++)
+                            // now that building is built, loop back through tiles in range
+                            for (int x = ((int)t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
                             {
-                                if (obj.ObjectId.Equals(Building.PowerLine().ObjectId))
+                                for (int y = ((int)t.TileIndex.Y - obj.Range); y < (t.TileIndex.Y + (obj.Range + 1)); y++)
                                 {
                                     // set tiles in range to be visible
                                     try
@@ -1298,6 +1414,7 @@ namespace CitySim.States
 
                         GSData.TileData = new List<TileData>();
 
+                        // update current gamestate data of tiles
                         // for each tile in current map,
                         foreach (Tile cmt in _currentMap.Tiles)
                         {
@@ -1305,8 +1422,9 @@ namespace CitySim.States
                             GSData.TileData.Add(cmt.GetTileData());
                         }
                     }
+                    // DISPLAY DELETE BUTTON OVER TILE (TODO REMOVE)
                     // else, if there isn't a selected object but a tile with a building was clicked on
-                    else if(sel_obj.ObjectId.Equals(0) && t.Object.ObjectId >= 0 & t.Object.TypeId.Equals(2))
+                    else if(sel_obj.ObjectId.Equals(0) && t.Object.ObjectId >= 0 & t.Object.TypeId.Equals(2) && RoadStartTile is null)
                     {
                         if (CurrentlySelectedTile != null)
                         {

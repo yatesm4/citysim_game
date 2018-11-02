@@ -61,6 +61,8 @@ namespace CitySim.Objects
 
         public bool IsVisible { get; set; } = false;
         public bool IsGlowing { get; set; } = false;
+        public bool IsPreviewingRoad { get; set; } = false;
+        public Texture2D LastSavedRoadTexture { get; set; } = null;
 
         private MouseState _previousMouseState { get; set; }
 
@@ -69,6 +71,8 @@ namespace CitySim.Objects
         // used to determine when clicked
         public event EventHandler Click;
         public event EventHandler RightClick;
+        public event EventHandler Pressed;
+        public event EventHandler Pressing;
 
         // hitbox for mouse touch
         public Rectangle TouchHitbox
@@ -145,6 +149,7 @@ namespace CitySim.Objects
         {
             // update tile?
             IsGlowing = false;
+            IsPreviewingRoad = false;
 
             var currentMouse = Mouse.GetState();
 
@@ -170,9 +175,17 @@ namespace CitySim.Objects
                 //Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
                 //Console.WriteLine($"Hovering Over Tile: {TileIndex.ToString()}");
 
-                if (currentMouse.LeftButton == ButtonState.Released && _previousMouseState.LeftButton == ButtonState.Pressed)
+                switch (currentMouse.LeftButton)
                 {
-                    Click?.Invoke(this, new EventArgs());
+                    case ButtonState.Pressed when _previousMouseState.LeftButton == ButtonState.Pressed:
+                        if(!(state.CurrentlyPressedTile.TileIndex.Equals(TileIndex))) Pressing?.Invoke(this, new EventArgs());
+                        break;
+                    case ButtonState.Pressed when _previousMouseState.LeftButton == ButtonState.Released:
+                        Pressed?.Invoke(this, new EventArgs());
+                        break;
+                    case ButtonState.Released when _previousMouseState.LeftButton == ButtonState.Pressed:
+                        Click?.Invoke(this, new EventArgs());
+                        break;
                 }
 
                 if (currentMouse.RightButton == ButtonState.Released && _previousMouseState.RightButton == ButtonState.Pressed)
@@ -188,13 +201,96 @@ namespace CitySim.Objects
             _gameState = state;
         }
 
+        public bool[] GetNearbyRoads()
+        {
+            var x = TileIndex.X;
+            var y = TileIndex.Y;
 
+            var left_tile = _gameState.CurrentMap.Tiles[(int)x - 1, (int)y];
+            var right_tile = _gameState.CurrentMap.Tiles[(int)x + 1, (int)y];
+            var top_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y - 1];
+            var bot_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y + 1];
+
+            return new[]
+            {
+                left_tile.IsPreviewingRoad || (left_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
+                                               left_tile.Object.TypeId.Equals(Building.Road_Left().TypeId)),
+
+                right_tile.IsPreviewingRoad || (right_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
+                                                right_tile.Object.TypeId.Equals(Building.Road_Left().TypeId)),
+
+                top_tile.IsPreviewingRoad || (top_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
+                                              top_tile.Object.TypeId.Equals(Building.Road_Left().TypeId)),
+
+                bot_tile.IsPreviewingRoad || (bot_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
+                                              bot_tile.Object.TypeId.Equals(Building.Road_Left().TypeId))
+            };
+        }
+
+        public Texture2D DecideTexture_NearbyRoadsFactor()
+        {
+            var txt_id = DecideTextureID_NearbyRoadsFactor();
+            LastSavedRoadTexture = Content.GetTileTexture(txt_id);
+            return LastSavedRoadTexture;
+        }
+
+        public int DecideTextureID_NearbyRoadsFactor()
+        {
+            // get results factor
+            var f = GetNearbyRoads();
+
+            var txt_id = 26;
+
+            // if all directions (4 Way Intersection)
+            if (f[0] && f[1] && f[2] && f[3])
+            {
+                txt_id = 28;
+            }
+            // if left & right, or left, or right (Straight Road (Left))
+            else if ((f[0] && f[1]) || (f[0] && !(f[1]) && !(f[2]) && !(f[3])) || (f[1] && !(f[0]) && !(f[2]) && !(f[3])))
+            {
+                txt_id = 26;
+            }
+            // if up & down, or up, or down (Straight Road (Right))
+            else if ((f[2] && f[3]) || (f[2] && !(f[0]) && !(f[1]) && !(f[3])) || (f[3] && !(f[0]) && !(f[1]) && !(f[2])))
+            {
+                txt_id = 27;
+            }
+            // if left and up
+            else if (f[0] && f[2])
+            {
+                txt_id = 35;
+            }
+            // if left and down
+            else if (f[0] && f[3])
+            {
+                txt_id = 36;
+            }
+            // if right and up
+            else if (f[1] && f[2])
+            {
+                txt_id = 34;
+            }
+            // if right and down
+            else if (f[1] && f[3])
+            {
+                txt_id = 33;
+            }
+
+            return txt_id;
+        }
 
         // draw
         // - draw tile
         // - draw outline if selected
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
+            // vars to hold nearby road directions
+            var left = false;
+            var right = false;
+            var up = false;
+            var down = false;
+
             // set draw color to orange red if hovered by mouse, otherwise draw normal color
             if (_gameState.CurrentlyHoveredTile == this)
             {
@@ -209,39 +305,40 @@ namespace CitySim.Objects
 
             if (Object.TypeId != 0)
             {
-                if (TerrainId.Equals(2))
+                var txt = Texture;
+
+                // if a building, draw concrete texture on tile
+                if (Object.TypeId.Equals(2) && !(BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(Object.ObjectId)) && !(Object.ObjectId.Equals(Building.PowerLine().ObjectId)) && !(Object.ObjectId.Equals(Building.Windmill().ObjectId)))
                 {
-                    // terrain is water => object is water, so dont render anything over the tile
-                    spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                    txt = Content.GetTileTexture(3);
                 }
-                else if (Object.TypeId.Equals(2) && !(BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(Object.ObjectId)) && !(Object.ObjectId.Equals(Building.PowerLine().ObjectId)) && !(Object.ObjectId.Equals(Building.Windmill().ObjectId)))
+
+                // draw saved texture
+                spriteBatch_.Draw(txt, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                try
                 {
-                    spriteBatch_.Draw(Content.GetTileTexture(3), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
-                    try
+                    // draw tile object
+                    if (IsPreviewingRoad)
+                    {
+                        spriteBatch_.Draw(DecideTexture_NearbyRoadsFactor(), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                    }
+                    else
                     {
                         spriteBatch_.Draw(Content.GetTileTexture(Object.TextureIndex), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
                     }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Error drawing object sprite: " + e.Message);
-                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
-                    try
-                    {
-                        spriteBatch_.Draw(Content.GetTileTexture(Object.TextureIndex), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Error drawing object sprite: " + e.Message);
-                    }
+                    Console.WriteLine("Error drawing object sprite: " + e.Message);
                 }
             }
             else
             {
                 spriteBatch_.Draw(Texture, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                if (IsPreviewingRoad)
+                {
+                    spriteBatch_.Draw(DecideTexture_NearbyRoadsFactor(), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                }
             }
 
             // draw extras ?

@@ -478,8 +478,6 @@ namespace CitySim.UI
             // display inventory icons in hud
             for (int i = 0; i < HUDIconIDs.Length; i++)
             {
-                var e = CurrentIncomeReport.TotalGain[i] - CurrentIncomeReport.TotalLoss[i];
-
                 var icon_id = HUDIconIDs[i];
                 var icon_texture = _content.GetUiTexture(icon_id);
                 var icon_position = icon_start_pos + new Vector2(ResourceCell_Dimension.X * i, 0);

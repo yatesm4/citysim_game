@@ -214,11 +214,15 @@ namespace CitySim.Content
 
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Left", _content)); // 26
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Right", _content)); // 27
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/4_Way_Intersection", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_1", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_2", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_3", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_4", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/4_Way_Intersection", _content)); // 28
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_1", _content)); // 29
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_2", _content)); // 30
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_3", _content)); // 31
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/T_Intersection_4", _content)); // 32
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Corner_1", _content)); // 33
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Corner_2", _content)); // 34
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Corner_3", _content)); // 35 
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Corner_4", _content)); // 36
 
             Console.WriteLine($"Tile Textures: {i}");
         }

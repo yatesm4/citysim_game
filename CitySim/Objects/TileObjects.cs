@@ -617,6 +617,61 @@ namespace CitySim.Objects
             };
         }
 
+        public static Building Road()
+        {
+            var settings = new List<float>()
+            {
+                211, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                11, // object id: 3 = low level house
+                26, // texture index
+                30, // cycle time: 30 seconds
+                2,
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                1, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                0, // energy
+                0 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                5, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                5, // stone
+                0, // workers
+                0, // energy
+                0 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Road"
+            };
+        }
+
         public static Building Road_Left()
         {
             var settings = new List<float>()
