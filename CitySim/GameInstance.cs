@@ -109,8 +109,8 @@ namespace CitySim
                 _nextState = null;
                 if (_currentState is MenuState)
                 {
-                    //MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
-                    //MediaPlayer.IsRepeating = true;
+                    MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
+                    MediaPlayer.IsRepeating = true;
                 }
             }
 

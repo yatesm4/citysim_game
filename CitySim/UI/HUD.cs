@@ -88,7 +88,7 @@ namespace CitySim.UI
 
         protected List<int> SelectionCells_BldgDeco_Indexes => new List<int>()
         {
-            30, 31, 32, 33, 34, 35, 36
+            30
         };
         protected List<Texture2D> SelectionCells_BldgDeco_Textures { get; set; } = new List<Texture2D>();
         protected List<Button> SelectionCells_BldgDeco_Btns { get; set; } = new List<Button>();

@@ -660,7 +660,7 @@ namespace CitySim.Objects
                 0, // wood
                 0, // coal
                 0, // iron
-                5, // stone
+                0, // stone
                 0, // workers
                 0, // energy
                 0 // food

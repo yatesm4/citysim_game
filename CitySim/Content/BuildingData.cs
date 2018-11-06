@@ -43,13 +43,7 @@ namespace CitySim.Content
                     { 205, Building.Windmill() },
                     { 101, Building.MedHouse() },
                     { 102, Building.EliteHouse() },
-                    { 300, Building.Road_Left() },
-                    { 301, Building.Road_Right() },
-                    { 302, Building.Road_4_Way_Intersection() },
-                    { 303, Building.Road_T_Intersection_1() },
-                    { 304, Building.Road_T_Intersection_2() },
-                    { 305, Building.Road_T_Intersection_3() },
-                    { 306, Building.Road_T_Intersection_4() }
+                    { 300, Building.Road() }
                 };
             }
         }

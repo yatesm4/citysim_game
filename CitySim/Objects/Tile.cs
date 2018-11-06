@@ -213,17 +213,17 @@ namespace CitySim.Objects
 
             return new[]
             {
-                left_tile.IsPreviewingRoad || (left_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
-                                               left_tile.Object.TypeId.Equals(Building.Road_Left().TypeId)),
+                left_tile.IsPreviewingRoad || (left_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                               left_tile.Object.TypeId.Equals(Building.Road().TypeId)),
 
-                right_tile.IsPreviewingRoad || (right_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
-                                                right_tile.Object.TypeId.Equals(Building.Road_Left().TypeId)),
+                right_tile.IsPreviewingRoad || (right_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                                right_tile.Object.TypeId.Equals(Building.Road().TypeId)),
 
-                top_tile.IsPreviewingRoad || (top_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
-                                              top_tile.Object.TypeId.Equals(Building.Road_Left().TypeId)),
+                top_tile.IsPreviewingRoad || (top_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                              top_tile.Object.TypeId.Equals(Building.Road().TypeId)),
 
-                bot_tile.IsPreviewingRoad || (bot_tile.Object.ObjectId.Equals(Building.Road_Left().ObjectId) &&
-                                              bot_tile.Object.TypeId.Equals(Building.Road_Left().TypeId))
+                bot_tile.IsPreviewingRoad || (bot_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                              bot_tile.Object.TypeId.Equals(Building.Road().TypeId))
             };
         }
 
@@ -239,42 +239,74 @@ namespace CitySim.Objects
             // get results factor
             var f = GetNearbyRoads();
 
+            var bool_cnt = f.Count(b => b);
+
             var txt_id = 26;
 
-            // if all directions (4 Way Intersection)
-            if (f[0] && f[1] && f[2] && f[3])
+            switch (bool_cnt)
             {
-                txt_id = 28;
-            }
-            // if left & right, or left, or right (Straight Road (Left))
-            else if ((f[0] && f[1]) || (f[0] && !(f[1]) && !(f[2]) && !(f[3])) || (f[1] && !(f[0]) && !(f[2]) && !(f[3])))
-            {
-                txt_id = 26;
-            }
-            // if up & down, or up, or down (Straight Road (Right))
-            else if ((f[2] && f[3]) || (f[2] && !(f[0]) && !(f[1]) && !(f[3])) || (f[3] && !(f[0]) && !(f[1]) && !(f[2])))
-            {
-                txt_id = 27;
-            }
-            // if left and up
-            else if (f[0] && f[2])
-            {
-                txt_id = 35;
-            }
-            // if left and down
-            else if (f[0] && f[3])
-            {
-                txt_id = 36;
-            }
-            // if right and up
-            else if (f[1] && f[2])
-            {
-                txt_id = 34;
-            }
-            // if right and down
-            else if (f[1] && f[3])
-            {
-                txt_id = 33;
+                case 1:
+                    // if left & right, or left, or right (Straight Road (Left))
+                    if (!(f[3] || f[2]))
+                    {
+                        txt_id = 26;
+                    }
+                    // if up & down, or up, or down (Straight Road (Right))
+                    else if (!(f[0] || f[1]))
+                    {
+                        txt_id = 27;
+                    }
+                    break;
+                case 2:
+                    // if left and up
+                    if (f[0] && f[2] && (bool_cnt == 2))
+                    {
+                        txt_id = 35;
+                    }
+                    // if left and down
+                    else if (f[0] && f[3])
+                    {
+                        txt_id = 36;
+                    }
+                    // if right and up
+                    else if (f[1] && f[2])
+                    {
+                        txt_id = 34;
+                    }
+                    // if right and down
+                    else if (f[1] && f[3])
+                    {
+                        txt_id = 33;
+                    }
+                    // if left & right, or left, or right (Straight Road (Left))
+                    else if (!(f[3] || f[2]))
+                    {
+                        txt_id = 26;
+                    }
+                    // if up & down, or up, or down (Straight Road (Right))
+                    else if (!(f[0] || f[1]))
+                    {
+                        txt_id = 27;
+                    }
+                    break;
+                case 3:
+                    if (f[0] && f[1] && f[2])
+                    {
+                        txt_id = 30;
+                    } else if (f[0] && f[1] && f[3])
+                    {
+                        txt_id = 32;
+                    } else if (f[2] && f[3] && f[0])
+                    {
+                        txt_id = 29;
+                    } else if (f[2] && f[3] && f[1])
+                    {
+                        txt_id = 31;
+                    }
+                    break;
+                case 4:
+                    txt_id = 28;
+                    break;
             }
 
             return txt_id;
@@ -311,6 +343,16 @@ namespace CitySim.Objects
                 if (Object.TypeId.Equals(2) && !(BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(Object.ObjectId)) && !(Object.ObjectId.Equals(Building.PowerLine().ObjectId)) && !(Object.ObjectId.Equals(Building.Windmill().ObjectId)))
                 {
                     txt = Content.GetTileTexture(3);
+                }
+
+                if (Object.TypeId.Equals(2) && Object.ObjectId == Building.Road().ObjectId)
+                {
+                    txt = DecideTexture_NearbyRoadsFactor();
+                    var txt_index = DecideTextureID_NearbyRoadsFactor();
+                    if (txt_index != Object.TextureIndex)
+                    {
+                        Object.TextureIndex = txt_index;
+                    }
                 }
 
                 // draw saved texture

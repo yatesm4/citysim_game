@@ -134,6 +134,8 @@ namespace CitySim.States
 
         public Tile RoadStartTile { get; set; } = null;
 
+        public int RoadPlacementCount { get; set; } = 0;
+
         #endregion
 
         #region COMPONENTS
@@ -848,11 +850,16 @@ namespace CitySim.States
                             }
                         }
                     }
-                    else if (!(RoadStartTile is null) && !(CurrentlyPressedTile is null) && SelectedObject.ObjectId.Equals(Building.Road_Left().ObjectId) && CurrentlyHoveredTile.TileIndex.Equals(CurrentlyPressedTile.TileIndex))
+                    // else, if a road tile is selected and a "road start" tile has been selected by clicking on a tile but not letting go and dragging
+                    else if (!(RoadStartTile is null) && !(CurrentlyPressedTile is null) && SelectedObject.ObjectId.Equals(Building.Road().ObjectId) && CurrentlyHoveredTile.TileIndex.Equals(CurrentlyPressedTile.TileIndex))
                     {
+                        RoadPlacementCount = 0;
+
+                        // get the x and y offsets from the currently pressed tile and the starting pressed tile
                         var x_offset = CurrentlyPressedTile.TileIndex.X - RoadStartTile.TileIndex.X;
                         var y_offset = CurrentlyPressedTile.TileIndex.Y - RoadStartTile.TileIndex.Y;
-                        Console.WriteLine($"X off: {x_offset} | Y off: {y_offset}");
+
+                        // calculate the highlighted tiles for drawing
                         if (x_offset >= 0)
                         {
                             for (int x = ((int)RoadStartTile.TileIndex.X);
@@ -924,6 +931,9 @@ namespace CitySim.States
                                 }
                             }
                         }
+
+                        RoadPlacementCount = _currentMap.Tiles.OfType<Tile>().ToList()
+                            .FindAll(i => i.IsPreviewingRoad == true).Count();
                     }
                     else
                     {
@@ -1219,7 +1229,7 @@ namespace CitySim.States
         {
             CurrentlyPressedTile = (Tile) sender;
             var sel_obj = SelectedObject;
-            if (sel_obj.ObjectId.Equals(Building.Road_Left().ObjectId))
+            if (sel_obj.ObjectId.Equals(Building.Road().ObjectId))
             {
                 if(CurrentlyPressedTile.Object.ObjectId <= 0) RoadStartTile = (Tile)sender;
             }
@@ -1252,6 +1262,7 @@ namespace CitySim.States
             RoadStartTile = null;
 
             // reset currently pressed tile
+            var cpt = CurrentlyPressedTile;
             CurrentlyPressedTile = null;
 
             // try to place/construct a building
@@ -1293,15 +1304,36 @@ namespace CitySim.States
 
                         // check balance to see if player can afford building
                         bool canBuild = true;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Gold >= obj.GoldUpfront;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Wood >= obj.WoodUpfront;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Coal >= obj.CoalUpfront;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Iron >= obj.IronUpfront;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Stone >= obj.StoneUpfront;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Workers >= obj.WorkersUpfront;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Energy >= obj.EnergyUpfront;
-                        if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Food >= obj.FoodUpfront;
-                        if (canBuild.Equals(false)) throw new Exception("Can't afford to place!");
+
+                        int total_gold_for_roads = 0;
+
+                        if (rst != null && obj.ObjectId.Equals(Building.Road().ObjectId))
+                        {
+                            var ref_obj = Building.Road();
+                            var i = RoadPlacementCount;
+
+                            Console.WriteLine($"Placing {i} roads...");
+
+                            for (int j = 0; j < i; j++)
+                            {
+                                total_gold_for_roads += 5;
+                            }
+
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Gold >= total_gold_for_roads;
+                            if (canBuild.Equals(false)) throw new Exception("Can't afford to place!");
+                        }
+                        else
+                        {
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Gold >= obj.GoldUpfront;
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Wood >= obj.WoodUpfront;
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Coal >= obj.CoalUpfront;
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Iron >= obj.IronUpfront;
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Stone >= obj.StoneUpfront;
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Workers >= obj.WorkersUpfront;
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Energy >= obj.EnergyUpfront;
+                            if (canBuild.Equals(true)) canBuild = GSData.PlayerInventory.Food >= obj.FoodUpfront;
+                            if (canBuild.Equals(false)) throw new Exception("Can't afford to place!");
+                        }
 
                         // do random skin math
                         var applied_txt_index = obj.TextureIndex;
@@ -1338,15 +1370,158 @@ namespace CitySim.States
                         _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].TileData.Object.TextureIndex =
                             applied_txt_index;
 
+                        if (rst != null && obj.ObjectId.Equals(Building.Road().ObjectId))
+                        {
+
+                            // get the x and y offsets from the currently pressed tile and the starting pressed tile
+                            var x_offset = cpt.TileIndex.X - rst.TileIndex.X;
+                            var y_offset = cpt.TileIndex.Y - rst.TileIndex.Y;
+
+                            // calculate the highlighted tiles for drawing
+                            if (x_offset >= 0)
+                            {
+                                for (int x = ((int)rst.TileIndex.X);
+                                    x < ((int)rst.TileIndex.X + x_offset + 1);
+                                    x++)
+                                {
+                                    _currentMap.Tiles[x, (int) rst.TileIndex.Y].IsPreviewingRoad = false;
+                                    if (_currentMap.Tiles[x, (int) rst.TileIndex.Y].Object.ObjectId <= 0 &&
+                                        _currentMap.Tiles[x, (int) rst.TileIndex.Y].IsVisible)
+                                    {
+                                        _currentMap.Tiles[x, (int) rst.TileIndex.Y].Object = obj;
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].TileData.Object = obj;
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].Object.TextureIndex =
+                                            applied_txt_index;
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].TileData.Object.TextureIndex =
+                                            applied_txt_index;
+                                    }
+                                    if (x.Equals((int)(rst.TileIndex.X + x_offset)))
+                                    {
+                                        if (y_offset >= 0)
+                                        {
+                                            for (int y = (int)(rst.TileIndex.Y);
+                                                y < (int)(rst.TileIndex.Y + y_offset + 1);
+                                                y++)
+                                            {
+                                                _currentMap.Tiles[x, y].IsPreviewingRoad = false;
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                    _currentMap.Tiles[x, y].IsVisible)
+                                                {
+                                                    _currentMap.Tiles[x, y].Object = obj;
+                                                    _currentMap.Tiles[x, y].TileData.Object = obj;
+                                                    _currentMap.Tiles[x, y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
+                                                    _currentMap.Tiles[x, y].Object.TextureIndex =
+                                                        applied_txt_index;
+                                                    _currentMap.Tiles[x, y].TileData.Object.TextureIndex =
+                                                        applied_txt_index;
+                                                }
+                                            }
+                                        }
+                                        else if (y_offset < 0)
+                                        {
+                                            for (int y = (int)(rst.TileIndex.Y);
+                                                y > (int)(rst.TileIndex.Y + y_offset - 1);
+                                                y--)
+                                            {
+                                                _currentMap.Tiles[x, y].IsPreviewingRoad = false;
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                    _currentMap.Tiles[x, y].IsVisible)
+                                                {
+                                                    _currentMap.Tiles[x, y].Object = obj;
+                                                    _currentMap.Tiles[x, y].TileData.Object = obj;
+                                                    _currentMap.Tiles[x, y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
+                                                    _currentMap.Tiles[x, y].Object.TextureIndex =
+                                                        applied_txt_index;
+                                                    _currentMap.Tiles[x, y].TileData.Object.TextureIndex =
+                                                        applied_txt_index;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if (x_offset < 0)
+                            {
+                                for (int x = ((int)rst.TileIndex.X);
+                                    x > ((int)rst.TileIndex.X + x_offset - 1);
+                                    x--)
+                                {
+                                    _currentMap.Tiles[x, (int)rst.TileIndex.Y].IsPreviewingRoad = false;
+                                    if (_currentMap.Tiles[x, (int)rst.TileIndex.Y].Object.ObjectId <= 0 &&
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].IsVisible)
+                                    {
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].Object = obj;
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].TileData.Object = obj;
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].Object.TextureIndex =
+                                            applied_txt_index;
+                                        _currentMap.Tiles[x, (int)rst.TileIndex.Y].TileData.Object.TextureIndex =
+                                            applied_txt_index;
+                                    }
+                                    if (x.Equals((int)(rst.TileIndex.X + x_offset)))
+                                    {
+                                        if (y_offset >= 0)
+                                        {
+                                            for (int y = (int)(rst.TileIndex.Y);
+                                                y < (int)(rst.TileIndex.Y + y_offset + 1);
+                                                y++)
+                                            {
+                                                _currentMap.Tiles[x, y].IsPreviewingRoad = false;
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                    _currentMap.Tiles[x, y].IsVisible)
+                                                {
+                                                    _currentMap.Tiles[x, y].Object = obj;
+                                                    _currentMap.Tiles[x, y].TileData.Object = obj;
+                                                    _currentMap.Tiles[x, y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
+                                                    _currentMap.Tiles[x, y].Object.TextureIndex =
+                                                        applied_txt_index;
+                                                    _currentMap.Tiles[x, y].TileData.Object.TextureIndex =
+                                                        applied_txt_index;
+                                                }
+                                            }
+                                        }
+                                        else if (y_offset < 0)
+                                        {
+                                            for (int y = (int)(rst.TileIndex.Y);
+                                                y > (int)(rst.TileIndex.Y + y_offset - 1);
+                                                y--)
+                                            {
+                                                _currentMap.Tiles[x, y].IsPreviewingRoad = false;
+                                                if (_currentMap.Tiles[x, y].Object.ObjectId <= 0 &&
+                                                    _currentMap.Tiles[x, y].IsVisible)
+                                                {
+                                                    _currentMap.Tiles[x, y].Object = obj;
+                                                    _currentMap.Tiles[x, y].TileData.Object = obj;
+                                                    _currentMap.Tiles[x, y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
+                                                    _currentMap.Tiles[x, y].Object.TextureIndex =
+                                                        applied_txt_index;
+                                                    _currentMap.Tiles[x, y].TileData.Object.TextureIndex =
+                                                        applied_txt_index;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // take away values from inventory
-                        GSData.PlayerInventory.Gold -= obj.GoldUpfront;
-                        GSData.PlayerInventory.Wood -= obj.WoodUpfront;
-                        GSData.PlayerInventory.Coal -= obj.CoalUpfront;
-                        GSData.PlayerInventory.Iron -= obj.IronUpfront;
-                        GSData.PlayerInventory.SetStone((GSData.PlayerInventory.Stone -= obj.StoneUpfront), this, "Tile_OnClick");
-                        GSData.PlayerInventory.Workers -= obj.WorkersUpfront;
-                        GSData.PlayerInventory.Energy -= obj.EnergyUpfront;
-                        GSData.PlayerInventory.Food -= obj.FoodUpfront;
+                        if (obj.ObjectId.Equals(Building.Road().ObjectId))
+                        {
+                            GSData.PlayerInventory.Gold -= total_gold_for_roads;
+                        }
+                        else
+                        {
+                            GSData.PlayerInventory.Gold -= obj.GoldUpfront;
+                            GSData.PlayerInventory.Wood -= obj.WoodUpfront;
+                            GSData.PlayerInventory.Coal -= obj.CoalUpfront;
+                            GSData.PlayerInventory.Iron -= obj.IronUpfront;
+                            GSData.PlayerInventory.SetStone((GSData.PlayerInventory.Stone -= obj.StoneUpfront), this, "Tile_OnClick");
+                            GSData.PlayerInventory.Workers -= obj.WorkersUpfront;
+                            GSData.PlayerInventory.Energy -= obj.EnergyUpfront;
+                            GSData.PlayerInventory.Food -= obj.FoodUpfront;
+                        }
 
                         // light up area around powerline
                         if (obj.ObjectId.Equals(Building.PowerLine().ObjectId))
@@ -1419,6 +1594,15 @@ namespace CitySim.States
                         foreach (Tile cmt in _currentMap.Tiles)
                         {
                             // add its tile data to list
+                            if (cmt.Object != null)
+                            {
+                                if (cmt.Object.ObjectId == Building.Road().ObjectId)
+                                {
+                                    cmt.ObjectTexture = cmt.DecideTexture_NearbyRoadsFactor();
+                                    cmt.Object.TextureIndex = cmt.DecideTextureID_NearbyRoadsFactor();
+                                    cmt.TileData.Object.TextureIndex = cmt.Object.TextureIndex;
+                                }
+                            }
                             GSData.TileData.Add(cmt.GetTileData());
                         }
                     }
@@ -1436,6 +1620,16 @@ namespace CitySim.States
                         else
                         {
                             _displayDeleteBldgBtn = true;
+                        }
+
+                        if (t.Object.ObjectId == Building.Road().ObjectId)
+                        {
+                            Console.WriteLine("Nearby roads for road: ");
+                            var nrby = t.GetNearbyRoads();
+                            Console.WriteLine($"Left    : {nrby[0].ToString()}");
+                            Console.WriteLine($"Right   : {nrby[1].ToString()}");
+                            Console.WriteLine($"Up      : {nrby[2].ToString()}");
+                            Console.WriteLine($"Down    : {nrby[3].ToString()}");
                         }
                     }
                 }
@@ -1694,7 +1888,6 @@ namespace CitySim.States
                 if (_displayDeleteBldgBtn.Equals(true))
                 {
                     DeleteBldgButton.Position = _deleteBldgBtnPos;
-                    Console.WriteLine($"Displaying delete btn at {DeleteBldgButton.Position}");
                     DeleteBldgButton.Draw(gameTime, spriteBatch);
                 }
 
