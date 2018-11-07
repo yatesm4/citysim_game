@@ -141,6 +141,8 @@ namespace CitySim.States
         #region COMPONENTS
         public List<Component> Components { get; set; } = new List<Component>();
 
+        public HUD GameHUD { get; set; }
+
         public TileObject SelectedObject { get; set; } = new TileObject();
 
         public Tile CurrentlyHoveredTile { get; set; }
@@ -149,7 +151,6 @@ namespace CitySim.States
         private const float _deleteButtonDelay = 10; // seconds
         private float _remainingDeleteButtonDelay = _deleteButtonDelay;
         private bool _isDeleteBldgBtnDisplayed = false;
-        private bool _displayDeleteBldgBtn = false;
         private Vector2 _deleteBldgBtnPos;
         private Tile DeleteBldgQueue { get; set; }
         #endregion
@@ -234,14 +235,8 @@ namespace CitySim.States
 
         public async void LoadHUD()
         {
-            Components.Add(new HUD(_graphicsDevice, _gameContent));
-
-            DeleteBldgButton = new Button(_gameContent.GetUiTexture(23), _font)
-            {
-                Position = new Vector2(),
-                HoverColor = Color.Red
-            };
-            DeleteBldgButton.Click += DeleteBldgButton_Click;
+            GameHUD = new HUD(_graphicsDevice, _gameContent);
+            Components.Add(GameHUD);
         }
 
         public void InitGameStateData()
@@ -851,6 +846,7 @@ namespace CitySim.States
                         }
                     }
                     // else, if a road tile is selected and a "road start" tile has been selected by clicking on a tile but not letting go and dragging
+                    // do some road drawing logic
                     else if (!(RoadStartTile is null) && !(CurrentlyPressedTile is null) && SelectedObject.ObjectId.Equals(Building.Road().ObjectId) && CurrentlyHoveredTile.TileIndex.Equals(CurrentlyPressedTile.TileIndex))
                     {
                         RoadPlacementCount = 0;
@@ -946,7 +942,6 @@ namespace CitySim.States
                 {
                     c.Update(gameTime, this);
                 }
-                if (_displayDeleteBldgBtn.Equals(true)) DeleteBldgButton.Update(gameTime, this);;
 
                 // update the camera (comora)
                 _camera.Update(gameTime);
@@ -960,18 +955,6 @@ namespace CitySim.States
                     // update gamestate data and reset timer
                     Task.Run(() => UpdateGameState(gameTime));
                     _remainingDelay = _timeCycleDelay;
-                }
-
-                if (_displayDeleteBldgBtn)
-                {
-                    _remainingDeleteButtonDelay -= timer;
-
-                    if (_remainingDeleteButtonDelay <= 0)
-                    {
-                        _displayDeleteBldgBtn = false;
-                        _remainingDeleteButtonDelay = _deleteButtonDelay;
-                        CurrentlySelectedTile = null;
-                    }
                 }
             }
             else
@@ -1237,22 +1220,22 @@ namespace CitySim.States
 
         private void Tile_OnClick(object sender, EventArgs e)
         {
-            // get selected object and clear it
-            var sel_obj = SelectedObject;
-            SelectedObject = new TileObject();
 
             // get mouse data
             var msp = Mouse.GetState().Position;
             var mp = new Vector2(msp.X, msp.Y);
+            var mr = new Rectangle(msp.X, msp.Y, 1, 1);
+            if (mr.Intersects(GameHUD.DisplayRect)) return;
+
+            // get selected object and clear it
+            var sel_obj = SelectedObject;
+            SelectedObject = new TileObject();
 
             // get the tile clicked on
             Tile t = (Tile)sender;
             Console.WriteLine($"Tile clicked: {t.TileIndex}");
 
-            // reset delete bldg button due to click
-            _displayDeleteBldgBtn = false;
-            _remainingDeleteButtonDelay = _deleteButtonDelay;
-            CurrentlySelectedTile = null;
+            CurrentlySelectedTile = t;
 
             // reset building delete queue
             DeleteBldgQueue = null;
@@ -1606,21 +1589,8 @@ namespace CitySim.States
                             GSData.TileData.Add(cmt.GetTileData());
                         }
                     }
-                    // DISPLAY DELETE BUTTON OVER TILE (TODO REMOVE)
-                    // else, if there isn't a selected object but a tile with a building was clicked on
                     else if(sel_obj.ObjectId.Equals(0) && t.Object.ObjectId >= 0 & t.Object.TypeId.Equals(2) && RoadStartTile is null)
                     {
-                        if (CurrentlySelectedTile != null)
-                        {
-                            if (CurrentlySelectedTile.TileIndex != t.TileIndex)
-                            {
-                                _displayDeleteBldgBtn = true;
-                            }
-                        }
-                        else
-                        {
-                            _displayDeleteBldgBtn = true;
-                        }
 
                         if (t.Object.ObjectId == Building.Road().ObjectId)
                         {
@@ -1644,29 +1614,18 @@ namespace CitySim.States
                 SelectedObject = sel_obj;
                 //GSData.PlayerInventory = prev_inv;
             }
-
-            if (_displayDeleteBldgBtn.Equals(true))
-            {
-                _deleteBldgBtnPos = mp + new Vector2(-(DeleteBldgButton.Rectangle.Width / 2), -(DeleteBldgButton.Rectangle.Height));
-                CurrentlySelectedTile = t;
-                DeleteBldgQueue = t;
-                _remainingDeleteButtonDelay = _deleteButtonDelay;
-            }
         }
 
-        private void DeleteBldgButton_Click(object sender, EventArgs e)
+        public void DeleteBldgButton_Click()
         {
-            if (DeleteBldgQueue is null) return;
+            Console.WriteLine("Deleting building..");
 
-            // reset delete bldg btn
-            _displayDeleteBldgBtn = false;
-            _remainingDeleteButtonDelay = _deleteButtonDelay;
-            CurrentlySelectedTile = null;
+            if (CurrentlySelectedTile is null) return;
 
             // delete a building
             foreach (Tile t in _currentMap.Tiles)
             {
-                if (t.TileIndex == DeleteBldgQueue.TileIndex)
+                if (t.TileIndex == CurrentlySelectedTile.TileIndex)
                 {
                     t.Object = new TileObject();
                     t.TileData.Object = new TileObject();
@@ -1679,7 +1638,7 @@ namespace CitySim.States
                 }
             }
 
-            DeleteBldgQueue = null;
+            CurrentlySelectedTile = null;
         }
         #endregion
 
@@ -1883,12 +1842,6 @@ namespace CitySim.States
                             }
                         }
                     }
-                }
-
-                if (_displayDeleteBldgBtn.Equals(true))
-                {
-                    DeleteBldgButton.Position = _deleteBldgBtnPos;
-                    DeleteBldgButton.Draw(gameTime, spriteBatch);
                 }
 
                 // draw cursor over UI elements !!

@@ -167,6 +167,8 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_T_Intersection_3", _content)); // 35
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_T_Intersection_4", _content)); // 36
 
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Panel_DisplayInfo", _content)); // 37
+
             Console.WriteLine($"Ui Textures: {i}");
         }
 
