@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace CitySim.Objects
 {
@@ -77,11 +78,16 @@ namespace CitySim.Objects
         // - takes list of construction / on-purchase fees (int)
         public Building(List<float> settings_, List<int> costs_, List<int> outputs_, List<int> upfronts_)
         {
+            SetProperties(settings_, costs_, outputs_, upfronts_);
+        }
+
+        public void SetProperties(List<float> settings_, List<int> costs_, List<int> outputs_, List<int> upfronts_)
+        {
             // set tileobject properties
             Id = (int)settings_[0];
             TypeId = (int)settings_[1];
             ObjectId = (int)settings_[2];
-            TextureIndex = (int) settings_[3];
+            TextureIndex = (int)settings_[3];
             CycleTime = settings_[4];
             Range = (int)settings_[5];
 
@@ -115,6 +121,8 @@ namespace CitySim.Objects
             EnergyUpfront = upfronts_[6];
             FoodUpfront = upfronts_[7];
         }
+
+        #region GENERATE BUILDINGS FACTORY METHODS
 
         // construct a log cabin
         public static Building LogCabin()
@@ -225,174 +233,6 @@ namespace CitySim.Objects
             return new Building(settings, costs, outputs, upfronts)
             {
                 Name = "Farm"
-            };
-        }
-
-        // construct a low level house
-        public static Building LowHouse()
-        {
-            var settings = new List<float>()
-            {
-                203, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                3, // object id: 3 = low level house
-                11, // texture index
-                30, // cycle time: 30 seconds
-                2, 
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                1, // energy
-                4 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                6, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                2, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                15, // gold
-                10, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                1, // energy
-                4 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Low Residential Home"
-            };
-        }
-
-        // construct a medium level house
-        public static Building MedHouse()
-        {
-            var settings = new List<float>()
-            {
-                207, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                7, // object id: 7, mid level house
-                20, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                4, // energy
-                12 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                8, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                6, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                40, // gold
-                20, // wood
-                0, // coal
-                0, // iron
-                10, // stone
-                0, // workers
-                4, // energy
-                12 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Med Residential Home"
-            };
-        }
-
-        // construct a medium level house
-        public static Building EliteHouse()
-        {
-            var settings = new List<float>()
-            {
-                208, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                8, // object id: 8, elite level house
-                23, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                10, // energy
-                24 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                15, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                15, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                150, // gold
-                100, // wood
-                0, // coal
-                50, // iron
-                35, // stone
-                0, // workers
-                10, // energy
-                24 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Elite Residential Home"
             };
         }
 
@@ -1054,6 +894,195 @@ namespace CitySim.Objects
             return new Building(settings, costs, outputs, upfronts)
             {
                 Name = "Road - T Xing (4)"
+            };
+        }
+
+        #endregion
+
+        public void Update(GameTime gameTime)
+        {
+
+        }
+    }
+
+    public class Residence : Building
+    {
+        public List<Resident> Residents = new List<Resident>();
+
+        public Residence(List<float> settings_, List<int> costs_, List<int> outputs_, List<int> upfronts_) : base(settings_, costs_, outputs_, upfronts_)
+        {
+            // add resident objects to residence
+            for (int i = 0; i < WorkersOutput; i++)
+            {
+                Residents.Add(new Resident());
+            }
+        }
+
+        // construct a low level house
+        public static Residence LowHouse()
+        {
+            var settings = new List<float>()
+            {
+                203, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                3, // object id: 3 = low level house
+                11, // texture index
+                30, // cycle time: 30 seconds
+                2,
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                1, // energy
+                4 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                6, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                2, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                15, // gold
+                10, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                1, // energy
+                4 // food
+            };
+
+            return new Residence(settings, costs, outputs, upfronts)
+            {
+                Name = "Low Residential Home"
+            };
+        }
+
+        // construct a medium level house
+        public static Residence MedHouse()
+        {
+            var settings = new List<float>()
+            {
+                207, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                7, // object id: 7, mid level house
+                20, // texture index
+                30, // cycle time: 30 seconds
+                2,
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                4, // energy
+                12 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                8, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                6, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                40, // gold
+                20, // wood
+                0, // coal
+                0, // iron
+                10, // stone
+                0, // workers
+                4, // energy
+                12 // food
+            };
+
+            return new Residence(settings, costs, outputs, upfronts)
+            {
+                Name = "Med Residential Home"
+            };
+        }
+
+        // construct a medium level house
+        public static Residence EliteHouse()
+        {
+            var settings = new List<float>()
+            {
+                208, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                8, // object id: 8, elite level house
+                23, // texture index
+                30, // cycle time: 30 seconds
+                2,
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                10, // energy
+                24 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                15, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                15, // workers
+                0, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                150, // gold
+                100, // wood
+                0, // coal
+                50, // iron
+                35, // stone
+                0, // workers
+                10, // energy
+                24 // food
+            };
+
+            return new Residence(settings, costs, outputs, upfronts)
+            {
+                Name = "Elite Residential Home"
             };
         }
 

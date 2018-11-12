@@ -15,15 +15,16 @@ namespace CitySim.Content
             {
                 return new Dictionary<int, Building>()
                 {
-                    {1, Building.LogCabin() },
-                    {2, Building.Farm() },
-                    {3, Building.LowHouse() },
-                    {4, Building.Quarry() },
-                    {5, Building.PowerLine() },
-                    {6, Building.Windmill() },
-                    {7, Building.MedHouse() },
-                    {8, Building.EliteHouse() },
-                    {10, Building.TownHall() }
+                    {1, Building.LogCabin()},
+                    {2, Building.Farm()},
+                    {3, Residence.LowHouse()},
+                    {4, Building.Quarry()},
+                    {5, Building.PowerLine()},
+                    {6, Building.Windmill()},
+                    {7, Residence.MedHouse()},
+                    {8, Residence.EliteHouse()},
+                    {10, Building.TownHall()},
+                    {11, Building.Road() }
                 };
             }
         }
@@ -34,16 +35,16 @@ namespace CitySim.Content
             {
                 return new Dictionary<int, Building>()
                 {
-                    { 200, Building.TownHall() },
-                    { 100, Building.LowHouse() },
-                    { 201, Building.Farm() },
-                    { 202, Building.LogCabin() },
-                    { 203, Building.Quarry() },
-                    { 204, Building.PowerLine() },
-                    { 205, Building.Windmill() },
-                    { 101, Building.MedHouse() },
-                    { 102, Building.EliteHouse() },
-                    { 300, Building.Road() }
+                    {200, Building.TownHall()},
+                    {100, Residence.LowHouse()},
+                    {201, Building.Farm()},
+                    {202, Building.LogCabin()},
+                    {203, Building.Quarry()},
+                    {204, Building.PowerLine()},
+                    {205, Building.Windmill()},
+                    {101, Residence.MedHouse()},
+                    {102, Residence.EliteHouse()},
+                    {300, Building.Road()}
                 };
             }
         }
@@ -57,9 +58,9 @@ namespace CitySim.Content
             {
                 return new Dictionary<int, List<int>>()
                 {
-                    { 1, new List<int>(){2}}, // log cabin
-                    { 2, new List<int>(){10}}, // farm
-                    { 4, new List<int>(){4,5,6}} // quarry
+                    {1, new List<int>() {2}}, // log cabin
+                    {2, new List<int>() {10}}, // farm
+                    {4, new List<int>() {4, 5, 6}} // quarry
                 };
             }
         }
@@ -70,11 +71,11 @@ namespace CitySim.Content
             {
                 return new Dictionary<int, string>()
                 {
-                    { 2, "Wood" },
-                    { 10, "Food" },
-                    { 4, "Stone" },
-                    { 5, "Coal" },
-                    { 6, "Iron" }
+                    {2, "Wood"},
+                    {10, "Food"},
+                    {4, "Stone"},
+                    {5, "Coal"},
+                    {6, "Iron"}
                 };
             }
         }
@@ -85,13 +86,28 @@ namespace CitySim.Content
             {
                 return new Dictionary<int, object[]>()
                 {
-                    { 2, new Object[]{"Wood", 2}},
-                    { 10, new Object[]{"Food", 5}},
-                    { 4, new Object[]{"Stone", 4}},
-                    { 5, new Object[]{"Coal", 4}},
-                    { 6, new Object[]{"Iron", 4}}
+                    {2, new Object[] {"Wood", 2}},
+                    {10, new Object[] {"Food", 5}},
+                    {4, new Object[] {"Stone", 4}},
+                    {5, new Object[] {"Coal", 4}},
+                    {6, new Object[] {"Iron", 4}}
                 };
             }
+        }
+
+        public static bool ValidBuilding(TileObject obj)
+        {
+            return ValidObj(obj) && obj.TypeId == 2;
+        }
+
+        public static bool ValidResource(TileObject obj)
+        {
+            return ValidObj(obj) && obj.TypeId == 1;
+        }
+
+        public static bool ValidObj(TileObject obj)
+        {
+            return obj != null && obj.ObjectId > 0;
         }
     }
 }

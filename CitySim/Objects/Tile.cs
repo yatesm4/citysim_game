@@ -79,7 +79,6 @@ namespace CitySim.Objects
         {
             get { return new Rectangle((int) Position.X + 16, (int) Position.Y + (83 * 2), 18 * 2, 10 * 2); }
         }
-
         // tile position
         public Vector2 Position { get; set; } = new Vector2(0, 0);
 
@@ -151,6 +150,7 @@ namespace CitySim.Objects
             IsGlowing = false;
             IsPreviewingRoad = false;
 
+            #region MOUSE INTERACTION LOGIC
             var currentMouse = Mouse.GetState();
 
             // convert mouse screen position to world position
@@ -194,6 +194,19 @@ namespace CitySim.Objects
                     RightClick?.Invoke(this, new EventArgs());
                 }
             }
+
+            #endregion
+
+            
+            if (Object is Residence r)
+            {
+                //Console.Out.WriteLine("Listing residents for tile: {0}", TileIndex.ToString());
+                foreach (var res in r.Residents)
+                {
+                    //Console.Out.WriteLine("res.Name = {0}", res.Name);
+                }
+            }
+            
 
             // save mouse state as previous mousestate for next update call
             _previousMouseState = currentMouse;

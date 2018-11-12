@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using CitySim.States;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
@@ -13,6 +16,7 @@ namespace CitySim
     /// </summary>
     public class GameInstance : Game
     {
+        FPS_Counter fpsCounter;
 
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -33,8 +37,6 @@ namespace CitySim
             graphics.PreferredBackBufferHeight = 270 * 3;
 
             Content.RootDirectory = "Content";
-
-            this.Window.AllowUserResizing = true;
         }
 
         /// <summary>
@@ -61,6 +63,9 @@ namespace CitySim
             _currentState = new SplashScreenState(this, GraphicsDevice, Content);
 
             ClickSound = Content.Load<SoundEffect>("Sounds/FX/Click");
+
+            fpsCounter = new FPS_Counter(spriteBatch, Content);
+            fpsCounter.LoadContent(Content);
         }
 
         /// <summary>
@@ -79,6 +84,7 @@ namespace CitySim
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+
             _previousMouseState = _currentMouseState;
             _currentMouseState = Mouse.GetState();
 
@@ -131,6 +137,8 @@ namespace CitySim
             _currentState.Draw(gameTime, spriteBatch);
 
             base.Draw(gameTime);
+
+            fpsCounter.Draw(gameTime, spriteBatch);
         }
 
         public void ChangeState(State state)
@@ -143,6 +151,44 @@ namespace CitySim
             MouseState ms = Mouse.GetState();
             Point pos = new Point(ms.X, ms.Y);
             return GraphicsDevice.Viewport.Bounds.Contains(pos);
+        }
+    }
+
+    public class FPS_Counter
+    {
+        private SpriteFont _font;
+        private float _fps = 0;
+        private float _totalTime;
+        private float _displayFPS;
+
+        public FPS_Counter(SpriteBatch batch, ContentManager content)
+        {
+            this._totalTime = 0f;
+            this._displayFPS = 0f;
+        }
+
+        public void LoadContent(ContentManager content)
+        {
+            this._font = content.Load<SpriteFont>("Fonts/Font_01");
+        }
+
+        public void Draw(GameTime gameTime, SpriteBatch batch)
+        {
+            float elapsed = (float) gameTime.ElapsedGameTime.TotalMilliseconds;
+            _totalTime += elapsed;
+
+            if (_totalTime >= 1000)
+            {
+                _displayFPS = _fps;
+                _fps = 0;
+                _totalTime = 0;
+            }
+
+            _fps++;
+
+            batch.Begin();
+            batch.DrawString(this._font, this._displayFPS.ToString() + " FPS", new Vector2(10,10), Color.White);
+            batch.End();
         }
     }
 }

@@ -566,7 +566,7 @@ namespace CitySim.UI
 
             #region DRAW DIPLAY INFO SECTION 
 
-            if (State.CurrentlySelectedTile != null && State.CurrentlySelectedTile.Object.ObjectId > 0 && BuildingData.Dict_BuildingFromObjectID.ContainsKey(State.CurrentlySelectedTile.Object.ObjectId))
+            if (State.CurrentlySelectedTile != null && BuildingData.ValidBuilding(State.CurrentlySelectedTile.Object))
             {
                 var obj = State.CurrentlySelectedTile.Object;
                 var bldg = BuildingData.Dict_BuildingFromObjectID[obj.ObjectId];

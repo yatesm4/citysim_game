@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using CitySim;
-using CitySim.Content;
+﻿using CitySim.Content;
 using CitySim.Objects;
-using CitySim.States;
 using CitySim.UI;
-
 using Comora;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Component = CitySim.UI.Component;
 
 namespace CitySim.States
@@ -237,6 +231,26 @@ namespace CitySim.States
         {
             GameHUD = new HUD(_graphicsDevice, _gameContent);
             Components.Add(GameHUD);
+
+            var welcome_txt =
+                "Welcome to CitySim!\n" +
+                " \n" +
+                "Thank you for taking part in testing an in-development build of this game, \n" +
+                "and I appreciate your patience as I work out bugs and new features - \n" +
+                "as well as balance game mechanics and make things fun. \n" +
+                "-- Yesterday Development \n" +
+                " \n" +
+
+                "After the first day processess, you will have some gold to begin constructing \n" +
+                "some buildings. Start with some houses to gain workers, so you can then construct \n" +
+                "buildings that provide resources. Good luck, and make sure to monitor your \n" +
+                "resource incomes so that they don't fall negative! You can monitor per-resource \n" +
+                "gains / per day by hovering over a resource in the HUD's middle resource bar menu.";
+
+            var welcome_dialog_window = new DialogWindow(welcome_txt, new Vector2(100, 100), _graphicsDevice,
+                _gameContent.GetFont(1), _gameContent);
+
+            Components.Add(welcome_dialog_window);
         }
 
         public void InitGameStateData()
@@ -1321,21 +1335,25 @@ namespace CitySim.States
                         // do random skin math
                         var applied_txt_index = obj.TextureIndex;
 
+                        var is_residence = false;
                         // apply random skin for residential buildings
-                        if (obj.ObjectId.Equals(Building.LowHouse().ObjectId))
+                        if (obj.ObjectId.Equals(Residence.LowHouse().ObjectId))
                         {
+                            is_residence = true;
                             applied_txt_index = Enumerable.Range(0, 1)
                                 .Select(r => new int[] { new int[] { 11, 18, 19 }[_rndGen.Next(3)], new int[] { 11, 18, 19 }[_rndGen.Next(3)], new int[] { 11, 18, 19 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
                             Console.WriteLine($"Applying random texture to low house: id{applied_txt_index}");
                         }
-                        else if (obj.ObjectId.Equals(Building.MedHouse().ObjectId))
+                        else if (obj.ObjectId.Equals(Residence.MedHouse().ObjectId))
                         {
+                            is_residence = true;
                             applied_txt_index = Enumerable.Range(0, 1)
                                 .Select(r => new int[] { new int[] { 20, 21, 22 }[_rndGen.Next(3)], new int[] { 20, 21, 22 }[_rndGen.Next(3)], new int[] { 20, 21, 22 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
                             Console.WriteLine($"Applying random texture to med house: id{applied_txt_index}");
                         }
-                        else if (obj.ObjectId.Equals(Building.EliteHouse().ObjectId))
+                        else if (obj.ObjectId.Equals(Residence.EliteHouse().ObjectId))
                         {
+                            is_residence = true;
                             applied_txt_index = Enumerable.Range(0, 1)
                                 .Select(r => new int[] { new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
                             Console.WriteLine($"Applying random texture to elite house: id{applied_txt_index}");
@@ -1345,14 +1363,36 @@ namespace CitySim.States
                             applied_txt_index = _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y]
                                 .DecideTextureID_NearbyRoadsFactor();
                         }
-                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object = obj;
-                        _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object = obj;
+
+                        // if residence, do apply-resident logic
+                        if (is_residence)
+                        {
+                            Residence res_obj = (Residence) sel_obj;
+                            foreach (var res in res_obj.Residents)
+                            {
+                                // generate name for resident
+                                res.Name = Resident.RandomNameList.OrderBy(x => _rndGen.Next()).FirstOrDefault();
+                            }
+
+                            // apply residence to tile object
+                            _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object = res_obj;
+                            _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object = res_obj;
+                        }
+                        else
+                        {
+                            // apply building to tile object
+                            _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object = obj;
+                            _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object = obj;
+                        }
+
+                        // apply texture data to object 
                         _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].ObjectTexture = _gameContent.GetTileTexture(applied_txt_index);
                         _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].Object.TextureIndex =
                             applied_txt_index;
                         _currentMap.Tiles[(int) t.TileIndex.X, (int) t.TileIndex.Y].TileData.Object.TextureIndex =
                             applied_txt_index;
 
+                        // apply roads logic
                         if (rst != null && obj.ObjectId.Equals(Building.Road().ObjectId))
                         {
 
@@ -1587,6 +1627,7 @@ namespace CitySim.States
                                 }
                             }
                             GSData.TileData.Add(cmt.GetTileData());
+
                         }
                     }
                     else if(sel_obj.ObjectId.Equals(0) && t.Object.ObjectId >= 0 & t.Object.TypeId.Equals(2) && RoadStartTile is null)
@@ -1611,6 +1652,7 @@ namespace CitySim.States
             }
             catch (Exception exception)
             {
+                Console.WriteLine($"ERROR ON TILE PLACE: {exception.Message}");
                 SelectedObject = sel_obj;
                 //GSData.PlayerInventory = prev_inv;
             }

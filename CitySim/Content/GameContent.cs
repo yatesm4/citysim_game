@@ -126,7 +126,6 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Arrow_Black", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Cursor", _content));
 
-
             // inventory icons for hud
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Gold", _content));
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Wood", _content));
@@ -168,6 +167,7 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_T_Intersection_4", _content)); // 36
 
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Panel_DisplayInfo", _content)); // 37
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Close", _content)); // 38
 
             Console.WriteLine($"Ui Textures: {i}");
         }
