@@ -306,7 +306,7 @@ namespace CitySim.Objects
             // set costs per cycle
             var costs = new List<int>()
             {
-                7, // gold
+                5, // gold
                 0, // wood
                 0, // coal
                 0, // iron
@@ -379,7 +379,7 @@ namespace CitySim.Objects
                 0, // iron
                 0, // stone
                 0, // workers
-                25, // energy
+                30, // energy
                 0, // food
             };
 
@@ -398,6 +398,61 @@ namespace CitySim.Objects
             return new Building(settings, costs, outputs, upfronts)
             {
                 Name = "Windmill"
+            };
+        }
+
+        public static Building Watermill()
+        {
+            var settings = new List<float>()
+            {
+                209, // id = random identifier i have yet to assess how to use
+                2, // type id: 2 = building
+                9, // object id: 9, watermill
+                37, // texture indnex
+                30, // cycle time: 30 seconds
+                2, // Range (Visib/Active)
+            };
+
+            // set costs per cycle
+            var costs = new List<int>()
+            {
+                5, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                3, // workers
+                0, // energy
+                0 // food
+            };
+
+            var outputs = new List<int>()
+            {
+                0, // gold
+                0, // wood
+                0, // coal
+                0, // iron
+                0, // stone
+                0, // workers
+                15, // energy
+                0, // food
+            };
+
+            var upfronts = new List<int>()
+            {
+                50, // gold
+                75, // woood
+                0, // coal
+                0, // iron
+                0, // stone
+                3, // workers
+                0, // energy
+                0 // food
+            };
+
+            return new Building(settings, costs, outputs, upfronts)
+            {
+                Name = "Watermill"
             };
         }
 
@@ -509,391 +564,6 @@ namespace CitySim.Objects
             return new Building(settings, costs, outputs, upfronts)
             {
                 Name = "Road"
-            };
-        }
-
-        public static Building Road_Left()
-        {
-            var settings = new List<float>()
-            {
-                220, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                20, // object id: 3 = low level house
-                26, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                1, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                5, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                5, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Road - Left"
-            };
-        }
-
-        public static Building Road_Right()
-        {
-            var settings = new List<float>()
-            {
-                221, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                21, // object id: 3 = low level house
-                27, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                1, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                5, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                5, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Road - Right"
-            };
-        }
-
-        public static Building Road_4_Way_Intersection()
-        {
-            var settings = new List<float>()
-            {
-                222, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                22, // object id: 3 = low level house
-                28, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                1, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                5, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                5, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Road - 4 Way Xing"
-            };
-        }
-
-        public static Building Road_T_Intersection_1()
-        {
-            var settings = new List<float>()
-            {
-                223, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                23, // object id: 3 = low level house
-                29, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                1, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                5, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                5, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Road - T Xing (1)"
-            };
-        }
-
-        public static Building Road_T_Intersection_2()
-        {
-            var settings = new List<float>()
-            {
-                224, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                24, // object id: 3 = low level house
-                30, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                1, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                5, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                5, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Road - T Xing (2)"
-            };
-        }
-
-        public static Building Road_T_Intersection_3()
-        {
-            var settings = new List<float>()
-            {
-                225, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                25, // object id: 3 = low level house
-                31, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                1, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                5, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                5, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Road - T Xing (3)"
-            };
-        }
-
-        public static Building Road_T_Intersection_4()
-        {
-            var settings = new List<float>()
-            {
-                226, // id = random identifier i have yet to assess how to use
-                2, // type id: 2 = building
-                26, // object id: 3 = low level house
-                32, // texture index
-                30, // cycle time: 30 seconds
-                2,
-            };
-
-            // set costs per cycle
-            var costs = new List<int>()
-            {
-                1, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            var outputs = new List<int>()
-            {
-                0, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                0, // stone
-                0, // workers
-                0, // energy
-                0, // food
-            };
-
-            var upfronts = new List<int>()
-            {
-                5, // gold
-                0, // wood
-                0, // coal
-                0, // iron
-                5, // stone
-                0, // workers
-                0, // energy
-                0 // food
-            };
-
-            return new Building(settings, costs, outputs, upfronts)
-            {
-                Name = "Road - T Xing (4)"
             };
         }
 

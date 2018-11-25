@@ -169,6 +169,8 @@ namespace CitySim.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Panel_DisplayInfo", _content)); // 37
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Close", _content)); // 38
 
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Watermill", _content)); // 39
+
             Console.WriteLine($"Ui Textures: {i}");
         }
 
@@ -197,20 +199,20 @@ namespace CitySim.Content
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Tree_Cluster_01", _content));
 
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/TownHall/01", _content)); // 10
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/01", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Farm/01", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Farm/02", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Wood/01", _content));
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Ore/01", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/01", _content)); // 11
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Farm/01", _content));  // 12
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Farm/02", _content));  // 13
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Wood/01", _content));  // 14
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Ore/01", _content));   // 15
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Power/01", _content)); // 16
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Power/02", _content)); // 17
 
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/02", _content)); // 18
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/03", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/03", _content)); // 19
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/04", _content)); // 20
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/05", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/05", _content)); // 21
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/06", _content)); // 22
-            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/07", _content));
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/07", _content)); // 23
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/08", _content)); // 24
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/House/09", _content)); // 25
 
@@ -225,6 +227,9 @@ namespace CitySim.Content
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Corner_2", _content)); // 34
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Corner_3", _content)); // 35 
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Roads/Corner_4", _content)); // 36
+
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Watermill/01", _content)); // 37
+            TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Watermill/01-Anim", _content)); // 38
 
             Console.WriteLine($"Tile Textures: {i}");
         }

@@ -78,7 +78,9 @@ namespace CitySim.UI
         // RESIDENTIAL INDEXES
         protected List<int> SelectionCells_BldgHouses_Indexes => new List<int>()
         {
-            15, 24, 25
+            15, // Low House Icon
+            24, // Med House Icon
+            25 // Elite House Icon
         };
         // RESIDENTIAL TEXTURES
         protected List<Texture2D> SelectionCells_BldgHouses_Textures { get; set; } = new List<Texture2D>();
@@ -88,12 +90,13 @@ namespace CitySim.UI
         // RESOURCE INDEXES
         protected List<int> SelectionCells_BldgReso_Indexes => new List<int>()
         {
-            14,
-            16,
-            17,
-            18,
-            19,
-            20
+            14, // Townhall Icon
+            16, // Farm Icon
+            17, // Log Cabin Icon
+            18, // Quarry Icon
+            19, // Powerline Icon
+            20, // Windmill Icon
+            39, // Watermill
         };
         // RESOURCE TEXTURES
         protected List<Texture2D> SelectionCells_BldgReso_Textures { get; set; } = new List<Texture2D>();
@@ -103,7 +106,7 @@ namespace CitySim.UI
         // DECORATION INDEXES
         protected List<int> SelectionCells_BldgDeco_Indexes => new List<int>()
         {
-            30
+            30 // Road Icon
         };
         // DECORATION TEXTURES
         protected List<Texture2D> SelectionCells_BldgDeco_Textures { get; set; } = new List<Texture2D>();
@@ -375,6 +378,7 @@ namespace CitySim.UI
             var initCellPos = new Vector2(SelectionCellsSection_Rectangle.X, SelectionCellsSection_Rectangle.Y) +
                               new Vector2(SelectionCell_Spacing.X, SelectionCell_Spacing.Y);
 
+            // Residential Buildings Buttons
             var b = 0;
             for (int i = 0; i < (SelectionCell_GridDimensions.Y); i++)
             {
@@ -397,6 +401,8 @@ namespace CitySim.UI
                     b++;
                 }
             }
+
+            // Resource Building Buttons
             b = 0;
             for (int i = 0; i < (SelectionCell_GridDimensions.Y); i++)
             {
@@ -419,6 +425,8 @@ namespace CitySim.UI
                     b++;
                 }
             }
+
+            // Decoration Building Buttons
             b = 0;
             for (int i = 0; i < (SelectionCell_GridDimensions.Y); i++)
             {
@@ -625,6 +633,7 @@ namespace CitySim.UI
                 }
             }
 
+            // switch building page view
             var list = SelectionCells_BldgHouses_Btns;
             switch (SelectionCells_ViewIndex)
             {
@@ -639,6 +648,7 @@ namespace CitySim.UI
                     break;
             }
 
+            // foreach button in building page view
             foreach (var e in list)
             {
                 e.Draw(gameTime, spriteBatch);

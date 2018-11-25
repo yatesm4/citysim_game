@@ -1298,6 +1298,31 @@ namespace CitySim.States
                                 }
                             }
                         }
+                        else if (obj.ObjectId.Equals(Building.Watermill().ObjectId))
+                        {
+                            // look for adjacent water tiles
+                            var nearby_water = false;
+                            for (int x = ((int)t.TileIndex.X - 1);
+                                x < (t.TileIndex.X + (2));
+                                x++)
+                            {
+                                for (int y = ((int)t.TileIndex.Y - 1);
+                                    y < (t.TileIndex.Y + (2));
+                                    y++)
+                                {
+                                    // if there is already of a building of the selected building's type within the range
+                                    if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(Resource.Water().Object.ObjectId)
+                                        && _currentMap.Tiles[x, y].Object.TypeId.Equals(Resource.Water().Object.TypeId)
+                                        && _currentMap.Tiles[x, y].TerrainId.Equals(Resource.Water().TerrainId))
+
+                                        nearby_water = true;
+                                }
+                            }
+
+                            if (nearby_water != true)
+                                throw new Exception(
+                                    "This building requires an adjacent water tile to construct."); // deny
+                        }
 
                         // check balance to see if player can afford building
                         bool canBuild = true;
@@ -1810,8 +1835,10 @@ namespace CitySim.States
                                 counts.Add(r, 0);
                             }
 
+                            // Try to display nearby resources when a bldg is selected and hovering over tile but not yet placed
                             try
                             {
+                                // if farmland, look for empty space
                                 if (obj.ObjectId.Equals(Building.Farm().ObjectId))
                                 {
                                     for (int x = ((int)t.TileIndex.X - 1); x < (t.TileIndex.X + 2); x++)
@@ -1834,6 +1861,7 @@ namespace CitySim.States
                                         }
                                     }
                                 }
+                                // else, look for respective resource
                                 else
                                 {
                                     // for each tile within the building's range
@@ -1873,6 +1901,49 @@ namespace CitySim.States
                                     spriteBatch.DrawString(_gameContent.GetFont(1), res_str, mp + new Vector2(0, -50 + (15 * indent)), Color.Black, 0.0f, new Vector2(str_x, str_y), 1.3f, SpriteEffects.None, 1.0f);
                                     indent++;
                                 }
+                            }
+                            catch (Exception e)
+                            {
+                                var print_str = $"Error: {e.Message}";
+                                var str_x = ((_gameContent.GetFont(1).MeasureString(print_str).X) / 2);
+                                var str_y = ((_gameContent.GetFont(1).MeasureString(print_str).Y) / 2);
+
+                                spriteBatch.DrawString(_gameContent.GetFont(1), print_str, mp + new Vector2(0, -50), Color.Black, 0.0f, new Vector2(str_x, str_y), 1.0f, SpriteEffects.None, 1.0f);
+                            }
+                        }
+                        else if (SelectedObject.ObjectId.Equals(Building.Watermill().ObjectId))
+                        {
+                            try
+                            {
+                                // look for adjacent water tiles
+                                var nearby_water = false;
+                                for (int x = ((int)t.TileIndex.X - 1);
+                                    x < (t.TileIndex.X + (2));
+                                    x++)
+                                {
+                                    for (int y = ((int)t.TileIndex.Y - 1);
+                                        y < (t.TileIndex.Y + (2));
+                                        y++)
+                                    {
+                                        // if there is already of a building of the selected building's type within the range
+                                        if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(Resource.Water().Object.ObjectId)
+                                            && _currentMap.Tiles[x, y].Object.TypeId.Equals(Resource.Water().Object.TypeId)
+                                            && _currentMap.Tiles[x, y].TerrainId.Equals(Resource.Water().TerrainId))
+
+                                            nearby_water = true;
+                                    }
+                                }
+
+                                if (nearby_water != true)
+                                    throw new Exception(
+                                        "This building requires an adjacent water tile to construct."); // deny
+
+                                var print_str = $"Nearby water available!";
+                                var str_x = ((_gameContent.GetFont(1).MeasureString(print_str).X) / 2);
+                                var str_y = ((_gameContent.GetFont(1).MeasureString(print_str).Y) / 2);
+
+                                spriteBatch.DrawString(_gameContent.GetFont(1), print_str, mp + new Vector2(0, -50), Color.Black, 0.0f, new Vector2(str_x, str_y), 1.0f, SpriteEffects.None, 1.0f);
+
                             }
                             catch (Exception e)
                             {

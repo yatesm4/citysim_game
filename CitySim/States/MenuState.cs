@@ -49,7 +49,7 @@ namespace CitySim.States
                 Position = new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 2) + new Vector2(0, -200),
                 Text = "New Game",
                 HoverColor = Color.Green,
-                Scale = new Vector2(0.8f, 0.8f)
+                Scale = new Vector2(0.75f, 0.75f)
             };
             newGameButton.Click += NewGameButton_Click;
             newGameButton.Position = newGameButton.Position + new Vector2(-(newGameButton.Rectangle.Width / 2), 0);
@@ -59,7 +59,7 @@ namespace CitySim.States
                 Position = new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 2) + new Vector2(0, -100),
                 Text = "Load Game",
                 HoverColor = Color.Yellow,
-                Scale = new Vector2(0.8f, 0.8f)
+                Scale = new Vector2(0.75f, 0.75f)
             };
             loadGameButton.Click += LoadGameButton_Click;
             loadGameButton.Position = loadGameButton.Position + new Vector2(-(loadGameButton.Rectangle.Width / 2), 0);
@@ -69,7 +69,7 @@ namespace CitySim.States
                 Position = new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 2),
                 Text = "Edit Map",
                 HoverColor = Color.Orange,
-                Scale = new Vector2(0.8f, 0.8f)
+                Scale = new Vector2(0.75f, 0.75f)
             };
             editMapButton.Click += EditMapButton_Click;
             editMapButton.Position = editMapButton.Position + new Vector2(-(editMapButton.Rectangle.Width / 2), 0);
@@ -79,7 +79,7 @@ namespace CitySim.States
                 Position = new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 2) + new Vector2(0, 100),
                 Text = "Quit Game",
                 HoverColor = Color.Red,
-                Scale = new Vector2(0.8f, 0.8f)
+                Scale = new Vector2(0.75f, 0.75f)
             };
             quitGameButton.Click += QuitGameButton_Click;
             quitGameButton.Position = quitGameButton.Position + new Vector2(-(quitGameButton.Rectangle.Width / 2), 0);
@@ -89,7 +89,7 @@ namespace CitySim.States
                 Position = new Vector2(_graphicsDevice.Viewport.Width / 2, _graphicsDevice.Viewport.Height / 2) + new Vector2(0, 200),
                 Text = "Testing / Debug",
                 HoverColor = Color.HotPink,
-                Scale = new Vector2(0.8f, 0.8f)
+                Scale = new Vector2(0.75f, 0.75f)
             };
             testingButton.Click += TestingButton_Click;
             testingButton.Position = testingButton.Position + new Vector2(-(testingButton.Rectangle.Width / 2), 0);

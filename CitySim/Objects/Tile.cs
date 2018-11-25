@@ -49,6 +49,14 @@ namespace CitySim.Objects
         // the texture of this tile
         public Texture2D Texture { get; set; }
 
+        // animated tile properties
+        public Texture2D Anim_Texture { get; set; }
+        public bool HasAnimatedTexture => Anim_Texture != null;
+        public float Anim_Time { get; set; } = 0.0f;
+        public float Anim_FrameTime = 0.25f;
+        public int Anim_FrameIndex = 0;
+        public int Anim_FrameCount => HasAnimatedTexture ? Anim_Texture.Width / Texture.Width : 0;
+
         public Sprite Spr;
         public SpritePlayer SprPlayer;
 
@@ -330,11 +338,13 @@ namespace CitySim.Objects
         // - draw outline if selected
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
-            // vars to hold nearby road directions
-            var left = false;
-            var right = false;
-            var up = false;
-            var down = false;
+            if (Object.ObjectId.Equals(Building.Watermill().ObjectId))
+            {
+                if (HasAnimatedTexture == false)
+                {
+                    Anim_Texture = Content.GetTileTexture(38);
+                }
+            }
 
             // set draw color to orange red if hovered by mouse, otherwise draw normal color
             if (_gameState.CurrentlyHoveredTile == this)
@@ -348,16 +358,22 @@ namespace CitySim.Objects
                 DrawColor = (IsGlowing) ? new Color(Color.Yellow, 0.5f) : DrawColor;
             } 
 
+            // if there is a tile object
             if (Object.TypeId != 0)
             {
                 var txt = Texture;
 
                 // if a building, draw concrete texture on tile
-                if (Object.TypeId.Equals(2) && !(BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(Object.ObjectId)) && !(Object.ObjectId.Equals(Building.PowerLine().ObjectId)) && !(Object.ObjectId.Equals(Building.Windmill().ObjectId)))
+                if (Object.TypeId.Equals(2)
+                    && !(BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(Object.ObjectId))
+                    && !(Object.ObjectId.Equals(Building.PowerLine().ObjectId))
+                    && !(Object.ObjectId.Equals(Building.Windmill().ObjectId))
+                    && !(Object.ObjectId.Equals(Building.Watermill().ObjectId)))
                 {
                     txt = Content.GetTileTexture(3);
                 }
 
+                // if road, decide texture based on nearby roads
                 if (Object.TypeId.Equals(2) && Object.ObjectId == Building.Road().ObjectId)
                 {
                     txt = DecideTexture_NearbyRoadsFactor();
@@ -370,17 +386,48 @@ namespace CitySim.Objects
 
                 // draw saved texture
                 spriteBatch_.Draw(txt, position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+
+                var anim_src = new Rectangle();
+                if (HasAnimatedTexture)
+                {
+                    Anim_Time += (float) gameTime_.ElapsedGameTime.TotalSeconds;
+                    while (Anim_Time > Anim_FrameTime)
+                    {
+                        Anim_Time -= Anim_FrameTime;
+                        Anim_FrameIndex = (Anim_FrameIndex + 1) % Anim_FrameCount;
+                    }
+                    anim_src = new Rectangle(Anim_FrameIndex * Texture.Width, 0, Texture.Width, Texture.Height);
+                }
+
+                // tile object draw attempt
                 try
                 {
                     // draw tile object
-                    if (IsPreviewingRoad)
+#pragma warning disable CS0618 // Type or member is obsolete
+
+                    if (HasAnimatedTexture)
                     {
-                        spriteBatch_.Draw(DecideTexture_NearbyRoadsFactor(), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                        spriteBatch_.Draw(
+                            Anim_Texture,
+                            sourceRectangle: anim_src,
+                            position: Position,
+                            scale: Scale,
+                            layerDepth: 0.4f,
+                            color: DrawColor);
                     }
                     else
                     {
-                        spriteBatch_.Draw(Content.GetTileTexture(Object.TextureIndex), position: Position, scale: Scale, layerDepth: 0.4f, color: DrawColor);
+                        spriteBatch_.Draw(
+                            IsPreviewingRoad
+                                ? DecideTexture_NearbyRoadsFactor()
+                                : Content.GetTileTexture(Object.TextureIndex),
+                            position: Position,
+                            scale: Scale,
+                            layerDepth: 0.4f,
+                            color: DrawColor);
                     }
+
+#pragma warning restore CS0618 // Type or member is obsolete
                 }
                 catch (Exception e)
                 {
