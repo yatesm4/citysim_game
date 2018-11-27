@@ -186,6 +186,9 @@ namespace CitySim.Content
         // load tile/tileset textures
         public void LoadTileTextures()
         {
+            // Load Tile Effect Textures within negative range
+            TileTextures.Add(new ContentData<Texture2D>(-1, "Sprites/Tiles/FX/Smoke/01-Anim", _content));
+
             // total: 12
             var i = 1;
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Natural/Grass", _content));
@@ -233,6 +236,11 @@ namespace CitySim.Content
 
             Console.WriteLine($"Tile Textures: {i}");
         }
+
+        public Dictionary<int, int> Dict_CorrespondingAnimTextureID => new Dictionary<int, int>()
+        {
+            {37, 38}, // Watermill
+        };
 
         // load sound effects
         public void LoadSoundEffects()

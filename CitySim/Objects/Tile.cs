@@ -214,12 +214,19 @@ namespace CitySim.Objects
                     //Console.Out.WriteLine("res.Name = {0}", res.Name);
                 }
             }
-            
+
+            if (HasAnimatedTexture == false) CheckForAnimatedTexture();
 
             // save mouse state as previous mousestate for next update call
             _previousMouseState = currentMouse;
 
             _gameState = state;
+        }
+
+        public void CheckForAnimatedTexture()
+        {
+            if (Content.Dict_CorrespondingAnimTextureID.ContainsKey(Object.TextureIndex))
+                Anim_Texture = Content.GetTileTexture(Content.Dict_CorrespondingAnimTextureID[Object.TextureIndex]);
         }
 
         public bool[] GetNearbyRoads()
@@ -338,13 +345,6 @@ namespace CitySim.Objects
         // - draw outline if selected
         public void Draw(GameTime gameTime_, SpriteBatch spriteBatch_)
         {
-            if (Object.ObjectId.Equals(Building.Watermill().ObjectId))
-            {
-                if (HasAnimatedTexture == false)
-                {
-                    Anim_Texture = Content.GetTileTexture(38);
-                }
-            }
 
             // set draw color to orange red if hovered by mouse, otherwise draw normal color
             if (_gameState.CurrentlyHoveredTile == this)
