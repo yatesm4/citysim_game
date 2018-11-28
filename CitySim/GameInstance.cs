@@ -28,13 +28,16 @@ namespace CitySim
         private MouseState _previousMouseState;
 
         private SoundEffect ClickSound;
+        private SoundEffect DestroySound;
 
         public GameInstance()
         {
-            graphics = new GraphicsDeviceManager(this);
-            //graphics.IsFullScreen = true;
-            graphics.PreferredBackBufferWidth = 480 * 3;
-            graphics.PreferredBackBufferHeight = 270 * 3;
+            graphics = new GraphicsDeviceManager(this)
+            {
+                //IsFullScreen = true,
+                PreferredBackBufferWidth = 480 * 3,
+                PreferredBackBufferHeight = 270 * 3
+            };
 
             Content.RootDirectory = "Content";
         }
@@ -63,6 +66,7 @@ namespace CitySim
             _currentState = new SplashScreenState(this, GraphicsDevice, Content);
 
             ClickSound = Content.Load<SoundEffect>("Sounds/FX/Click");
+            DestroySound = Content.Load<SoundEffect>("Sounds/FX/Poof");
 
             fpsCounter = new FPS_Counter(spriteBatch, Content);
             fpsCounter.LoadContent(Content);
@@ -117,6 +121,9 @@ namespace CitySim
                 {
                     //MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
                     //MediaPlayer.IsRepeating = true;
+                } else if (_currentState is GameState cs)
+                {
+                    cs.ObjectDestroyed += GameState_ObjectDestroyed;
                 }
             }
 
@@ -124,6 +131,11 @@ namespace CitySim
             _currentState.PostUpdate(gameTime);
 
             base.Update(gameTime);
+        }
+
+        private void GameState_ObjectDestroyed(object sender, EventArgs e)
+        {
+            DestroySound.Play(0.2f, -0.3f, 0.0f);
         }
 
         /// <summary>

@@ -1023,3 +1023,9 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Tiles/FX/Smoke/01-Anim.png
 
+#begin Sounds/FX/Poof.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/FX/Poof.wav
+

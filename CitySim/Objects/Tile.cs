@@ -57,8 +57,13 @@ namespace CitySim.Objects
         public int Anim_FrameIndex = 0;
         public int Anim_FrameCount => HasAnimatedTexture ? Anim_Texture.Width / Texture.Width : 0;
 
-        public Sprite Spr;
-        public SpritePlayer SprPlayer;
+        // destruction properties
+        public bool ObjectDestroyed { get; set; } = false;
+        public Texture2D FX_Destroyed_Anim_Texture { get; set; }
+        public float FX_Destroyed_Anim_Time { get; set; } = 0;
+        public float FX_Destroyed_Anim_FrameTime = 0.25f;
+        public int FX_Destroyed_Anim_FrameIndex = 0;
+        public int FX_Destroyed_Anim_FrameCount => FX_Destroyed_Anim_Texture.Width / Texture.Width;
 
         public Texture2D ObjectTexture { get; set; }
 
@@ -91,10 +96,7 @@ namespace CitySim.Objects
         public Vector2 Position { get; set; } = new Vector2(0, 0);
 
         // center point of the tile (used later for npcs moving tile to tile)
-        public Vector2 CenterPoint
-        {
-            get { return Position + new Vector2(16, 12); }
-        }
+        public Vector2 CenterPoint => Position + new Vector2(16, 12);
 
         // scale to draw the tile at
         public Vector2 Scale { get; set; } = new Vector2(2,2);
@@ -127,6 +129,8 @@ namespace CitySim.Objects
             }
 
             Texture = content_.GetTileTexture(texture_for_terrain);
+
+            FX_Destroyed_Anim_Texture = content_.GetTileTexture(-1);
 
             IsVisible = tileData_.IsVisible;
 
@@ -356,7 +360,16 @@ namespace CitySim.Objects
             {
                 DrawColor = (IsVisible) ? Color.White : Color.DarkGray;
                 DrawColor = (IsGlowing) ? new Color(Color.Yellow, 0.5f) : DrawColor;
-            } 
+            }
+
+            DrawColor = IsVisible
+                ? (_gameState.CurrentlyHoveredTile == this
+                    ? Color.OrangeRed
+                    : Color.White)
+                : Color.DarkGray;
+            DrawColor = IsGlowing
+                ? new Color(Color.Yellow, 0.5f)
+                : DrawColor;
 
             // if there is a tile object
             if (Object.TypeId != 0)
@@ -443,13 +456,35 @@ namespace CitySim.Objects
                 }
             }
 
-            // draw extras ?
+            // draw destruction fx?
+            if (ObjectDestroyed != true) return;
 
-            // if tile is hovered, draw debug box on tile
-            //if(IsHovered)
-            //    spriteBatch_.Draw(DebugRect, destinationRectangle: TouchHitbox, color: new Color(Color.White, 0.25f));
+            FX_Destroyed_Anim_Time += (float) gameTime_.ElapsedGameTime.TotalSeconds;
+            while (FX_Destroyed_Anim_Time > FX_Destroyed_Anim_FrameTime)
+            {
+                FX_Destroyed_Anim_Time -= FX_Destroyed_Anim_FrameTime;
+                FX_Destroyed_Anim_FrameIndex =
+                    Math.Min(FX_Destroyed_Anim_FrameIndex + 1, FX_Destroyed_Anim_FrameCount);
+            }
 
-            //spriteBatch_.Draw(DebugRect, destinationRectangle: TouchHitbox, color: new Color(Color.White, 0.25f));
+            var FX_Destroy_Src = new Rectangle(FX_Destroyed_Anim_FrameIndex * Texture.Width, 0, Texture.Width, Texture.Height);
+            if (FX_Destroyed_Anim_Texture != null)
+#pragma warning disable CS0618 // Type or member is obsolete
+                spriteBatch_.Draw(
+                    FX_Destroyed_Anim_Texture,
+                    sourceRectangle: FX_Destroy_Src,
+                    position: Position,
+                    scale: Scale,
+                    layerDepth: 0.4f,
+                    color: DrawColor);
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            if (FX_Destroyed_Anim_FrameIndex == FX_Destroyed_Anim_FrameCount)
+            {
+                ObjectDestroyed = false;
+                FX_Destroyed_Anim_FrameIndex = 0;
+                FX_Destroyed_Anim_Time = 0;
+            }
         }
     }
 }

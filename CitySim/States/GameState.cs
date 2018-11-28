@@ -130,6 +130,8 @@ namespace CitySim.States
 
         public int RoadPlacementCount { get; set; } = 0;
 
+        public EventHandler ObjectDestroyed;
+
         #endregion
 
         #region COMPONENTS
@@ -1276,6 +1278,15 @@ namespace CitySim.States
                         // get a correctly casted version of the selected obj
                         var obj = (Building)sel_obj;
 
+                        // check for adjacent road if object is not a road\
+                        if (!obj.ObjectId.Equals(Building.Road().ObjectId))
+                        {
+                            var f = t.GetNearbyRoads();
+                            var adj_road_cnt = f.Count(b => b);
+                            if (adj_road_cnt > 1)
+                                throw new Exception("There is no adjacent road tile to connect to this building"); // deny
+                        } 
+
                         // does the building's objectid have a matching resource objectid linked to it?
                         // if so, only one building of this type can be within it's range.
                         if (BuildingData.Dict_BuildingResourceLinkKeys.ContainsKey(obj.ObjectId))
@@ -1692,17 +1703,18 @@ namespace CitySim.States
             // delete a building
             foreach (Tile t in _currentMap.Tiles)
             {
-                if (t.TileIndex == CurrentlySelectedTile.TileIndex)
-                {
-                    t.Object = new TileObject();
-                    t.TileData.Object = new TileObject();
+                if (t.TileIndex != CurrentlySelectedTile.TileIndex) continue;
+                t.Object = new TileObject();
+                t.TileData.Object = new TileObject();
+                t.ObjectDestroyed = true;
 
-                    GSData.PlayerInventory.Gold += (t.Object.GoldOutput / 2);
-                    GSData.PlayerInventory.Wood += (t.Object.WoodCost / 2);
-                    GSData.PlayerInventory.Coal += (t.Object.CoalCost / 2);
-                    GSData.PlayerInventory.Iron += (t.Object.IronCost / 2);
-                    GSData.PlayerInventory.Stone += (t.Object.StoneCost / 2);
-                }
+                ObjectDestroyed?.Invoke(this, new EventArgs());
+
+                GSData.PlayerInventory.Gold += (t.Object.GoldOutput / 2);
+                GSData.PlayerInventory.Wood += (t.Object.WoodCost / 2);
+                GSData.PlayerInventory.Coal += (t.Object.CoalCost / 2);
+                GSData.PlayerInventory.Iron += (t.Object.IronCost / 2);
+                GSData.PlayerInventory.Stone += (t.Object.StoneCost / 2);
             }
 
             CurrentlySelectedTile = null;
