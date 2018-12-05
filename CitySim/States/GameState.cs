@@ -1279,12 +1279,12 @@ namespace CitySim.States
                         var obj = (Building)sel_obj;
 
                         // check for adjacent road if object is not a road\
-                        if (!obj.ObjectId.Equals(Building.Road().ObjectId))
+                        if (BuildingData.Dict_BuildingFromObjectID[obj.ObjectId].RequiresRoad)
                         {
                             var f = t.GetNearbyRoads();
                             var adj_road_cnt = f.Count(b => b);
-                            if (adj_road_cnt > 1)
-                                throw new Exception("There is no adjacent road tile to connect to this building"); // deny
+                            if (adj_road_cnt < 1)
+                                throw new Exception("No Adjacent Road"); // deny
                         } 
 
                         // does the building's objectid have a matching resource objectid linked to it?
@@ -1850,6 +1850,11 @@ namespace CitySim.States
                             // Try to display nearby resources when a bldg is selected and hovering over tile but not yet placed
                             try
                             {
+                                // check for adjacent roads
+                                var f = t.GetNearbyRoads();
+                                var adj_road_cnt = f.Count(b => b);
+                                if (adj_road_cnt < 1) throw new Exception("No Adjacent Road");
+
                                 // if farmland, look for empty space
                                 if (obj.ObjectId.Equals(Building.Farm().ObjectId))
                                 {
@@ -1927,6 +1932,11 @@ namespace CitySim.States
                         {
                             try
                             {
+                                // check for adjacent roads
+                                var f = t.GetNearbyRoads();
+                                var adj_road_cnt = f.Count(b => b);
+                                if (adj_road_cnt < 1) throw new Exception("No Adjacent Road");
+
                                 // look for adjacent water tiles
                                 var nearby_water = false;
                                 for (int x = ((int)t.TileIndex.X - 1);
@@ -1960,6 +1970,20 @@ namespace CitySim.States
                             catch (Exception e)
                             {
                                 var print_str = $"Error: {e.Message}";
+                                var str_x = ((_gameContent.GetFont(1).MeasureString(print_str).X) / 2);
+                                var str_y = ((_gameContent.GetFont(1).MeasureString(print_str).Y) / 2);
+
+                                spriteBatch.DrawString(_gameContent.GetFont(1), print_str, mp + new Vector2(0, -50), Color.Black, 0.0f, new Vector2(str_x, str_y), 1.0f, SpriteEffects.None, 1.0f);
+                            }
+                        }
+                        else if (BuildingData.Dict_BuildingFromObjectID[SelectedObject.ObjectId].RequiresRoad)
+                        {
+                            // check for adjacent road if object is not a road
+                            var f = t.GetNearbyRoads();
+                            var adj_road_cnt = f.Count(b => b);
+                            if (adj_road_cnt < 1)
+                            {
+                                var print_str = $"Error: No Adjacent Road";
                                 var str_x = ((_gameContent.GetFont(1).MeasureString(print_str).X) / 2);
                                 var str_y = ((_gameContent.GetFont(1).MeasureString(print_str).Y) / 2);
 

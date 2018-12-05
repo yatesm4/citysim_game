@@ -71,6 +71,8 @@ namespace CitySim.Objects
 
         public int Range { get; private set; } = 1;
 
+        public bool RequiresRoad { get; private set; } = true;
+
         // building constructor
         // - takes list of settings for tileobject
         // - takes list of costs (ints)
@@ -342,7 +344,8 @@ namespace CitySim.Objects
 
             return new Building(settings, costs, outputs, upfronts)
             {
-                Name = "Power Line"
+                Name = "Power Line",
+                RequiresRoad = false
             };
         }
 
@@ -397,7 +400,8 @@ namespace CitySim.Objects
 
             return new Building(settings, costs, outputs, upfronts)
             {
-                Name = "Windmill"
+                Name = "Windmill",
+                RequiresRoad = false
             };
         }
 
@@ -563,7 +567,8 @@ namespace CitySim.Objects
 
             return new Building(settings, costs, outputs, upfronts)
             {
-                Name = "Road"
+                Name = "Road",
+                RequiresRoad = false
             };
         }
 
