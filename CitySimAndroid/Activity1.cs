@@ -1,3 +1,4 @@
+using Android;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
@@ -20,6 +21,14 @@ namespace CitySimAndroid
             base.OnCreate(bundle);
             var g = new GameInstance();
             SetContentView((View)g.Services.GetService(typeof(View)));
+
+            if (PackageManager.CheckPermission(Manifest.Permission.ReadExternalStorage, PackageName) != Permission.Granted
+                && PackageManager.CheckPermission(Manifest.Permission.WriteExternalStorage, PackageName) != Permission.Granted)
+            {
+                var permissions = new string[] { Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage };
+                RequestPermissions(permissions, 1);
+            }
+
             g.Run();
         }
     }

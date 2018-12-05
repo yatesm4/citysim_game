@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ using Microsoft.Xna.Framework.Input;
 
 using Comora;
 using Newtonsoft.Json;
+using Environment = System.Environment;
 
 namespace CitySimAndroid.States
 {
@@ -52,6 +54,10 @@ namespace CitySimAndroid.States
         #endregion
 
         #region LOADING
+
+        protected string SavePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+        protected string SaveFilename => Path.Combine(SavePath, "GAMEDATA.json");
+        protected string BackupSaveFilename => Path.Combine(SavePath, "GAMEDATA_BACKUP.json");
 
         // if the game is currently saving
         protected bool IsSaving = false;
@@ -305,11 +311,12 @@ namespace CitySimAndroid.States
             {
                 LoadingText = $"Reading save files...";
                 // try to read map data from data_map.json file
-                using (var streamReader = new System.IO.StreamReader($"GAMEDATA.json"))
+                using (var streamReader = new System.IO.StreamReader(SaveFilename))
                 {
                     data = streamReader.ReadToEnd();
                     streamReader.Close();
                 }
+
                 // if the data read isn't null or empty, load the map | else, throw exception
                 if (string.IsNullOrEmpty(data).Equals(true))
                 {
@@ -643,7 +650,10 @@ namespace CitySimAndroid.States
 
 
             // get data_map.json file & write _tileData to file (overwrite any)
-            using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json")) { streamWriter.WriteLine(JsonConvert.SerializeObject(newgame, Formatting.Indented)); }
+            using (var streamWriter = new System.IO.StreamWriter(SaveFilename))
+            {
+                streamWriter.WriteLine(JsonConvert.SerializeObject(newgame, Formatting.Indented));
+            }
             Console.WriteLine("Map finished generating.");
 
             // now, load the map
@@ -1200,7 +1210,7 @@ namespace CitySimAndroid.States
             try
             {
                 // delete previous backups
-                System.IO.File.Delete("GAMEDATA_BACKUP.json");
+                System.IO.File.Delete(BackupSaveFilename);
             }
             catch (Exception e)
             {
@@ -1211,7 +1221,7 @@ namespace CitySimAndroid.States
             try
             {
                 // change filename to backup format
-                System.IO.File.Move($"GAMEDATA.json", "GAMEDATA_BACKUP.json");
+                System.IO.File.Move(SaveFilename, BackupSaveFilename);
             }
             catch (Exception e)
             {
@@ -1220,7 +1230,7 @@ namespace CitySimAndroid.States
 
             IsSaving = true;
             // get current data_map file
-            using (var streamWriter = new System.IO.StreamWriter($"GAMEDATA.json"))
+            using (var streamWriter = new System.IO.StreamWriter(SaveFilename))
             {
                 // overwrite data with list of _tileData
                 streamWriter.WriteLine(JsonConvert.SerializeObject(GSData, Formatting.Indented));
