@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using CitySimAndroid.UI;
 using Microsoft.Xna.Framework;
@@ -105,14 +106,14 @@ namespace CitySimAndroid.States
 
         private void QuitGameButton_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Quitting game...");
+            Log.Info("CitySim",  "Quitting game...");
             _game.Exit();
         }
 
         private void LoadGameButton_Click(object sender, EventArgs e)
         {
             // todo load game
-            Console.WriteLine("Loading game...");
+            Log.Info("CitySim",  "Loading game...");
             _game.ChangeState(new GameState(_game, _graphicsDevice, _content, false));
             // load previous game
         }
@@ -120,21 +121,21 @@ namespace CitySimAndroid.States
         private void NewGameButton_Click(object sender, EventArgs e)
         {
             // todo new game
-            Console.WriteLine("Starting new game...");
+            Log.Info("CitySim",  "Starting new game...");
             _game.ChangeState(new GameState(_game, _graphicsDevice, _content, true));
             // load new game
         }
 
         private void EditMapButton_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Editing maps...");
+            Log.Info("CitySim",  "Editing maps...");
             //_game.ChangeState(new EditMapsListState(_game, _graphicsDevice, _content));
             // load edit map
         }
 
         private void TestingButton_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Loading testing / debug...");
+            Log.Info("CitySim",  "Loading testing / debug...");
             _game.ChangeState(new TestingState(_game, _graphicsDevice, _content));
         }
         #endregion

@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using CitySimAndroid.Content;
@@ -207,9 +208,9 @@ namespace CitySimAndroid.UI
             _displaySize = new Vector2(width, height);
             _buttonSize = new Vector2(30, height * 0.8f);
 
-            Console.WriteLine("HUD created.");
-            Console.WriteLine($"HUD Size: {_displaySize}");
-            Console.WriteLine($"HUD Pos: {_position}");
+            Log.Info("CitySim",  "HUD created.");
+            Log.Info("CitySim",  $"HUD Size: {_displaySize}");
+            Log.Info("CitySim",  $"HUD Pos: {_position}");
 
             _content = content_;
             _font = _content.GetFont(1);
@@ -360,7 +361,7 @@ namespace CitySimAndroid.UI
             ResourceBar_Texture.SetData(rbt_data);
 
             ResourceBar_Texture = _content.GetUiTexture(29);
-            Console.WriteLine($"ResourceBar dimens: Width: {ResourceBar_Rectangle.Width} || Height: {ResourceBar_Rectangle.Height}");
+            Log.Info("CitySim",  $"ResourceBar dimens: Width: {ResourceBar_Rectangle.Width} || Height: {ResourceBar_Rectangle.Height}");
 
             SelectionCell_Texture = new Texture2D(graphicsDevice_, (int)SelectionCell_Dimensions.X, (int)SelectionCell_Dimensions.Y);
             var sct_data = new Color[(int)SelectionCell_Dimensions.X * (int)SelectionCell_Dimensions.Y];
@@ -461,7 +462,7 @@ namespace CitySimAndroid.UI
         {
             if (sender is Button convSender)
             {
-                Console.WriteLine($"Button clicked: {BuildingData.Dict_BuildingKeys[convSender.ID].Name}");
+                Log.Info("CitySim",  $"Button clicked: {BuildingData.Dict_BuildingKeys[convSender.ID].Name}");
                 State.SelectedObject = BuildingData.Dict_BuildingKeys[convSender.ID];
             }
         }
@@ -490,7 +491,7 @@ namespace CitySimAndroid.UI
 
                 SelectionCells_ViewIndex = convSender.ID;
                 convSender.IsSelected = true;
-                Console.WriteLine($"Button clicked: {name}");
+                Log.Info("CitySim",  $"Button clicked: {name}");
             }
         }
 

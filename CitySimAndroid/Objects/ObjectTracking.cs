@@ -8,6 +8,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 
@@ -47,7 +48,7 @@ namespace CitySimAndroid.Objects
 
             foreach (PropertyInfo prop in props)
             {
-                Console.WriteLine($"{prop.Name} changed to: {prop.GetValue(this)}");
+                Log.Info("CitySim",  $"{prop.Name} changed to: {prop.GetValue(this)}");
                 latestChanges.Add(prop.Name, prop.GetValue(this));
             }
 

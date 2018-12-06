@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 
@@ -190,8 +191,8 @@ namespace CitySimAndroid.Objects
             if (mouseRectangle.Intersects(TouchHitbox) && IsVisible.Equals(true))
             {
                 state.CurrentlyHoveredTile = this;
-                //Console.WriteLine($"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
-                //Console.WriteLine($"Hovering Over Tile: {TileIndex.ToString()}");
+                //Log.Info("CitySim",  $"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
+                //Log.Info("CitySim",  $"Hovering Over Tile: {TileIndex.ToString()}");
 
                 switch (currentMouse.LeftButton)
                 {
@@ -453,7 +454,7 @@ namespace CitySimAndroid.Objects
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Error drawing object sprite: " + e.Message);
+                    Log.Info("CitySim",  "Error drawing object sprite: " + e.Message);
                 }
             }
             else

@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using CitySimAndroid.Content;
@@ -219,9 +220,20 @@ namespace CitySimAndroid.UI
                 // construct rect to represent touch area
                 var tl_rect = new Rectangle((int)tl_pos.X, (int)tl_pos.Y, 1, 1);
 
-                if (tl.State != TouchLocationState.Pressed) continue;
+                // if touch rect intersects button hitbox and touch state is pressed
+                if (tl_rect.Intersects(Rectangle))
+                {
+                    _isHovering = true;
 
-                if (tl_rect.Intersects(Rectangle)) Click?.Invoke(this, new EventArgs());
+                    Log.Info("CitySim-UI", "Button Hover Registered");
+
+                    if (Locked.Equals(false) && (tl.State == TouchLocationState.Pressed || tl.State == TouchLocationState.Moved))
+                    {
+                        Log.Info("CitySim-UI", "Button Touch Registered");
+
+                        Click?.Invoke(this, new EventArgs());
+                    }
+                }
             }
         }
     }

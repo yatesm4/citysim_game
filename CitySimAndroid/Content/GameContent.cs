@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 
@@ -177,7 +178,7 @@ namespace CitySimAndroid.Content
 
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Watermill", _content)); // 39
 
-            Console.WriteLine($"Ui Textures: {i}");
+            Log.Info("CitySim",  $"Ui Textures: {i}");
         }
 
         public void LoadFonts()
@@ -186,7 +187,7 @@ namespace CitySimAndroid.Content
             var i = 1;
             Fonts.Add(new ContentData<SpriteFont>(i++, "Fonts/Font_01", _content));
 
-            Console.WriteLine($"Fonts: {i}");
+            Log.Info("CitySim",  $"Fonts: {i}");
         }
 
         // load tile/tileset textures
@@ -240,7 +241,7 @@ namespace CitySimAndroid.Content
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Watermill/01", _content)); // 37
             TileTextures.Add(new ContentData<Texture2D>(i++, "Sprites/Tiles/Buildings/Watermill/01-Anim", _content)); // 38
 
-            Console.WriteLine($"Tile Textures: {i}");
+            Log.Info("CitySim",  $"Tile Textures: {i}");
         }
 
         public Dictionary<int, int> Dict_CorrespondingAnimTextureID => new Dictionary<int, int>()
@@ -255,7 +256,7 @@ namespace CitySimAndroid.Content
             var i = 1;
             SoundEffects.Add(new ContentData<Song>(i++, "Sounds/FX/Glimmer", _content));
 
-            Console.WriteLine($"Sound Effects: {i}");
+            Log.Info("CitySim",  $"Sound Effects: {i}");
         }
     }
 }

@@ -24,6 +24,7 @@ using Microsoft.Xna.Framework.Input;
 using Comora;
 using Newtonsoft.Json;
 using Environment = System.Environment;
+using Android.Util;
 
 namespace CitySimAndroid.States
 {
@@ -188,12 +189,12 @@ namespace CitySimAndroid.States
 
             if (newgame is true)
             {
-                Console.WriteLine($"Starting new game...");
+                Log.Info("CitySim",  $"Starting new game...");
                 Task.Run(() => GenerateMap());
             }
             else
             {
-                Console.WriteLine($"Loading previous game...");
+                Log.Info("CitySim",  $"Loading previous game...");
                 Task.Run(() => LoadGame());
             }
 
@@ -325,7 +326,7 @@ namespace CitySimAndroid.States
                 }
                 else
                 {
-                    Console.WriteLine($"Loading map...");
+                    Log.Info("CitySim",  $"Loading map...");
 
                     // deserialize data to gamestate data object
                     GameStateData loaded_GSData = JsonConvert.DeserializeObject<GameStateData>(data);
@@ -356,7 +357,7 @@ namespace CitySimAndroid.States
                             _camera.Position = tileArr_[x, y].Position + new Vector2(0, 100);
                     }
 
-                    Console.WriteLine("Map restored - tile count: " + tileArr_.Length);
+                    Log.Info("CitySim",  "Map restored - tile count: " + tileArr_.Length);
                 }
 
                 LoadingText = $"Looping through map data completed...";
@@ -369,14 +370,14 @@ namespace CitySimAndroid.States
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error Loading Map Data: {e.Message}.");
+                Log.Info("CitySim",  $"Error Loading Map Data: {e.Message}.");
                 return false;
             }
         }
 
         private void PlayerInventoryOnPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            Console.WriteLine($"{sender.GetType().Name} has changed a property in the inventory");
+            Log.Info("CitySim",  $"{sender.GetType().Name} has changed a property in the inventory");
         }
 
         /// <summary>
@@ -390,7 +391,7 @@ namespace CitySimAndroid.States
         public async void GenerateMap()
         {
             LoadingText = $"Generating map...";
-            Console.WriteLine(LoadingText);
+            Log.Info("CitySim",  LoadingText);
 
             // create list to hold tile data
             _tileData = new List<TileData>();
@@ -654,7 +655,7 @@ namespace CitySimAndroid.States
             {
                 streamWriter.WriteLine(JsonConvert.SerializeObject(newgame, Formatting.Indented));
             }
-            Console.WriteLine("Map finished generating.");
+            Log.Info("CitySim",  "Map finished generating.");
 
             // now, load the map
             await LoadMap();
@@ -845,7 +846,7 @@ namespace CitySimAndroid.States
                 }
                 catch (Exception e)
                 {
-                    //Console.WriteLine("Error drawing map: " + e.Message);
+                    //Log.Info("CitySim",  "Error drawing map: " + e.Message);
                 }
 
                 // if currently hovering a tile (do logic for setting radius highlight for currently selected building, before placing)
@@ -875,7 +876,7 @@ namespace CitySimAndroid.States
                                     }
                                     catch (Exception exc)
                                     {
-                                        Console.WriteLine($"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
+                                        Log.Info("CitySim",  $"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
                                     }
                                 }
                             }
@@ -1008,7 +1009,7 @@ namespace CitySimAndroid.States
         public async void UpdateGameState(GameTime gameTime)
         {
             // cycle finished
-            Console.WriteLine($"Advancing cycle to day: {GSData.Day}");
+            Log.Info("CitySim",  $"Advancing cycle to day: {GSData.Day}");
 
             // process all building in game
             ProcessBuildings();
@@ -1080,36 +1081,36 @@ namespace CitySimAndroid.States
                                             // if the current tile is the linked resource
                                             if (_currentMap.Tiles[x, y].Object.ObjectId.Equals(k) && _currentMap.Tiles[x, y].Object.TypeId.Equals(1))
                                             {
-                                                Console.WriteLine("Adding " + BuildingData.Dic_ResourceCollectionKeys[k][0]);
+                                                Log.Info("CitySim",  "Adding " + BuildingData.Dic_ResourceCollectionKeys[k][0]);
                                                 // add the resource output to this buildings output
                                                 switch (BuildingData.Dic_ResourceCollectionKeys[k][0])
                                                 {
                                                     case "Wood":
-                                                        Console.WriteLine(
+                                                        Log.Info("CitySim",  
                                                             $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} wood to the building");
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.WoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         break;
                                                     case "Food":
-                                                        Console.WriteLine(
+                                                        Log.Info("CitySim",  
                                                             $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} Food to the building");
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.FoodOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         break;
                                                     case "Stone":
-                                                        Console.WriteLine(
+                                                        Log.Info("CitySim",  
                                                             $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} stone to the building");
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.StoneOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         break;
                                                     case "Coal":
-                                                        Console.WriteLine(
+                                                        Log.Info("CitySim",  
                                                             $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} coal to the building");
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.CoalOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         break;
                                                     case "Iron":
-                                                        Console.WriteLine(
+                                                        Log.Info("CitySim",  
                                                             $"Adding {(int)BuildingData.Dic_ResourceCollectionKeys[k][1]} iron to the building");
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
                                                         _currentMap.Tiles[(int)t.TileIndex.X, (int)t.TileIndex.Y].TileData.Object.IronOutput += (int)BuildingData.Dic_ResourceCollectionKeys[k][1];
@@ -1181,10 +1182,10 @@ namespace CitySimAndroid.States
             GSData.PlayerInventory.Energy += 30;
             GSData.PlayerInventory.Food += 60;
             // subtract from food the amount of food per worker in total buildings
-            Console.WriteLine($"Calc Food: {total_workers} * 2 = {2 * total_workers}");
-            Console.WriteLine($"Food: {GSData.PlayerInventory.Food} - {2 * total_workers} = ");
+            Log.Info("CitySim",  $"Calc Food: {total_workers} * 2 = {2 * total_workers}");
+            Log.Info("CitySim",  $"Food: {GSData.PlayerInventory.Food} - {2 * total_workers} = ");
             GSData.PlayerInventory.Food -= (2 * total_workers);
-            Console.WriteLine($"{GSData.PlayerInventory.Food}");
+            Log.Info("CitySim",  $"{GSData.PlayerInventory.Food}");
         }
 
         /// <summary>
@@ -1214,7 +1215,7 @@ namespace CitySimAndroid.States
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Log.Info("CitySim",  e.Message);
             }
 
             // backup old map data first
@@ -1225,7 +1226,7 @@ namespace CitySimAndroid.States
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error backing up previous map data: " + e.Message);
+                Log.Info("CitySim",  "Error backing up previous map data: " + e.Message);
             }
 
             IsSaving = true;
@@ -1238,7 +1239,7 @@ namespace CitySimAndroid.States
             }
 
             IsSaving = false;
-            Console.WriteLine("Finished Saving Map.");
+            Log.Info("CitySim",  "Finished Saving Map.");
         }
 
         private void Tile_CurrentlyPressed(object sender, EventArgs e)
@@ -1271,7 +1272,7 @@ namespace CitySimAndroid.States
 
             // get the tile clicked on
             Tile t = (Tile)sender;
-            Console.WriteLine($"Tile clicked: {t.TileIndex}");
+            Log.Info("CitySim",  $"Tile clicked: {t.TileIndex}");
 
             CurrentlySelectedTile = t;
 
@@ -1367,7 +1368,7 @@ namespace CitySimAndroid.States
                             var ref_obj = Building.Road();
                             var i = RoadPlacementCount;
 
-                            Console.WriteLine($"Placing {i} roads...");
+                            Log.Info("CitySim",  $"Placing {i} roads...");
 
                             for (int j = 0; j < i; j++)
                             {
@@ -1400,21 +1401,21 @@ namespace CitySimAndroid.States
                             is_residence = true;
                             applied_txt_index = Enumerable.Range(0, 1)
                                 .Select(r => new int[] { new int[] { 11, 18, 19 }[_rndGen.Next(3)], new int[] { 11, 18, 19 }[_rndGen.Next(3)], new int[] { 11, 18, 19 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
-                            Console.WriteLine($"Applying random texture to low house: id{applied_txt_index}");
+                            Log.Info("CitySim",  $"Applying random texture to low house: id{applied_txt_index}");
                         }
                         else if (obj.ObjectId.Equals(Residence.MedHouse().ObjectId))
                         {
                             is_residence = true;
                             applied_txt_index = Enumerable.Range(0, 1)
                                 .Select(r => new int[] { new int[] { 20, 21, 22 }[_rndGen.Next(3)], new int[] { 20, 21, 22 }[_rndGen.Next(3)], new int[] { 20, 21, 22 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
-                            Console.WriteLine($"Applying random texture to med house: id{applied_txt_index}");
+                            Log.Info("CitySim",  $"Applying random texture to med house: id{applied_txt_index}");
                         }
                         else if (obj.ObjectId.Equals(Residence.EliteHouse().ObjectId))
                         {
                             is_residence = true;
                             applied_txt_index = Enumerable.Range(0, 1)
                                 .Select(r => new int[] { new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)], new int[] { 23, 24, 25 }[_rndGen.Next(3)] }[_rndGen.Next(3)]).First();
-                            Console.WriteLine($"Applying random texture to elite house: id{applied_txt_index}");
+                            Log.Info("CitySim",  $"Applying random texture to elite house: id{applied_txt_index}");
                         }
                         else if (obj.ObjectId.Equals(Building.Road().ObjectId))
                         {
@@ -1620,7 +1621,7 @@ namespace CitySimAndroid.States
                                     }
                                     catch (Exception exc)
                                     {
-                                        Console.WriteLine($"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
+                                        Log.Info("CitySim",  $"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
                                     }
                                 }
                             }
@@ -1655,7 +1656,7 @@ namespace CitySimAndroid.States
                                         }
                                         catch (Exception exc)
                                         {
-                                            Console.WriteLine(
+                                            Log.Info("CitySim",  
                                                 $"Couldn't activate tile: {new Vector2(x, y)} | {exc.Message}");
                                         }
                                     }
@@ -1693,24 +1694,24 @@ namespace CitySimAndroid.States
 
                         if (t.Object.ObjectId == Building.Road().ObjectId)
                         {
-                            Console.WriteLine("Nearby roads for road: ");
+                            Log.Info("CitySim",  "Nearby roads for road: ");
                             var nrby = t.GetNearbyRoads();
-                            Console.WriteLine($"Left    : {nrby[0].ToString()}");
-                            Console.WriteLine($"Right   : {nrby[1].ToString()}");
-                            Console.WriteLine($"Up      : {nrby[2].ToString()}");
-                            Console.WriteLine($"Down    : {nrby[3].ToString()}");
+                            Log.Info("CitySim",  $"Left    : {nrby[0].ToString()}");
+                            Log.Info("CitySim",  $"Right   : {nrby[1].ToString()}");
+                            Log.Info("CitySim",  $"Up      : {nrby[2].ToString()}");
+                            Log.Info("CitySim",  $"Down    : {nrby[3].ToString()}");
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine(
+                    Log.Info("CitySim",  
                         $"Tile {new Vector2(t.TileIndex.X, t.TileIndex.Y)} is outside of the active area.");
                 }
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"ERROR ON TILE PLACE: {exception.Message}");
+                Log.Info("CitySim",  $"ERROR ON TILE PLACE: {exception.Message}");
                 SelectedObject = sel_obj;
                 //GSData.PlayerInventory = prev_inv;
             }
@@ -1718,7 +1719,7 @@ namespace CitySimAndroid.States
 
         public void DeleteBldgButton_Click()
         {
-            Console.WriteLine("Deleting building..");
+            Log.Info("CitySim",  "Deleting building..");
 
             if (CurrentlySelectedTile is null) return;
 
@@ -1760,7 +1761,7 @@ namespace CitySimAndroid.States
             // if esc is held down, go back to main menu
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
-                Console.WriteLine("ESCAPE clicked...");
+                Log.Info("CitySim",  "ESCAPE clicked...");
                 //Task.Run(() => ExitGame());
             }
 
@@ -1830,7 +1831,7 @@ namespace CitySimAndroid.States
                 }
                 catch (Exception e)
                 {
-                    //Console.WriteLine("Error drawing map:" + e.Message);
+                    //Log.Info("CitySim",  "Error drawing map:" + e.Message);
                 }
 
                 spriteBatch.End();

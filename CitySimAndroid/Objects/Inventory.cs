@@ -8,6 +8,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 
@@ -89,7 +90,7 @@ namespace CitySimAndroid.Objects
         // from debugging
         public void SetStone(int i, object sender, string function_name)
         {
-            Console.WriteLine($"{sender.GetType().Name} called func. {function_name} to set stone to {i}");
+            Log.Info("CitySim",  $"{sender.GetType().Name} called func. {function_name} to set stone to {i}");
             Stone = i;
         }
 
@@ -152,7 +153,7 @@ namespace CitySimAndroid.Objects
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error getting resource: " + e.Message);
+                Log.Info("CitySim",  "Error getting resource: " + e.Message);
                 return false;
             }
         }
@@ -260,7 +261,7 @@ namespace CitySimAndroid.Objects
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error getting resource: " + e.Message);
+                Log.Info("CitySim",  "Error getting resource: " + e.Message);
                 return false;
             }
         }
@@ -368,7 +369,7 @@ namespace CitySimAndroid.Objects
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error adding resource: " + e.Message);
+                Log.Info("CitySim",  "Error adding resource: " + e.Message);
                 return false;
             }
         }
