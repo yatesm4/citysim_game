@@ -17,6 +17,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Comora;
+using Microsoft.Xna.Framework.Input.Touch;
 
 namespace CitySimAndroid.Objects
 {
@@ -95,10 +96,8 @@ namespace CitySimAndroid.Objects
         public event EventHandler Pressing;
 
         // hitbox for mouse touch
-        public Rectangle TouchHitbox
-        {
-            get { return new Rectangle((int)Position.X + 16, (int)Position.Y + (83 * 2), 18 * 2, 10 * 2); }
-        }
+        public Rectangle TouchHitbox => new Rectangle((int)Position.X + 16, (int)Position.Y + (83 * 2), 18 * 2, 10 * 2);
+
         // tile position
         public Vector2 Position { get; set; } = new Vector2(0, 0);
 

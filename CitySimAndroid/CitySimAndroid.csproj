@@ -10,8 +10,8 @@
     <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CitySimMobile</RootNamespace>
-    <AssemblyName>CitySimMobile</AssemblyName>
+    <RootNamespace>CitySimAndroid</RootNamespace>
+    <AssemblyName>CitySimAndroid</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <AndroidApplication>true</AndroidApplication>
     <AndroidResgenFile>Resources\Resource.Designer.cs</AndroidResgenFile>
@@ -88,6 +88,7 @@
     <Compile Include="UI\Button.cs" />
     <Compile Include="UI\Component.cs" />
     <Compile Include="UI\DialogWindow.cs" />
+    <Compile Include="UI\GamePad.cs" />
     <Compile Include="UI\HUD.cs" />
   </ItemGroup>
   <ItemGroup>

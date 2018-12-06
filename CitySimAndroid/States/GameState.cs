@@ -25,6 +25,7 @@ using Comora;
 using Newtonsoft.Json;
 using Environment = System.Environment;
 using Android.Util;
+using Microsoft.Xna.Framework.Input.Touch;
 
 namespace CitySimAndroid.States
 {
@@ -121,6 +122,9 @@ namespace CitySimAndroid.States
 
         // previous mouse state (before current)
         private MouseState _previousMouseState { get; set; }
+
+        private TouchCollection _previousTouch { get; set; }
+        private TouchCollection _currentTouch { get; set; }
         #endregion
 
         #region EXTRA PROPERTIES
@@ -170,7 +174,9 @@ namespace CitySimAndroid.States
         #endregion
 
         #region MAP PROPS
-        private int _mapBounds = 75;
+
+        // reduced map size for mobile devices
+        private int _mapBounds = 20;
 
         private List<TileData> _tileData { get; set; }
 
@@ -814,8 +820,11 @@ namespace CitySimAndroid.States
                 var keyboardState = Keyboard.GetState();
                 var mouseState = Mouse.GetState();
 
+                _previousTouch = _currentTouch;
+                _currentTouch = TouchPanel.GetState();
+
                 // handle current state input (keyboard / mouse)
-                HandleInput(gameTime, keyboardState, mouseState);
+                HandleInput(gameTime);
 
                 // set previous keyboardstate = keyboardstate;
                 _previousKeyboardState = keyboardState;
@@ -1745,7 +1754,7 @@ namespace CitySimAndroid.States
         #endregion
 
         #region HANDLE INPUTS
-        public void HandleInput(GameTime gameTime, KeyboardState keyboardState, MouseState mouseState)
+        public void HandleInput(GameTime gameTime)
         {
             // if first render
             if (_firstTake.Equals(true))
@@ -1753,58 +1762,40 @@ namespace CitySimAndroid.States
                 _firstTake = false;
             }
 
-            // if shift is held down, set shift multiplier - else, set to 1
-            float shift = (keyboardState.IsKeyDown(Keys.LeftShift) || keyboardState.IsKeyDown(Keys.RightShift))
-                ? 3.5f
-                : 1f;
+            // move camera based on touch inputs
+            var gesture = default(GestureSample);
 
-            // if esc is held down, go back to main menu
-            if (keyboardState.IsKeyDown(Keys.Escape))
+            while (TouchPanel.IsGestureAvailable)
             {
-                Log.Info("CitySim",  "ESCAPE clicked...");
-                //Task.Run(() => ExitGame());
-            }
+                gesture = TouchPanel.ReadGesture();
 
-            if (mouseState.RightButton == ButtonState.Released && _previousMouseState.RightButton == ButtonState.Pressed)
-            {
-                SelectedObject = new TileObject();
+                if (gesture.GestureType == GestureType.VerticalDrag)
+                {
+                    if (gesture.Delta.Y < 0)
+                    {
+                        // pan up
+                        _camera.Position += new Vector2(0, -1);
+                    }
+                    else if (gesture.Delta.Y > 0)
+                    {
+                        // pan down
+                        _camera.Position += new Vector2(0, 1);
+                    }
+                }
+                else if (gesture.GestureType == GestureType.HorizontalDrag)
+                {
+                    if (gesture.Delta.X < 0)
+                    {
+                        // pan left
+                        _camera.Position += new Vector2(-1, 0);
+                    }
+                    else if (gesture.Delta.X > 0)
+                    {
+                        // pan right
+                        _camera.Position += new Vector2(1, 0);
+                    }
+                }
             }
-
-            // if WASD, move camera accordingly and mutiply by shift multiplier
-
-            if (keyboardState.IsKeyDown(Keys.A))
-            {
-                _camera.Position += new Vector2(-1, 0) * shift;
-            }
-            else if (keyboardState.IsKeyDown(Keys.D))
-            {
-                _camera.Position += new Vector2(1, 0) * shift;
-            }
-
-            if (keyboardState.IsKeyDown(Keys.W))
-            {
-                _camera.Position += new Vector2(0, -1) * shift;
-            }
-            else if (keyboardState.IsKeyDown(Keys.S))
-            {
-                _camera.Position += new Vector2(0, 1) * shift;
-            }
-
-            // if mouse scrollwheel value is different than last frames scroll wheel value,
-            // zoom camera accordingly
-            // REMOVED TEMPORARILY
-            // TODO: PROPERLY CONVERT MOUSE SCREEN POS TO WORLD POS WHEN CAMERA IS ZOOMED, THEN RE-ADD SCROLLING
-            /*
-            if (mouseState.ScrollWheelValue < _previousMouseState.ScrollWheelValue)
-            {
-                // check for camera zoom > 0 ?
-                _camera.Zoom -= 0.2f;
-            }
-            else if (mouseState.ScrollWheelValue > _previousMouseState.ScrollWheelValue)
-            {
-                _camera.Zoom += 0.2f;
-            }
-            */
         }
         #endregion
 

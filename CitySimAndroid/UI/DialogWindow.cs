@@ -14,6 +14,7 @@ using CitySimAndroid.States;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input.Touch;
 
 namespace CitySimAndroid.UI
 {
@@ -38,6 +39,9 @@ namespace CitySimAndroid.UI
                 _previousMouseState.Y,
                 1, 1
             );
+
+        private TouchCollection _currentTouch;
+        private TouchCollection _previousTouch;
 
         private GameState _currentGameState;
 
@@ -94,6 +98,8 @@ namespace CitySimAndroid.UI
             return _font.MeasureString(row);
         }
 
+        public Vector2 TextScale { get; set; } = new Vector2(1.5f, 1.5f);
+
         public Vector2 TextStartPosition =>
             new Vector2(
                 Position.X + (Dimensions.X / 2),
@@ -105,8 +111,8 @@ namespace CitySimAndroid.UI
         // Dimensions of DialogWindow
         public Vector2 Dimensions =>
             new Vector2(
-                MaxTextDimensions().X + (Padding * 2),
-                (MaxTextDimensions().Y * TextRows.Length) + (Padding * 2)
+                (MaxTextDimensions().X * TextScale.X) + (Padding * 2),
+                ((MaxTextDimensions().Y * TextScale.Y) * TextRows.Length) + (Padding * 2)
             );
 
         // Dimensions of the black border displayed around the DialogWindow
@@ -184,6 +190,11 @@ namespace CitySimAndroid.UI
                 Position = CloseButtonPosition,
                 HoverColor = Color.Red
             };
+            CloseButton.CustomRect = new Rectangle(
+                (int)CloseButton.Position.X,
+                (int)CloseButton.Position.Y,
+                _closeButtonTexture.Width * 2,
+                _closeButtonTexture.Height * 2);
             CloseButton.Click += CloseButton_Click;
         }
 
@@ -212,14 +223,13 @@ namespace CitySimAndroid.UI
 
                     // calculate text position and sheit
                     var txt_pos = TextStartPosition;
-                    txt_pos += new Vector2(0, i * _font.MeasureString(row).Y);
+                    txt_pos += new Vector2(0, i * (_font.MeasureString(row).Y * TextScale.Y));
 
                     // middle of the text, betch
-                    var txt_origin = new Vector2(_font.MeasureString(row).X / 2, _font.MeasureString(row).Y / 2);
+                    var txt_origin = new Vector2((_font.MeasureString(row).X * TextScale.X) / 2,
+                        (_font.MeasureString(row).Y * TextScale.Y) / 2);
 
-                    var txt_scale = new Vector2(1, 1);
-
-                    spriteBatch.DrawString(_font, row, txt_pos, TextColor, 0f, txt_origin, txt_scale,
+                    spriteBatch.DrawString(_font, row, txt_pos, TextColor, 0f, txt_origin, TextScale,
                         SpriteEffects.None, 1f);
 
                     i++;
@@ -234,6 +244,9 @@ namespace CitySimAndroid.UI
             // get mouse state
             _previousMouseState = _currentMouseState;
             _currentMouseState = Mouse.GetState();
+
+            _previousTouch = _currentTouch;
+            _currentTouch = TouchPanel.GetState();
 
             if (TopBarRectangle.Contains(_mouseRect))
             {
