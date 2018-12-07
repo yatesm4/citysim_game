@@ -9,9 +9,9 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: global::Android.Runtime.ResourceDesignerAttribute("CitySimMobile.Resource", IsApplication=true)]
+[assembly: global::Android.Runtime.ResourceDesignerAttribute("CitySimAndroid.Resource", IsApplication=true)]
 
-namespace CitySimMobile
+namespace CitySimAndroid
 {
 	
 	

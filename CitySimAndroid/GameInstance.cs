@@ -18,6 +18,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 
 namespace CitySimAndroid
 {
@@ -126,8 +127,8 @@ namespace CitySimAndroid
                 _nextState = null;
                 if (_currentState is MenuState)
                 {
-                    //MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
-                    //MediaPlayer.IsRepeating = true;
+                    MediaPlayer.Play(Content.Load<Song>("Sounds/Music/Bgm2"));
+                    MediaPlayer.IsRepeating = true;
                 }
                 else if (_currentState is GameState cs)
                 {

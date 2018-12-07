@@ -96,7 +96,7 @@ namespace CitySimAndroid.Objects
         public event EventHandler Pressing;
 
         // hitbox for mouse touch
-        public Rectangle TouchHitbox => new Rectangle((int)Position.X + 16, (int)Position.Y + (83 * 2), 18 * 2, 10 * 2);
+        public Rectangle TouchHitbox => new Rectangle((int)Position.X + 16, (int)Position.Y + (83 * (int)Scale.X), 18 * (int)Scale.X, 10 * (int)Scale.X);
 
         // tile position
         public Vector2 Position { get; set; } = new Vector2(0, 0);
@@ -105,7 +105,7 @@ namespace CitySimAndroid.Objects
         public Vector2 CenterPoint => Position + new Vector2(16, 12);
 
         // scale to draw the tile at
-        public Vector2 Scale { get; set; } = new Vector2(2, 2);
+        public Vector2 Scale { get; set; } = new Vector2(5.5f, 5.5f);
 
         // tile constructor, pass a gamecontent manager and tiledata to load from
         public Tile(GameContent content_, GraphicsDevice graphicsDevice_, TileData tileData_)

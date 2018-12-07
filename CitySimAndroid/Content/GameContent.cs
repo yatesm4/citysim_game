@@ -179,6 +179,10 @@ namespace CitySimAndroid.Content
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/Icons/Icon_Cell_Watermill", _content)); // 39
 
             UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Arrow", _content)); // 40
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Large_Arrow", _content)); // 41
+
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Small_Arrow2", _content)); // 42
+            UiTextures.Add(new ContentData<Texture2D>(i++, "Sprites/UI/UI_Button_Large_Arrow2", _content)); // 43
 
             Log.Info("CitySim",  $"Ui Textures: {i}");
         }

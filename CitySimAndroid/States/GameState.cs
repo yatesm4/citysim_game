@@ -114,6 +114,8 @@ namespace CitySimAndroid.States
 
         // game camera
         private Camera _camera { get; set; }
+
+        public Camera Camera => _camera;
         #endregion
 
         #region MOUSE & KEYBOARD STATES
@@ -125,6 +127,7 @@ namespace CitySimAndroid.States
 
         private TouchCollection _previousTouch { get; set; }
         private TouchCollection _currentTouch { get; set; }
+        public TouchCollection CurrentTouch => _currentTouch;
         #endregion
 
         #region EXTRA PROPERTIES
@@ -183,7 +186,7 @@ namespace CitySimAndroid.States
         // generation props
         private float _tileWidth = 17f;
         private float _tileHeight = 8.5f;
-        private float _tileScale = 2f;
+        private float _tileScale = 5.5f;
         #endregion
 
         #region METHODS
@@ -256,6 +259,8 @@ namespace CitySimAndroid.States
         {
             GameHUD = new HUD(_graphicsDevice, _gameContent);
             Components.Add(GameHUD);
+
+            Components.Add(new UI.GamePad(_graphicsDevice, _gameContent));
 
             var welcome_txt =
                 "Welcome to CitySim!\n" +
@@ -524,9 +529,6 @@ namespace CitySimAndroid.States
                 {
 
                     if (townHallMade is true)
-                        continue;
-
-                    if (x > _mapBounds - 20 || x < 20 || y < 20 || y > _mapBounds - 20)
                         continue;
 
                     var sel_index = new Vector2(x, y);
@@ -1149,8 +1151,12 @@ namespace CitySimAndroid.States
                         {
                             for (int x = ((int)t.TileIndex.X - light_rng); x < (t.TileIndex.X + (light_rng + 1)); x++)
                             {
+                                if (x < 0 || x > _mapBounds) continue;
+
                                 for (int y = ((int)t.TileIndex.Y - light_rng); y < (t.TileIndex.Y + (light_rng + 1)); y++)
                                 {
+                                    if (y < 0 || y > _mapBounds) continue;
+
                                     _currentMap.Tiles[x, y].IsVisible = true;
                                     _currentMap.Tiles[x, y].TileData.IsVisible = true;
                                 }
@@ -1822,7 +1828,7 @@ namespace CitySimAndroid.States
                 }
                 catch (Exception e)
                 {
-                    //Log.Info("CitySim",  "Error drawing map:" + e.Message);
+                    Log.Info("CitySim",  "Error drawing map:" + e.Message);
                 }
 
                 spriteBatch.End();
@@ -2008,9 +2014,6 @@ namespace CitySimAndroid.States
                     }
                 }
 
-                // draw cursor over UI elements !!
-                spriteBatch.Draw(_cursorTexture, mp, Color.White);
-
                 spriteBatch.End();
             }
             else
@@ -2048,8 +2051,6 @@ namespace CitySimAndroid.States
                     var cellRectangle = new Rectangle(LoadingBar.X + (i * (LoadingBar.Width / 10)), LoadingBar.Y, LoadingBar.Width / 10, LoadingBar.Height);
                     spriteBatch.Draw(LoadingCellTexture, destinationRectangle: cellRectangle, color: Color.White);
                 }
-
-                spriteBatch.Draw(_cursorTexture, mp, Color.White);
 
                 // draw loading screen here?
 
