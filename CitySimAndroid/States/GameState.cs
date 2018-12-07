@@ -186,7 +186,7 @@ namespace CitySimAndroid.States
         // generation props
         private float _tileWidth = 17f;
         private float _tileHeight = 8.5f;
-        private float _tileScale = 5.5f;
+        private float _tileScale = 7f;
         #endregion
 
         #region METHODS

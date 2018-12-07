@@ -105,7 +105,10 @@ namespace CitySimAndroid.Objects
         public Vector2 CenterPoint => Position + new Vector2(16, 12);
 
         // scale to draw the tile at
-        public Vector2 Scale { get; set; } = new Vector2(5.5f, 5.5f);
+        public Vector2 Scale { get; set; } = new Vector2(7f, 7f);
+
+        private TouchCollection _previousTouch;
+        private TouchCollection _currentTouch;
 
         // tile constructor, pass a gamecontent manager and tiledata to load from
         public Tile(GameContent content_, GraphicsDevice graphicsDevice_, TileData tileData_)
@@ -164,52 +167,55 @@ namespace CitySimAndroid.Objects
         // - check for mouse hovering and click (select)
         public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera, GameState state)
         {
+            _previousTouch = _currentTouch;
+            _currentTouch = state.CurrentTouch;
+
             // update tile?
             IsGlowing = false;
             IsPreviewingRoad = false;
 
             #region MOUSE INTERACTION LOGIC
-            var currentMouse = Mouse.GetState();
 
-            // convert mouse screen position to world position
-            var m_screenPosition = new Vector2(currentMouse.X, currentMouse.Y);
-            var m_worldPosition = Vector2.Zero;
-            camera.ToWorld(ref m_screenPosition, out m_worldPosition);
-
-            // apply offset (why the fuck this is needed I absolutely do not know but I randomly fucking figured out this formula and somehow it works so for the love of fuck - do not change this until a superior solution is TESTED and delivered
-            m_worldPosition.X -= camera.Width / 2f;
-            m_worldPosition.Y -= camera.Height / 2f;
-
-            //m_worldPosition.X += (GraphicsDevice_.Viewport.Width * 0.25f);
-            //m_worldPosition.Y += (GraphicsDevice_.Viewport.Height * 0.25f);
-
-            // get bounds for mouse world position
-            var mouseRectangle = new Rectangle((int)m_worldPosition.X, (int)m_worldPosition.Y, 1, 1);
-
-            // check if mouse bounds intersects with tile touchbox bounds
-            if (mouseRectangle.Intersects(TouchHitbox) && IsVisible.Equals(true))
+            foreach (var tl in _currentTouch)
             {
-                state.CurrentlyHoveredTile = this;
-                //Log.Info("CitySim",  $"Hover:: Mp=>{currentMouse.Position.ToString()} :: Mwp=>{m_worldPosition.ToString()} :: Tp=>{Position.ToString()}");
-                //Log.Info("CitySim",  $"Hovering Over Tile: {TileIndex.ToString()}");
-
-                switch (currentMouse.LeftButton)
+                if (tl.State == TouchLocationState.Moved || tl.State == TouchLocationState.Pressed)
                 {
-                    case ButtonState.Pressed when _previousMouseState.LeftButton == ButtonState.Pressed:
-                        if (!(state.CurrentlyPressedTile.TileIndex.Equals(TileIndex))) Pressing?.Invoke(this, new EventArgs());
-                        break;
-                    case ButtonState.Pressed when _previousMouseState.LeftButton == ButtonState.Released:
+                    var t_screenPosition = new Vector2(tl.Position.X, tl.Position.Y);
+                    var t_worldPosition = Vector2.Zero;
+                    camera.ToWorld(ref t_screenPosition, out t_worldPosition);
+
+                    t_worldPosition.X -= camera.Width / 2f;
+                    t_worldPosition.Y -= camera.Height / 2f;
+
+                    var tlrect = new Rectangle((int)t_worldPosition.X, (int)t_worldPosition.Y, 1, 1);
+
+                    if (tlrect.Intersects(TouchHitbox) && IsVisible.Equals(true))
+                    {
+                        state.CurrentlyHoveredTile = this;
                         Pressed?.Invoke(this, new EventArgs());
-                        break;
-                    case ButtonState.Released when _previousMouseState.LeftButton == ButtonState.Pressed:
-                        Click?.Invoke(this, new EventArgs());
-                        break;
-                }
-
-                if (currentMouse.RightButton == ButtonState.Released && _previousMouseState.RightButton == ButtonState.Pressed)
+                    }
+                } else if (tl.State == TouchLocationState.Released)
                 {
-                    //camera.Position = Position + new Vector2(0, 150);
-                    RightClick?.Invoke(this, new EventArgs());
+                    TouchLocation prevLoc;
+
+                    if (!tl.TryGetPreviousLocation(out prevLoc) || prevLoc.State != TouchLocationState.Moved) continue;
+
+                    var t_screenPosition = new Vector2(tl.Position.X, tl.Position.Y);
+                    var t_worldPosition = Vector2.Zero;
+                    camera.ToWorld(ref t_screenPosition, out t_worldPosition);
+
+                    t_worldPosition.X -= camera.Width / 2f;
+                    t_worldPosition.Y -= camera.Height / 2f;
+
+                    var tlrect = new Rectangle((int)t_worldPosition.X, (int)t_worldPosition.Y, 1, 1);
+
+                    if (tlrect.Intersects(TouchHitbox) && IsVisible.Equals(true))
+                    {
+                        state.CurrentlySelectedTile = this;
+                        Click?.Invoke(this, new EventArgs());
+
+                    }
+
                 }
             }
 
@@ -226,9 +232,6 @@ namespace CitySimAndroid.Objects
             }
 
             if (HasAnimatedTexture == false) CheckForAnimatedTexture();
-
-            // save mouse state as previous mousestate for next update call
-            _previousMouseState = currentMouse;
 
             _gameState = state;
         }
