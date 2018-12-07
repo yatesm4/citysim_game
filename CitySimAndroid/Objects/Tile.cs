@@ -105,7 +105,7 @@ namespace CitySimAndroid.Objects
         public Vector2 CenterPoint => Position + new Vector2(16, 12);
 
         // scale to draw the tile at
-        public Vector2 Scale { get; set; } = new Vector2(7f, 7f);
+        public Vector2 Scale { get; set; } = new Vector2(10f, 10f);
 
         private TouchCollection _previousTouch;
         private TouchCollection _currentTouch;
@@ -174,13 +174,17 @@ namespace CitySimAndroid.Objects
             IsGlowing = false;
             IsPreviewingRoad = false;
 
-            #region MOUSE INTERACTION LOGIC
+            #region TOUCH INTERACTION LOGIC
 
-            foreach (var tl in _currentTouch)
+            if (IsVisible)
             {
-                if (tl.State == TouchLocationState.Moved || tl.State == TouchLocationState.Pressed)
+                foreach (var tl in _currentTouch)
                 {
+
                     var t_screenPosition = new Vector2(tl.Position.X, tl.Position.Y);
+                    var t_screenRect = new Rectangle((int)t_screenPosition.X, (int)t_screenPosition.Y, 1, 1);
+                    if (t_screenRect.Intersects(state.GameHUD.DisplayRect)) continue;
+
                     var t_worldPosition = Vector2.Zero;
                     camera.ToWorld(ref t_screenPosition, out t_worldPosition);
 
@@ -189,33 +193,22 @@ namespace CitySimAndroid.Objects
 
                     var tlrect = new Rectangle((int)t_worldPosition.X, (int)t_worldPosition.Y, 1, 1);
 
-                    if (tlrect.Intersects(TouchHitbox) && IsVisible.Equals(true))
+                    if (!tlrect.Intersects(TouchHitbox)) continue;
+
+                    if (tl.State == TouchLocationState.Moved || tl.State == TouchLocationState.Pressed)
                     {
                         state.CurrentlyHoveredTile = this;
                         Pressed?.Invoke(this, new EventArgs());
                     }
-                } else if (tl.State == TouchLocationState.Released)
-                {
-                    TouchLocation prevLoc;
-
-                    if (!tl.TryGetPreviousLocation(out prevLoc) || prevLoc.State != TouchLocationState.Moved) continue;
-
-                    var t_screenPosition = new Vector2(tl.Position.X, tl.Position.Y);
-                    var t_worldPosition = Vector2.Zero;
-                    camera.ToWorld(ref t_screenPosition, out t_worldPosition);
-
-                    t_worldPosition.X -= camera.Width / 2f;
-                    t_worldPosition.Y -= camera.Height / 2f;
-
-                    var tlrect = new Rectangle((int)t_worldPosition.X, (int)t_worldPosition.Y, 1, 1);
-
-                    if (tlrect.Intersects(TouchHitbox) && IsVisible.Equals(true))
+                    else if (tl.State == TouchLocationState.Released)
                     {
+                        TouchLocation prevLoc;
+
+                        if (!tl.TryGetPreviousLocation(out prevLoc) || prevLoc.State != TouchLocationState.Moved) continue;
+
                         state.CurrentlySelectedTile = this;
                         Click?.Invoke(this, new EventArgs());
-
                     }
-
                 }
             }
 

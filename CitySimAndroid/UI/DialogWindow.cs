@@ -71,7 +71,7 @@ namespace CitySimAndroid.UI
         public Vector2 TopBarDimensions =>
             new Vector2(
                 Rectangle.Width,
-                (CloseButton?.Rectangle.Height ?? 32) * 1.5f
+                (CloseButton?.Rectangle.Height ?? 32 * 5) / 2
             );
         public Rectangle TopBarRectangle =>
             new Rectangle(
@@ -82,8 +82,8 @@ namespace CitySimAndroid.UI
             );
         public Vector2 CloseButtonPosition =>
             new Vector2(
-                (TopBarRectangle.X + TopBarRectangle.Width) - ((CloseButton?.Rectangle.Width ?? 32) * 1.25f),
-                (TopBarRectangle.Y + ((CloseButton?.Rectangle.Height ?? 32) * 0.25f))
+                (TopBarRectangle.X + TopBarRectangle.Width) - (CloseButton?.Rectangle.Width ?? 32 * 5f) - 20,
+                (TopBarRectangle.Y + 20)
             );
 
         private SpriteFont _font { get; set; }
@@ -106,7 +106,7 @@ namespace CitySimAndroid.UI
                 Position.Y + (Padding)
             );
 
-        public int Padding { get; set; } = 20;
+        public int Padding { get; set; } = 100;
 
         // Dimensions of DialogWindow
         public Vector2 Dimensions =>
@@ -193,8 +193,8 @@ namespace CitySimAndroid.UI
             CloseButton.CustomRect = new Rectangle(
                 (int)CloseButton.Position.X,
                 (int)CloseButton.Position.Y,
-                _closeButtonTexture.Width * 2,
-                _closeButtonTexture.Height * 2);
+                _closeButtonTexture.Width * 5,
+                _closeButtonTexture.Height * 5);
             CloseButton.Click += CloseButton_Click;
         }
 
@@ -226,8 +226,8 @@ namespace CitySimAndroid.UI
                     txt_pos += new Vector2(0, i * (_font.MeasureString(row).Y * TextScale.Y));
 
                     // middle of the text, betch
-                    var txt_origin = new Vector2((_font.MeasureString(row).X * TextScale.X) / 2,
-                        (_font.MeasureString(row).Y * TextScale.Y) / 2);
+                    var txt_origin = new Vector2((_font.MeasureString(row).X) / 2,
+                        (_font.MeasureString(row).Y) / 2);
 
                     spriteBatch.DrawString(_font, row, txt_pos, TextColor, 0f, txt_origin, TextScale,
                         SpriteEffects.None, 1f);

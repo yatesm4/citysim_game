@@ -186,7 +186,9 @@ namespace CitySimAndroid.States
         // generation props
         private float _tileWidth = 17f;
         private float _tileHeight = 8.5f;
-        private float _tileScale = 7f;
+        private float _tileScale = 10f;
+
+        private Vector2 _cameraFirstTakePosition;
         #endregion
 
         #region METHODS
@@ -365,7 +367,14 @@ namespace CitySimAndroid.States
 
                         // set the camera's position if this tile is a townhall
                         if (tileArr_[x, y].Object.TypeId.Equals(2) && tileArr_[x, y].Object.ObjectId.Equals(10))
-                            _camera.Position = tileArr_[x, y].Position + new Vector2(0, 100);
+                        {
+                            var townhall_wPosition =
+                                tileArr_[x, y].Position;
+                            var townhall_sPosition = Vector2.Zero;
+
+                            _camera.ToScreen(ref townhall_wPosition, out townhall_sPosition);
+                            _camera.Position = townhall_sPosition;
+                        }
                     }
 
                     Log.Info("CitySim",  "Map restored - tile count: " + tileArr_.Length);
@@ -1763,43 +1772,13 @@ namespace CitySimAndroid.States
         public void HandleInput(GameTime gameTime)
         {
             // if first render
-            if (_firstTake.Equals(true))
+            if (IsLoaded)
             {
-                _firstTake = false;
-            }
-
-            // move camera based on touch inputs
-            var gesture = default(GestureSample);
-
-            while (TouchPanel.IsGestureAvailable)
-            {
-                gesture = TouchPanel.ReadGesture();
-
-                if (gesture.GestureType == GestureType.VerticalDrag)
+                if (_firstTake.Equals(true))
                 {
-                    if (gesture.Delta.Y < 0)
-                    {
-                        // pan up
-                        _camera.Position += new Vector2(0, -1);
-                    }
-                    else if (gesture.Delta.Y > 0)
-                    {
-                        // pan down
-                        _camera.Position += new Vector2(0, 1);
-                    }
-                }
-                else if (gesture.GestureType == GestureType.HorizontalDrag)
-                {
-                    if (gesture.Delta.X < 0)
-                    {
-                        // pan left
-                        _camera.Position += new Vector2(-1, 0);
-                    }
-                    else if (gesture.Delta.X > 0)
-                    {
-                        // pan right
-                        _camera.Position += new Vector2(1, 0);
-                    }
+                    _firstTake = false;
+
+                    _camera.Position += new Vector2(0, _gameContent.GetTileTexture(1).Height * _tileScale);
                 }
             }
         }
