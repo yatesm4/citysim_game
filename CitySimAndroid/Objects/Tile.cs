@@ -183,7 +183,7 @@ namespace CitySimAndroid.Objects
 
                     var t_screenPosition = new Vector2(tl.Position.X, tl.Position.Y);
                     var t_screenRect = new Rectangle((int)t_screenPosition.X, (int)t_screenPosition.Y, 1, 1);
-                    if (t_screenRect.Intersects(state.GameHUD.DisplayRect)) continue;
+                    if (t_screenRect.Intersects(state.GameHUD.DisplayRect) || t_screenRect.Intersects(state.Gamepad.GamePadUnionHitbox)) continue;
 
                     var t_worldPosition = Vector2.Zero;
                     camera.ToWorld(ref t_screenPosition, out t_worldPosition);

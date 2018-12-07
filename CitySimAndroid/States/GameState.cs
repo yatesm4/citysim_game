@@ -26,6 +26,7 @@ using Newtonsoft.Json;
 using Environment = System.Environment;
 using Android.Util;
 using Microsoft.Xna.Framework.Input.Touch;
+using GamePad = CitySimAndroid.UI.GamePad;
 
 namespace CitySimAndroid.States
 {
@@ -116,6 +117,9 @@ namespace CitySimAndroid.States
         private Camera _camera { get; set; }
 
         public Camera Camera => _camera;
+
+        public Vector2 CameraDestination { get; set; } = Vector2.Zero;
+        public bool CameraIsMoving = false;
         #endregion
 
         #region MOUSE & KEYBOARD STATES
@@ -161,6 +165,7 @@ namespace CitySimAndroid.States
         public List<UI.Component> Components { get; set; } = new List<UI.Component>();
 
         public HUD GameHUD { get; set; }
+        public GamePad Gamepad { get; set; }
 
         public TileObject SelectedObject { get; set; } = new TileObject();
 
@@ -262,7 +267,8 @@ namespace CitySimAndroid.States
             GameHUD = new HUD(_graphicsDevice, _gameContent);
             Components.Add(GameHUD);
 
-            Components.Add(new UI.GamePad(_graphicsDevice, _gameContent));
+            Gamepad = new UI.GamePad(_graphicsDevice, _gameContent);
+            Components.Add(Gamepad);
 
             var welcome_txt =
                 "Welcome to CitySim!\n" +
@@ -827,6 +833,19 @@ namespace CitySimAndroid.States
             {
                 // game state is loaded
 
+                if (CameraIsMoving)
+                {
+                    var camera_move_dir = Vector2.Normalize(CameraDestination - _camera.Position);
+                    _camera.Position += camera_move_dir * 1000 * (float) gameTime.ElapsedGameTime.TotalSeconds;
+                    var current_camera_move_dist = Vector2.Distance(_camera.Position, CameraDestination);
+                    if (current_camera_move_dist < 20)
+                    {
+                        _camera.Position = CameraDestination;
+                        CameraDestination = Vector2.Zero;
+                        CameraIsMoving = false;
+                    }
+                }
+
                 // get current keyboard state
                 var keyboardState = Keyboard.GetState();
                 var mouseState = Mouse.GetState();
@@ -1052,12 +1071,14 @@ namespace CitySimAndroid.States
             GSData.PlayerInventory.Energy = 0;
             GSData.PlayerInventory.Food = 0;
 
+            Log.Info("CitySim", $"Resetting tile visibility before processing...");
             foreach (Tile t in _currentMap.Tiles)
             {
                 t.IsVisible = false;
                 t.TileData.IsVisible = false;
             }
 
+            Log.Info("CitySim", $"Starting tile-processing recursion...");
             foreach (var t in _currentMap.Tiles)
             {
                 // if the object ID is greater than 0 (is an object)
@@ -1069,6 +1090,7 @@ namespace CitySimAndroid.States
                     }
                     else if (t.Object.TypeId.Equals(2))
                     {
+                        Log.Info("CitySim", $"Starting tile-object:building processing...");
                         // building tile
 
                         // if a resource is linked to this building's objectid, add that resource's output to this building's income
@@ -1090,8 +1112,10 @@ namespace CitySimAndroid.States
                             // loop thru all tiles within range for resources to add to output
                             for (int x = ((int)t.TileIndex.X - obj.Range); x < (t.TileIndex.X + (obj.Range + 1)); x++)
                             {
+                                if (x < 0 || x > _mapBounds) continue;
                                 for (int y = ((int)t.TileIndex.Y - obj.Range); y < (t.TileIndex.Y + (obj.Range + 1)); y++)
                                 {
+                                    if (y < 0 || y > _mapBounds) continue;
                                     if (!(_currentMap.Tiles[x, y].Object.ObjectId.Equals(t.Object.ObjectId) &&
                                           _currentMap.Tiles[x, y].Object.TypeId.Equals(t.Object.TypeId)))
                                     {
@@ -1158,18 +1182,27 @@ namespace CitySimAndroid.States
 
                         if (make_light.Equals(true))
                         {
+                            Log.Info("CitySim", $"Applying visibility to nearby tiles...");
                             for (int x = ((int)t.TileIndex.X - light_rng); x < (t.TileIndex.X + (light_rng + 1)); x++)
                             {
-                                if (x < 0 || x > _mapBounds) continue;
+                                if (x < 0 || x >= _mapBounds) continue;
 
                                 for (int y = ((int)t.TileIndex.Y - light_rng); y < (t.TileIndex.Y + (light_rng + 1)); y++)
                                 {
-                                    if (y < 0 || y > _mapBounds) continue;
+                                    if (y < 0 || y >= _mapBounds) continue;
 
-                                    _currentMap.Tiles[x, y].IsVisible = true;
-                                    _currentMap.Tiles[x, y].TileData.IsVisible = true;
+                                    try
+                                    {
+                                        _currentMap.Tiles[x, y].IsVisible = true;
+                                        _currentMap.Tiles[x, y].TileData.IsVisible = true;
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Log.Error($"CitySim", $"Error applying visibility to nearby tile({x},{y}): {e.Message}");
+                                    }
                                 }
                             }
+                            Log.Info("CitySim", $"Applying visibility completed.");
                         }
 
                         //var b = BuildingData.Dict_BuildingFromObjectID[t.Object.ObjectId];
@@ -1273,7 +1306,14 @@ namespace CitySimAndroid.States
 
         private void Tile_OnPressed(object sender, EventArgs e)
         {
-            CurrentlyPressedTile = (Tile)sender;
+            if (CurrentlyPressedTile != (Tile) sender)
+            {
+                CurrentlyPressedTile = (Tile)sender;
+                CameraDestination = CurrentlyPressedTile.Position +
+                                    new Vector2(0, CurrentlyPressedTile.Texture.Height * _tileScale);
+                CameraIsMoving = true;
+            }
+
             var sel_obj = SelectedObject;
             if (sel_obj.ObjectId.Equals(Building.Road().ObjectId))
             {

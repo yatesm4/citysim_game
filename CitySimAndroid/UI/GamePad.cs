@@ -42,28 +42,37 @@ namespace CitySimAndroid.UI
 
         private Color _color;
 
+        private Vector2 _gamepadDisplayOrigin;
+
         // up button
-        private Vector2 _btn1_position => new Vector2(_textureDisplayDimension + (_textureDisplayDimension / 4), _textureDisplayDimension / 4);
+        private Vector2 _btn1_position => new Vector2(_textureDisplayDimension + (_textureDisplayDimension / 4), _gamepadDisplayOrigin.Y + _textureDisplayDimension / 4);
         private Rectangle _btn1_rect => new Rectangle((int)_btn1_position.X, (int)_btn1_position.Y, (int)_textureDisplayDimension, (int)_textureDisplayDimension);
         private bool _btn1_pressed = false;
 
         // down button
-        private Vector2 _btn2_position => new Vector2(_textureDisplayDimension + (_textureDisplayDimension / 4),
+        private Vector2 _btn2_position => new Vector2(_textureDisplayDimension + (_textureDisplayDimension / 4), _gamepadDisplayOrigin.Y +
             _textureDisplayDimension + (_textureDisplayDimension / 4));
         private Rectangle _btn2_rect => new Rectangle((int)_btn2_position.X, (int)_btn2_position.Y, (int)_textureDisplayDimension, (int)_textureDisplayDimension);
         private bool _btn2_pressed = false;
 
         // left button
-        private Vector2 _btn3_position => new Vector2((_textureDisplayDimension / 4), (_textureDisplayDimension / 4) * 3);
+        private Vector2 _btn3_position => new Vector2((_textureDisplayDimension / 4), _gamepadDisplayOrigin.Y +
+                                                                                      ((_textureDisplayDimension / 4) * 3));
         private Rectangle _btn3_rect => new Rectangle((int) _btn3_position.X, (int) _btn3_position.Y,
             (int) _textureDisplayDimension, (int) _textureDisplayDimension);
         private bool _btn3_pressed = false;
 
         // right button
-        private Vector2 _btn4_position => new Vector2((_textureDisplayDimension / 4) + (_textureDisplayDimension * 2), (_textureDisplayDimension / 4) * 3);
+        private Vector2 _btn4_position => new Vector2((_textureDisplayDimension / 4) + (_textureDisplayDimension * 2), _gamepadDisplayOrigin.Y +
+                                                                                                                       ((_textureDisplayDimension / 4) * 3));
         private Rectangle _btn4_rect => new Rectangle((int)_btn4_position.X, (int)_btn4_position.Y,
             (int)_textureDisplayDimension, (int)_textureDisplayDimension);
         private bool _btn4_pressed = false;
+
+        // union rect
+        public Rectangle GamePadUnionHitbox => Rectangle.Union(
+            Rectangle.Union(_btn1_rect, _btn2_rect),
+            Rectangle.Union(_btn3_rect, _btn4_rect));
 
         private Vector2 _btnScale { get; set; } = new Vector2(2f, 2f);
 
@@ -75,6 +84,9 @@ namespace CitySimAndroid.UI
             _content = content_;
             _texture = _content.GetUiTexture(41);
             _textureRotated = _content.GetUiTexture(43);
+
+            _gamepadDisplayOrigin = new Vector2(0, (int)((_graphicsDevice.Viewport.Height / 2) -
+                                                    (_textureDisplayDimension * 1.25)));
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -86,6 +98,9 @@ namespace CitySimAndroid.UI
             spriteBatch.Draw(_textureRotated, destinationRectangle: _btn3_rect, color: _btn3_pressed ? Color.DarkGray : Color.White, effects: SpriteEffects.FlipHorizontally);
 
             spriteBatch.Draw(_textureRotated, destinationRectangle: _btn4_rect, color: _btn4_pressed ? Color.DarkGray : Color.White, effects: SpriteEffects.None);
+
+            // debug
+            //spriteBatch.Draw(_texture, destinationRectangle: _gamepadDisplayRect, color: Color.Red, effects: SpriteEffects.None);
         }
 
         public override void Update(GameTime gameTime, GameState state)
