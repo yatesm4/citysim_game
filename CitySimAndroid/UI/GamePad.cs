@@ -76,7 +76,7 @@ namespace CitySimAndroid.UI
 
         private Vector2 _btnScale { get; set; } = new Vector2(2f, 2f);
 
-        public float CameraMoveSpeed = 10;
+        public float CameraMoveSpeed = 20;
 
         public GamePad(GraphicsDevice graphicsDevice_, GameContent content_)
         {

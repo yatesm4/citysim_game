@@ -27,7 +27,7 @@ namespace CitySimAndroid
     /// </summary>
     public class GameInstance : Game
     {
-        FPS_Counter fpsCounter;
+        GameAnalytics fpsCounter;
 
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -76,7 +76,7 @@ namespace CitySimAndroid
             ClickSound = Content.Load<SoundEffect>("Sounds/FX/click");
             DestroySound = Content.Load<SoundEffect>("Sounds/FX/Poof");
 
-            fpsCounter = new FPS_Counter(spriteBatch, Content);
+            fpsCounter = new GameAnalytics(spriteBatch, Content);
             fpsCounter.LoadContent(Content);
         }
 
@@ -175,14 +175,14 @@ namespace CitySimAndroid
         }
     }
 
-    public class FPS_Counter
+    public class GameAnalytics
     {
         private SpriteFont _font;
         private float _fps = 0;
         private float _totalTime;
         private float _displayFPS;
 
-        public FPS_Counter(SpriteBatch batch, ContentManager content)
+        public GameAnalytics(SpriteBatch batch, ContentManager content)
         {
             this._totalTime = 0f;
             this._displayFPS = 0f;
@@ -207,8 +207,11 @@ namespace CitySimAndroid
 
             _fps++;
 
+            var ver_str = "Ver: PRE-ALPHA 0.0";
+
             batch.Begin();
-            batch.DrawString(this._font, this._displayFPS.ToString() + " FPS", new Vector2(10, 10), Color.White);
+            batch.DrawString(this._font, ver_str, new Vector2(10, 10), Color.White);
+            batch.DrawString(this._font, this._displayFPS.ToString() + " FPS", new Vector2(10, 10 + _font.MeasureString(ver_str).Y), Color.White);
             batch.End();
         }
     }

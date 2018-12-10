@@ -166,6 +166,7 @@ namespace CitySimAndroid.States
 
         public HUD GameHUD { get; set; }
         public GamePad Gamepad { get; set; }
+        public TopBar Topbar { get; set; }
 
         public TileObject SelectedObject { get; set; } = new TileObject();
 
@@ -269,6 +270,9 @@ namespace CitySimAndroid.States
 
             Gamepad = new UI.GamePad(_graphicsDevice, _gameContent);
             Components.Add(Gamepad);
+
+            Topbar = new TopBar(_graphicsDevice, _gameContent);
+            Components.Add(Topbar);
 
             var welcome_txt =
                 "Welcome to CitySim!\n" +
@@ -843,12 +847,6 @@ namespace CitySimAndroid.States
 
                 if (SelectedObject.ObjectId > 0)
                 {
-
-                    var txt = _gameContent.GetTileTexture(SelectedObject.TextureIndex);
-                    var pos = mp - new Vector2((txt.Width * 2) / 2, (txt.Height * 2) - ((txt.Height * 2) * 0.25f));
-                    var rct = new Rectangle((int)pos.X, (int)pos.Y, txt.Width * 2, txt.Height * 2);
-                    spriteBatch.Draw(txt, destinationRectangle: rct, color: Color.White);
-
                     if (!(CurrentlyHoveredTile is null))
                     {
                         var t = CurrentlyHoveredTile;

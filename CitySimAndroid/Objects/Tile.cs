@@ -101,7 +101,7 @@ namespace CitySimAndroid.Objects
         public bool IsVisible { get; set; } = false;
         public bool IsGlowing { get; set; } = false;
 
-        private const float _touchTimeCycleDelay = 2;
+        private const float _touchTimeCycleDelay = 1f;
         private float _touchRemainingDelay = _touchTimeCycleDelay;
         #endregion
 

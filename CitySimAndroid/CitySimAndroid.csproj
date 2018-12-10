@@ -93,6 +93,7 @@
     <Compile Include="UI\DialogWindow.cs" />
     <Compile Include="UI\GamePad.cs" />
     <Compile Include="UI\HUD.cs" />
+    <Compile Include="UI\TopBar.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

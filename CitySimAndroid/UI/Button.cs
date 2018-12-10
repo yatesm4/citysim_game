@@ -56,6 +56,8 @@ namespace CitySimAndroid.UI
 
         public bool IsFlipped { get; set; } = false;
 
+        public bool IsFlippedVert { get; set; } = false;
+
         public bool IsSelected { get; set; } = false;
 
         public int ID { get; set; } = 0;
@@ -90,6 +92,9 @@ namespace CitySimAndroid.UI
 
         public int TextPadding_X = 100;
         public int TextPadding_Y = 50;
+
+        private const float _touchTimeCycleDelay = 0.5f;
+        private float _touchRemainingDelay = _touchTimeCycleDelay;
 
         public Button(Texture2D texture, SpriteFont font)
         {
@@ -129,7 +134,7 @@ namespace CitySimAndroid.UI
 
             if (IsFlipped.Equals(true))
             {
-                spriteBatch.Draw(_texture, destinationRectangle: Rectangle, color: color, effects: SpriteEffects.FlipHorizontally);
+                spriteBatch.Draw(_texture, destinationRectangle: Rectangle, color: color, effects: (IsFlippedVert ? SpriteEffects.FlipVertically : SpriteEffects.FlipHorizontally));
             }
             else
             {
@@ -197,41 +202,38 @@ namespace CitySimAndroid.UI
 
             _isHovering = false;
 
-            /*
-            if (mouseRectangle.Intersects(Rectangle))
+            if (_touchRemainingDelay > 0)
             {
-                _isHovering = true;
-
-                if (Locked.Equals(false))
+                var touch_timer = (float) gameTime.ElapsedGameTime.TotalSeconds;
+                _touchRemainingDelay -= touch_timer;
+                if (_touchRemainingDelay <= 0)
                 {
-                    if (_currentMouse.LeftButton == ButtonState.Released && _previousMouse.LeftButton == ButtonState.Pressed)
-                    {
-                        Click?.Invoke(this, new EventArgs());
-                    }
+                    _touchRemainingDelay = 0;
                 }
             }
-            */
-
-            foreach (TouchLocation tl in _currentTouch)
+            else
             {
-                // get touch position
-                var tl_pos = tl.Position;
-
-                // construct rect to represent touch area
-                var tl_rect = new Rectangle((int)tl_pos.X, (int)tl_pos.Y, 1, 1);
-
-                // if touch rect intersects button hitbox and touch state is pressed
-                if (tl_rect.Intersects(Rectangle))
+                foreach (TouchLocation tl in _currentTouch)
                 {
-                    _isHovering = true;
+                    // get touch position
+                    var tl_pos = tl.Position;
 
-                    Log.Info("CitySim-UI", "Button Hover Registered");
+                    // construct rect to represent touch area
+                    var tl_rect = new Rectangle((int)tl_pos.X, (int)tl_pos.Y, 1, 1);
 
-                    if (Locked.Equals(false) && (tl.State == TouchLocationState.Pressed || tl.State == TouchLocationState.Moved))
+                    // if touch rect intersects button hitbox and touch state is pressed
+                    if (tl_rect.Intersects(Rectangle))
                     {
-                        Log.Info("CitySim-UI", "Button Touch Registered");
+                        _isHovering = true;
 
-                        Click?.Invoke(this, new EventArgs());
+                        Log.Info("CitySim-UI", "Button Hover Registered");
+
+                        if (Locked.Equals(false) && (tl.State == TouchLocationState.Pressed || tl.State == TouchLocationState.Moved))
+                        {
+                            Log.Info("CitySim-UI", "Button Touch Registered");
+                            _touchRemainingDelay = _touchTimeCycleDelay;
+                            Click?.Invoke(this, new EventArgs());
+                        }
                     }
                 }
             }
