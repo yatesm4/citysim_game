@@ -121,32 +121,46 @@ namespace CitySimAndroid.UI
                 // if pressing/touching
                 if (tl.State == TouchLocationState.Moved || tl.State == TouchLocationState.Pressed)
                 {
-                    Log.Info("CitySim-UI", "Gamepad Button Hover Registered");
-
                     var trect = new Rectangle((int)tl.Position.X, (int)tl.Position.Y, 1, 1);
 
                     if (trect.Intersects(_btn1_rect))
                     {
                         Log.Info("CitySim-UI", "Gamepad Button Touch Registered");
                         _btn1_pressed = true;
+                        // reset gamestate camera movement
+                        state.CameraIsMoving = false;
+                        state.CameraDestination = Vector2.Zero;
+                        // update camera position in gamestate
                         state.Camera.Position += new Vector2(0, -CameraMoveSpeed);
                     }
                     else if (trect.Intersects(_btn2_rect))
                     {
                         Log.Info("CitySim-UI", "Gamepad Button Touch Registered");
                         _btn2_pressed = true;
+                        // reset gamestate camera movement
+                        state.CameraIsMoving = false;
+                        state.CameraDestination = Vector2.Zero;
+                        // update camera position in gamestate
                         state.Camera.Position += new Vector2(0, CameraMoveSpeed);
                     }
                     else if (trect.Intersects(_btn3_rect))
                     {
                         Log.Info("CitySim-UI", "Gamepad Button Touch Registered");
                         _btn3_pressed = true;
+                        // reset gamestate camera movement
+                        state.CameraIsMoving = false;
+                        state.CameraDestination = Vector2.Zero;
+                        // update camera position in gamestate
                         state.Camera.Position += new Vector2(-CameraMoveSpeed, 0);
                     }
                     else if (trect.Intersects(_btn4_rect))
                     {
                         Log.Info("CitySim-UI", "Gamepad Button Touch Registered");
                         _btn4_pressed = true;
+                        // reset gamestate camera movement
+                        state.CameraIsMoving = false;
+                        state.CameraDestination = Vector2.Zero;
+                        // update camera position in gamestate
                         state.Camera.Position += new Vector2(CameraMoveSpeed, 0);
                     }
                 }

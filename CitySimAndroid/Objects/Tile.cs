@@ -42,6 +42,8 @@ namespace CitySimAndroid.Objects
         // debug texture for drawing hitbox (click area)
         public Texture2D DebugRect { get; set; }
 
+        // basic properties related to tile (tiledata, position, scale, object, texture)
+        #region TILE PROPERTIES
         // this tile's respective tiledata (will match tile properties)
         public TileData TileData { get; set; }
 
@@ -57,46 +59,8 @@ namespace CitySimAndroid.Objects
         // the texture of this tile
         public Texture2D Texture { get; set; }
 
-        // animated tile properties
-        public Texture2D Anim_Texture { get; set; }
-        public bool HasAnimatedTexture => Anim_Texture != null;
-        public float Anim_Time { get; set; } = 0.0f;
-        public float Anim_FrameTime = 0.25f;
-        public int Anim_FrameIndex = 0;
-        public int Anim_FrameCount => HasAnimatedTexture ? Anim_Texture.Width / Texture.Width : 0;
-
-        // destruction properties
-        public bool ObjectDestroyed { get; set; } = false;
-        public Texture2D FX_Destroyed_Anim_Texture { get; set; }
-        public float FX_Destroyed_Anim_Time { get; set; } = 0;
-        public float FX_Destroyed_Anim_FrameTime = 0.25f;
-        public int FX_Destroyed_Anim_FrameIndex = 0;
-        public int FX_Destroyed_Anim_FrameCount => FX_Destroyed_Anim_Texture.Width / Texture.Width;
-
+        // texture for representative object
         public Texture2D ObjectTexture { get; set; }
-
-        // is the tile interactable, is it hovered, and the hover properties
-        public bool IsInteractable { get; set; } = false;
-        public bool IsHovered { get; set; } = false;
-        public Color DrawColor { get; set; } = Color.White;
-
-        public bool IsVisible { get; set; } = false;
-        public bool IsGlowing { get; set; } = false;
-        public bool IsPreviewingRoad { get; set; } = false;
-        public Texture2D LastSavedRoadTexture { get; set; } = null;
-
-        private MouseState _previousMouseState { get; set; }
-
-        private GameState _gameState { get; set; }
-
-        // used to determine when clicked
-        public event EventHandler Click;
-        public event EventHandler RightClick;
-        public event EventHandler Pressed;
-        public event EventHandler Pressing;
-
-        // hitbox for mouse touch
-        public Rectangle TouchHitbox => new Rectangle((int)Position.X + 16, (int)Position.Y + (83 * (int)Scale.X), 18 * (int)Scale.X, 10 * (int)Scale.X);
 
         // tile position
         public Vector2 Position { get; set; } = new Vector2(0, 0);
@@ -106,9 +70,70 @@ namespace CitySimAndroid.Objects
 
         // scale to draw the tile at
         public Vector2 Scale { get; set; } = new Vector2(10f, 10f);
+        #endregion
+
+        // animated tile properties
+        #region ANIMATION PROPERTIES
+        public Texture2D Anim_Texture { get; set; }
+        public bool HasAnimatedTexture => Anim_Texture != null;
+        public float Anim_Time { get; set; } = 0.0f;
+        public float Anim_FrameTime = 0.25f;
+        public int Anim_FrameIndex = 0;
+        public int Anim_FrameCount => HasAnimatedTexture ? Anim_Texture.Width / Texture.Width : 0;
+        #endregion
+
+        // destruction properties
+        #region DESTRUCTION PROPERTIES
+        public bool ObjectDestroyed { get; set; } = false;
+        public Texture2D FX_Destroyed_Anim_Texture { get; set; }
+        public float FX_Destroyed_Anim_Time { get; set; } = 0;
+        public float FX_Destroyed_Anim_FrameTime = 0.25f;
+        public int FX_Destroyed_Anim_FrameIndex = 0;
+        public int FX_Destroyed_Anim_FrameCount => FX_Destroyed_Anim_Texture.Width / Texture.Width;
+        #endregion
+
+        // is the tile interactable, is it hovered, and the hover properties
+        #region INTERACTION & VISIBILITY PROPERTIES
+        public bool IsInteractable { get; set; } = false;
+        public bool IsHovered { get; set; } = false;
+        public Color DrawColor { get; set; } = Color.White;
+
+        public bool IsVisible { get; set; } = false;
+        public bool IsGlowing { get; set; } = false;
+
+        private const float _touchTimeCycleDelay = 2;
+        private float _touchRemainingDelay = _touchTimeCycleDelay;
+        #endregion
+
+        // properties for when roads are placed on tile (road previewing, etc)
+        #region ROAD PLACEMENT PROPERTIES
+        public bool IsPreviewingRoad { get; set; } = false;
+        public Texture2D LastSavedRoadTexture { get; set; } = null;
+        #endregion
+
+        // touch state, mouse state, game state, etc
+        #region STATE PROPERTIES
+        private GameState _gameState { get; set; }
+
+        private MouseState _previousMouseState { get; set; }
 
         private TouchCollection _previousTouch;
         private TouchCollection _currentTouch;
+        #endregion
+
+        // used to determine when clicked
+        #region EVENT HANDLERS
+        public event EventHandler Click;
+        public event EventHandler RightClick;
+        public event EventHandler Pressed;
+        public event EventHandler Pressing;
+        #endregion
+
+        // properties for interaction hitbox, etc
+        #region TOUCH PROPERTIES
+        // hitbox for mouse touch
+        public Rectangle TouchHitbox => new Rectangle((int)Position.X + 16, (int)Position.Y + (83 * (int)Scale.X), 18 * (int)Scale.X, 10 * (int)Scale.X);
+        #endregion
 
         // tile constructor, pass a gamecontent manager and tiledata to load from
         public Tile(GameContent content_, GraphicsDevice graphicsDevice_, TileData tileData_)
@@ -151,18 +176,6 @@ namespace CitySimAndroid.Objects
             _previousMouseState = Mouse.GetState();
         }
 
-        public TileData GetTileData()
-        {
-            return TileData = new TileData()
-            {
-                TileIndex = this.TileIndex,
-                Position = this.Position,
-                TerrainId = this.TerrainId,
-                IsVisible = this.IsVisible,
-                Object = this.Object
-            };
-        }
-
         // update
         // - check for mouse hovering and click (select)
         public void Update(GameTime gameTime, KeyboardState keyboardState, Camera camera, GameState state)
@@ -175,39 +188,59 @@ namespace CitySimAndroid.Objects
             IsPreviewingRoad = false;
 
             #region TOUCH INTERACTION LOGIC
-
             if (IsVisible)
             {
-                foreach (var tl in _currentTouch)
+                if (_touchRemainingDelay > 0)
                 {
-
-                    var t_screenPosition = new Vector2(tl.Position.X, tl.Position.Y);
-                    var t_screenRect = new Rectangle((int)t_screenPosition.X, (int)t_screenPosition.Y, 1, 1);
-                    if (t_screenRect.Intersects(state.GameHUD.DisplayRect) || t_screenRect.Intersects(state.Gamepad.GamePadUnionHitbox)) continue;
-
-                    var t_worldPosition = Vector2.Zero;
-                    camera.ToWorld(ref t_screenPosition, out t_worldPosition);
-
-                    t_worldPosition.X -= camera.Width / 2f;
-                    t_worldPosition.Y -= camera.Height / 2f;
-
-                    var tlrect = new Rectangle((int)t_worldPosition.X, (int)t_worldPosition.Y, 1, 1);
-
-                    if (!tlrect.Intersects(TouchHitbox)) continue;
-
-                    if (tl.State == TouchLocationState.Moved || tl.State == TouchLocationState.Pressed)
+                    var touch_timer = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    _touchRemainingDelay -= touch_timer;
+                    if (_touchRemainingDelay <= 0)
                     {
-                        state.CurrentlyHoveredTile = this;
-                        Pressed?.Invoke(this, new EventArgs());
+                        _touchRemainingDelay = 0;
                     }
-                    else if (tl.State == TouchLocationState.Released)
+                }
+                else
+                {
+                    foreach (var tl in _currentTouch)
                     {
-                        TouchLocation prevLoc;
+                        // get the screen position of the touch
+                        var t_screenPosition = new Vector2(tl.Position.X, tl.Position.Y);
+                        // construct rect to represent touch
+                        var t_screenRect = new Rectangle((int)t_screenPosition.X, (int)t_screenPosition.Y, 1, 1);
+                        // dont continue if touch intersects hud/ui
+                        if (t_screenRect.Intersects(state.GameHUD.DisplayRect) || t_screenRect.Intersects(state.Gamepad.GamePadUnionHitbox)) continue;
+                        // convert touch screen pos to in-world pos
+                        var t_worldPosition = Vector2.Zero;
+                        camera.ToWorld(ref t_screenPosition, out t_worldPosition);
+                        // adjust output of world position (why this works idfk)
+                        t_worldPosition.X -= camera.Width / 2f;
+                        t_worldPosition.Y -= camera.Height / 2f;
+                        // create rect to represent inworld touch location
+                        var tlrect = new Rectangle((int)t_worldPosition.X, (int)t_worldPosition.Y, 1, 1);
+                        // if touch doesn't intersect tile hitbox
+                        if (!tlrect.Intersects(TouchHitbox)) continue;
 
-                        if (!tl.TryGetPreviousLocation(out prevLoc) || prevLoc.State != TouchLocationState.Moved) continue;
-
-                        state.CurrentlySelectedTile = this;
-                        Click?.Invoke(this, new EventArgs());
+                        // if touchstate is moved/moving or pressed
+                        if (tl.State == TouchLocationState.Moved || tl.State == TouchLocationState.Pressed)
+                        {
+                            // set states currently hovered tile
+                            state.CurrentlyHoveredTile = this;
+                            Log.Info("CitySim-Tile", $"Tile {TileIndex} Press Registered");
+                            Pressed?.Invoke(this, new EventArgs());
+                        }
+                        // else if touch was released on this tile
+                        else if (tl.State == TouchLocationState.Released)
+                        {
+                            // try to get previous touch and see if it wasn't moving before released
+                            TouchLocation prevLoc;
+                            if (!tl.TryGetPreviousLocation(out prevLoc) || prevLoc.State != TouchLocationState.Moved) continue;
+                            // set states currently selected tile
+                            state.CurrentlySelectedTile = this;
+                            // reset timer on touch (only can touch every two seconds)
+                            _touchRemainingDelay = _touchTimeCycleDelay;
+                            Log.Info("CitySim-Tile", $"Tile {TileIndex} Press-Release Registered");
+                            Click?.Invoke(this, new EventArgs());
+                        }
                     }
                 }
             }
@@ -227,126 +260,6 @@ namespace CitySimAndroid.Objects
             if (HasAnimatedTexture == false) CheckForAnimatedTexture();
 
             _gameState = state;
-        }
-
-        public void CheckForAnimatedTexture()
-        {
-            if (Content.Dict_CorrespondingAnimTextureID.ContainsKey(Object.TextureIndex))
-                Anim_Texture = Content.GetTileTexture(Content.Dict_CorrespondingAnimTextureID[Object.TextureIndex]);
-        }
-
-        public bool[] GetNearbyRoads()
-        {
-            var x = TileIndex.X;
-            var y = TileIndex.Y;
-
-            var left_tile = _gameState.CurrentMap.Tiles[(int)x - 1, (int)y];
-            var right_tile = _gameState.CurrentMap.Tiles[(int)x + 1, (int)y];
-            var top_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y - 1];
-            var bot_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y + 1];
-
-            return new[]
-            {
-                left_tile.IsPreviewingRoad || (left_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
-                                               left_tile.Object.TypeId.Equals(Building.Road().TypeId)),
-
-                right_tile.IsPreviewingRoad || (right_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
-                                                right_tile.Object.TypeId.Equals(Building.Road().TypeId)),
-
-                top_tile.IsPreviewingRoad || (top_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
-                                              top_tile.Object.TypeId.Equals(Building.Road().TypeId)),
-
-                bot_tile.IsPreviewingRoad || (bot_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
-                                              bot_tile.Object.TypeId.Equals(Building.Road().TypeId))
-            };
-        }
-
-        public Texture2D DecideTexture_NearbyRoadsFactor()
-        {
-            var txt_id = DecideTextureID_NearbyRoadsFactor();
-            LastSavedRoadTexture = Content.GetTileTexture(txt_id);
-            return LastSavedRoadTexture;
-        }
-
-        public int DecideTextureID_NearbyRoadsFactor()
-        {
-            // get results factor
-            var f = GetNearbyRoads();
-
-            var bool_cnt = f.Count(b => b);
-
-            var txt_id = 26;
-
-            switch (bool_cnt)
-            {
-                case 1:
-                    // if left & right, or left, or right (Straight Road (Left))
-                    if (!(f[3] || f[2]))
-                    {
-                        txt_id = 26;
-                    }
-                    // if up & down, or up, or down (Straight Road (Right))
-                    else if (!(f[0] || f[1]))
-                    {
-                        txt_id = 27;
-                    }
-                    break;
-                case 2:
-                    // if left and up
-                    if (f[0] && f[2] && (bool_cnt == 2))
-                    {
-                        txt_id = 35;
-                    }
-                    // if left and down
-                    else if (f[0] && f[3])
-                    {
-                        txt_id = 36;
-                    }
-                    // if right and up
-                    else if (f[1] && f[2])
-                    {
-                        txt_id = 34;
-                    }
-                    // if right and down
-                    else if (f[1] && f[3])
-                    {
-                        txt_id = 33;
-                    }
-                    // if left & right, or left, or right (Straight Road (Left))
-                    else if (!(f[3] || f[2]))
-                    {
-                        txt_id = 26;
-                    }
-                    // if up & down, or up, or down (Straight Road (Right))
-                    else if (!(f[0] || f[1]))
-                    {
-                        txt_id = 27;
-                    }
-                    break;
-                case 3:
-                    if (f[0] && f[1] && f[2])
-                    {
-                        txt_id = 30;
-                    }
-                    else if (f[0] && f[1] && f[3])
-                    {
-                        txt_id = 32;
-                    }
-                    else if (f[2] && f[3] && f[0])
-                    {
-                        txt_id = 29;
-                    }
-                    else if (f[2] && f[3] && f[1])
-                    {
-                        txt_id = 31;
-                    }
-                    break;
-                case 4:
-                    txt_id = 28;
-                    break;
-            }
-
-            return txt_id;
         }
 
         // draw
@@ -491,5 +404,139 @@ namespace CitySimAndroid.Objects
                 FX_Destroyed_Anim_Time = 0;
             }
         }
+
+        #region HELPER METHODS
+        public TileData GetTileData()
+        {
+            return TileData = new TileData()
+            {
+                TileIndex = this.TileIndex,
+                Position = this.Position,
+                TerrainId = this.TerrainId,
+                IsVisible = this.IsVisible,
+                Object = this.Object
+            };
+        }
+
+        public void CheckForAnimatedTexture()
+        {
+            if (Content.Dict_CorrespondingAnimTextureID.ContainsKey(Object.TextureIndex))
+                Anim_Texture = Content.GetTileTexture(Content.Dict_CorrespondingAnimTextureID[Object.TextureIndex]);
+        }
+
+        public bool[] GetNearbyRoads()
+        {
+            var x = TileIndex.X;
+            var y = TileIndex.Y;
+
+            var left_tile = _gameState.CurrentMap.Tiles[(int)x - 1, (int)y];
+            var right_tile = _gameState.CurrentMap.Tiles[(int)x + 1, (int)y];
+            var top_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y - 1];
+            var bot_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y + 1];
+
+            return new[]
+            {
+                left_tile.IsPreviewingRoad || (left_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                               left_tile.Object.TypeId.Equals(Building.Road().TypeId)),
+
+                right_tile.IsPreviewingRoad || (right_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                                right_tile.Object.TypeId.Equals(Building.Road().TypeId)),
+
+                top_tile.IsPreviewingRoad || (top_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                              top_tile.Object.TypeId.Equals(Building.Road().TypeId)),
+
+                bot_tile.IsPreviewingRoad || (bot_tile.Object.ObjectId.Equals(Building.Road().ObjectId) &&
+                                              bot_tile.Object.TypeId.Equals(Building.Road().TypeId))
+            };
+        }
+
+        public Texture2D DecideTexture_NearbyRoadsFactor()
+        {
+            var txt_id = DecideTextureID_NearbyRoadsFactor();
+            LastSavedRoadTexture = Content.GetTileTexture(txt_id);
+            return LastSavedRoadTexture;
+        }
+
+        public int DecideTextureID_NearbyRoadsFactor()
+        {
+            // get results factor
+            var f = GetNearbyRoads();
+
+            var bool_cnt = f.Count(b => b);
+
+            var txt_id = 26;
+
+            switch (bool_cnt)
+            {
+                case 1:
+                    // if left & right, or left, or right (Straight Road (Left))
+                    if (!(f[3] || f[2]))
+                    {
+                        txt_id = 26;
+                    }
+                    // if up & down, or up, or down (Straight Road (Right))
+                    else if (!(f[0] || f[1]))
+                    {
+                        txt_id = 27;
+                    }
+                    break;
+                case 2:
+                    // if left and up
+                    if (f[0] && f[2] && (bool_cnt == 2))
+                    {
+                        txt_id = 35;
+                    }
+                    // if left and down
+                    else if (f[0] && f[3])
+                    {
+                        txt_id = 36;
+                    }
+                    // if right and up
+                    else if (f[1] && f[2])
+                    {
+                        txt_id = 34;
+                    }
+                    // if right and down
+                    else if (f[1] && f[3])
+                    {
+                        txt_id = 33;
+                    }
+                    // if left & right, or left, or right (Straight Road (Left))
+                    else if (!(f[3] || f[2]))
+                    {
+                        txt_id = 26;
+                    }
+                    // if up & down, or up, or down (Straight Road (Right))
+                    else if (!(f[0] || f[1]))
+                    {
+                        txt_id = 27;
+                    }
+                    break;
+                case 3:
+                    if (f[0] && f[1] && f[2])
+                    {
+                        txt_id = 30;
+                    }
+                    else if (f[0] && f[1] && f[3])
+                    {
+                        txt_id = 32;
+                    }
+                    else if (f[2] && f[3] && f[0])
+                    {
+                        txt_id = 29;
+                    }
+                    else if (f[2] && f[3] && f[1])
+                    {
+                        txt_id = 31;
+                    }
+                    break;
+                case 4:
+                    txt_id = 28;
+                    break;
+            }
+
+            return txt_id;
+        }
+        #endregion
     }
 }
