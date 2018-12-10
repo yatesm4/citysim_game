@@ -44,6 +44,7 @@ namespace CitySimAndroid.UI
         protected Vector2 _buttonSize { get; set; }
 
         protected Vector2 _position { get; set; }
+        protected Vector2 _startPosition { get; set; }
         protected Vector2 _scale { get; set; } = new Vector2(1, 1);
 
         protected List<Component> _components = new List<Component>();
@@ -139,12 +140,15 @@ namespace CitySimAndroid.UI
         // END INFOGRAPHIC SECTION
 
         // BEGIN SELECT BUILDING PAGE BUTTONS SECTION (WITHIN INFOGRAPHIC SECTION)
+        protected Button Btn_SelectHouses { get; set; }
         protected Texture2D Btn_SelectHouses_Texture { get; set; }
         protected const string Btn_SelectHouses_String = "View Residential Buildings";
 
+        protected Button Btn_SelectDeco { get; set; }
         protected Texture2D Btn_SelectDeco_Texture { get; set; }
         protected const string Btn_SelectDeco_String = "View Decoration Buildings";
 
+        protected Button Btn_SelectReso { get; set; }
         protected Texture2D Btn_SelectReso_Texture { get; set; }
         protected const string Btn_SelectReso_String = "View Resource Buildings";
 
@@ -189,6 +193,7 @@ namespace CitySimAndroid.UI
 
         private Button _closeMenuButton;
         private bool _isMenuHidden = false;
+        private bool _isMenuDisplaying = true;
 
         public HUD(GraphicsDevice graphicsDevice_, GameContent content_)
         {
@@ -198,6 +203,7 @@ namespace CitySimAndroid.UI
             int width = (int)(graphicsDevice_.Viewport.Width);
 
             _position = new Vector2(0, graphicsDevice_.Viewport.Height - height);
+            _startPosition = new Vector2(0, graphicsDevice_.Viewport.Height - height);
             _displaySize = new Vector2(width, height);
             _buttonSize = new Vector2(30, height * 0.8f);
 
@@ -270,46 +276,46 @@ namespace CitySimAndroid.UI
 
             var init_btn_bldg_pos = new Vector2();
             init_btn_bldg_pos.X = _displaySize.X - ((Btn_SelectHouses_Texture.Width * 5) * 4) - 10;
-            init_btn_bldg_pos.Y = DisplayRect.Y - (Btn_SelectHouses_Texture.Height * 5) - 5;
+            init_btn_bldg_pos.Y = DisplayRect.Y - (Btn_SelectHouses_Texture.Height * 5) - 10;
 
-            var btn_bldgs_house = new Button(Btn_SelectHouses_Texture, _font)
+            Btn_SelectHouses = new Button(Btn_SelectHouses_Texture, _font)
             {
                 Position = init_btn_bldg_pos,
                 ID = 800,
             };
-            btn_bldgs_house.CustomRect = new Rectangle(
-                (int)btn_bldgs_house.Position.X,
-                (int)btn_bldgs_house.Position.Y,
+            Btn_SelectHouses.CustomRect = new Rectangle(
+                (int)Btn_SelectHouses.Position.X,
+                (int)Btn_SelectHouses.Position.Y,
                 Btn_SelectHouses_Texture.Width * 5,
                 Btn_SelectHouses_Texture.Height * 5
                 );
-            btn_bldgs_house.Click += ViewBldgsBtn_OnClick;
+            Btn_SelectHouses.Click += ViewBldgsBtn_OnClick;
 
-            var btn_bldgs_reso = new Button(Btn_SelectReso_Texture, _font)
+            Btn_SelectReso = new Button(Btn_SelectReso_Texture, _font)
             {
                 Position = init_btn_bldg_pos + new Vector2(Btn_SelectHouses_Texture.Width * 5f, 0),
                 ID = 801,
             };
-            btn_bldgs_reso.CustomRect = new Rectangle(
-                (int)btn_bldgs_reso.Position.X,
-                (int)btn_bldgs_reso.Position.Y,
+            Btn_SelectReso.CustomRect = new Rectangle(
+                (int)Btn_SelectReso.Position.X,
+                (int)Btn_SelectReso.Position.Y,
                 Btn_SelectHouses_Texture.Width * 5,
                 Btn_SelectHouses_Texture.Height * 5
             );
-            btn_bldgs_reso.Click += ViewBldgsBtn_OnClick;
+            Btn_SelectReso.Click += ViewBldgsBtn_OnClick;
 
-            var btn_bldgs_deco = new Button(Btn_SelectDeco_Texture, _font)
+            Btn_SelectDeco = new Button(Btn_SelectDeco_Texture, _font)
             {
                 Position = init_btn_bldg_pos + new Vector2(((Btn_SelectHouses_Texture.Width * 5f) * 2f), 0),
                 ID = 802,
             };
-            btn_bldgs_deco.CustomRect = new Rectangle(
-                (int)btn_bldgs_deco.Position.X,
-                (int)btn_bldgs_deco.Position.Y,
+            Btn_SelectDeco.CustomRect = new Rectangle(
+                (int)Btn_SelectDeco.Position.X,
+                (int)Btn_SelectDeco.Position.Y,
                 Btn_SelectHouses_Texture.Width * 5,
                 Btn_SelectHouses_Texture.Height * 5
             );
-            btn_bldgs_deco.Click += ViewBldgsBtn_OnClick;
+            Btn_SelectDeco.Click += ViewBldgsBtn_OnClick;
 
             _closeMenuButton = new Button(Btn_HideHUD_Texture, _font)
             {
@@ -325,12 +331,9 @@ namespace CitySimAndroid.UI
             );
             _closeMenuButton.Click += Btn_hide_hud_Click;
 
-            _components.Add(btn_bldgs_house);
-            _components.Add(btn_bldgs_reso);
-            _components.Add(btn_bldgs_deco);
-            BtnList_SelectBldgsView.Add(btn_bldgs_house);
-            BtnList_SelectBldgsView.Add(btn_bldgs_reso);
-            BtnList_SelectBldgsView.Add(btn_bldgs_deco);
+            BtnList_SelectBldgsView.Add(Btn_SelectHouses);
+            BtnList_SelectBldgsView.Add(Btn_SelectReso);
+            BtnList_SelectBldgsView.Add(Btn_SelectDeco);
 
             DeleteBuildingBtn_Texture = content_.GetUiTexture(23);
             DeleteBuildingBtn_Pos = new Vector2(
@@ -344,6 +347,177 @@ namespace CitySimAndroid.UI
                 HoverColor = Color.Red
             };
             DeleteBuildingBtn.Click += DeleteBuildingBtnOnClick;
+        }
+
+        public override void Update(GameTime gameTime, GameState state)
+        {
+            // update component positions for menu hiding
+            if (_isMenuHidden && _position.Y < _graphicsDevice.Viewport.Height)
+            {
+                // apply adjustments to position
+                var orig_pos = new Vector2(_position.X, _position.Y);
+                _position = new Vector2(0, _position.Y + 50);
+
+                // check for completion
+                if (_position.Y > _graphicsDevice.Viewport.Height)
+                {
+                    _position = new Vector2(0, _graphicsDevice.Viewport.Height);
+                }
+
+                #region UPDATE OTHER COMPONENTS 
+                var diff = orig_pos.Y - _position.Y;
+                UpdateComponentPositions(diff);
+                #endregion
+            }
+            else if (!_isMenuHidden && _position.Y > _startPosition.Y)
+            {
+                // apply adjustments to position
+                var orig_pos = new Vector2(_position.X, _position.Y);
+                _position = new Vector2(0, _position.Y - 50);
+
+                // check for completion
+                if (_position.Y < _startPosition.Y)
+                {
+                    _position = _startPosition;
+                    _isMenuDisplaying = true;
+                }
+
+                #region UPDATE OTHER COMPONENTS
+                var diff = orig_pos.Y - _position.Y;
+                UpdateComponentPositions(diff);
+                #endregion
+            }
+
+            // update components
+            _closeMenuButton.Update(gameTime, state);
+            // only update below components if menu is not hidden
+            if (!_isMenuHidden)
+            {
+                foreach (Component c in _components)
+                {
+                    c.Update(gameTime, state);
+                }
+                Btn_SelectHouses.Update(gameTime, state);
+                Btn_SelectReso.Update(gameTime, state);
+                Btn_SelectDeco.Update(gameTime, state);
+
+                var list = SelectionCells_BldgHouses_Btns;
+                switch (SelectionCells_ViewIndex)
+                {
+                    case 801:
+                        list = SelectionCells_BldgReso_Btns;
+                        break;
+                    case 802:
+                        list = SelectionCells_BldgDeco_Btns;
+                        break;
+                    default:
+                        list = SelectionCells_BldgHouses_Btns;
+                        break;
+                }
+
+                foreach (var e in list)
+                {
+                    e.Update(gameTime, state);
+                }
+
+                //DeleteBuildingBtn.Update(gameTime, state);
+            }
+
+            // save gamestate
+            State = state;
+        }
+
+        public void UpdateComponentPositions(float diff)
+        {
+            // update other components
+            Btn_SelectHouses.CustomRect = new Rectangle(
+                Btn_SelectHouses.CustomRect.X,
+                Btn_SelectHouses.CustomRect.Y + (int)(diff * -1),
+                Btn_SelectHouses.CustomRect.Width,
+                Btn_SelectHouses.CustomRect.Height
+            );
+            Btn_SelectReso.CustomRect = new Rectangle(
+                Btn_SelectReso.CustomRect.X,
+                Btn_SelectReso.CustomRect.Y + (int)(diff * -1),
+                Btn_SelectReso.CustomRect.Width,
+                Btn_SelectReso.CustomRect.Height
+            );
+            Btn_SelectDeco.CustomRect = new Rectangle(
+                Btn_SelectDeco.CustomRect.X,
+                Btn_SelectDeco.CustomRect.Y + (int)(diff * -1),
+                Btn_SelectDeco.CustomRect.Width,
+                Btn_SelectDeco.CustomRect.Height
+            );
+            _closeMenuButton.CustomRect = new Rectangle(
+                _closeMenuButton.CustomRect.X,
+                _closeMenuButton.CustomRect.Y + (int)(diff * -1),
+                _closeMenuButton.CustomRect.Width,
+                _closeMenuButton.CustomRect.Height
+            );
+
+            foreach (var c in _components)
+            {
+                if (c is Button b)
+                {
+                    b.CustomRect = new Rectangle(
+                        b.CustomRect.X,
+                        b.CustomRect.Y + (int)(diff * -1),
+                        b.CustomRect.Width,
+                        b.CustomRect.Height
+                        );
+                }
+            }
+            var list = SelectionCells_BldgHouses_Btns;
+            switch (SelectionCells_ViewIndex)
+            {
+                case 801:
+                    list = SelectionCells_BldgReso_Btns;
+                    break;
+                case 802:
+                    list = SelectionCells_BldgDeco_Btns;
+                    break;
+                default:
+                    list = SelectionCells_BldgHouses_Btns;
+                    break;
+            }
+
+            // foreach button in building page view
+            foreach (var c in SelectionCells_BldgHouses_Btns)
+            {
+                if (c is Button b)
+                {
+                    b.CustomRect = new Rectangle(
+                        b.CustomRect.X,
+                        b.CustomRect.Y + (int)(diff * -1),
+                        b.CustomRect.Width,
+                        b.CustomRect.Height
+                    );
+                }
+            }
+            foreach (var c in SelectionCells_BldgReso_Btns)
+            {
+                if (c is Button b)
+                {
+                    b.CustomRect = new Rectangle(
+                        b.CustomRect.X,
+                        b.CustomRect.Y + (int)(diff * -1),
+                        b.CustomRect.Width,
+                        b.CustomRect.Height
+                    );
+                }
+            }
+            foreach (var c in SelectionCells_BldgDeco_Btns)
+            {
+                if (c is Button b)
+                {
+                    b.CustomRect = new Rectangle(
+                        b.CustomRect.X,
+                        b.CustomRect.Y + (int)(diff * -1),
+                        b.CustomRect.Width,
+                        b.CustomRect.Height
+                    );
+                }
+            }
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -393,7 +567,7 @@ namespace CitySimAndroid.UI
                 var src_rect = new Rectangle(0, (int)(bldg_txt.Height - (bldg_txt.Height * 0.3f)), (int)bldg_txt.Width,
                     (int)(bldg_txt.Height * 0.3f));
                 spriteBatch.Draw(_content.GetTileTexture(State.CurrentlySelectedTile.Object.TextureIndex), destinationRectangle: bldg_txt_rect, sourceRectangle: src_rect, color: Color.White);
-                DeleteBuildingBtn.Draw(gameTime, spriteBatch);
+                //DeleteBuildingBtn.Draw(gameTime, spriteBatch);
             }
             else
             {
@@ -411,6 +585,7 @@ namespace CitySimAndroid.UI
             ShowBldgBtnTooltip = false;
             ShowBldgBtnId = 0;
 
+            _closeMenuButton.Draw(gameTime, spriteBatch);
             foreach (Component c in _components)
             {
                 c.Draw(gameTime, spriteBatch);
@@ -426,7 +601,9 @@ namespace CitySimAndroid.UI
                     }
                 }
             }
-            _closeMenuButton.Draw(gameTime, spriteBatch);
+            Btn_SelectHouses.Draw(gameTime, spriteBatch);
+            Btn_SelectReso.Draw(gameTime, spriteBatch);
+            Btn_SelectDeco.Draw(gameTime, spriteBatch);
 
             // switch building page view
             var list = SelectionCells_BldgHouses_Btns;
@@ -658,51 +835,20 @@ namespace CitySimAndroid.UI
             }
         }
 
-        public override void Update(GameTime gameTime, GameState state)
-        {
-            foreach (Component c in _components)
-            {
-                c.Update(gameTime, state);
-            }
-            _closeMenuButton.Update(gameTime, state);
-
-            var list = SelectionCells_BldgHouses_Btns;
-            switch (SelectionCells_ViewIndex)
-            {
-                case 801:
-                    list = SelectionCells_BldgReso_Btns;
-                    break;
-                case 802:
-                    list = SelectionCells_BldgDeco_Btns;
-                    break;
-                default:
-                    list = SelectionCells_BldgHouses_Btns;
-                    break;
-            }
-
-            foreach (var e in list)
-            {
-                e.Update(gameTime, state);
-            }
-
-            DeleteBuildingBtn.Update(gameTime, state);
-
-            // save gamestate
-            State = state;
-        }
-
         private void Btn_hide_hud_Click(object sender, EventArgs e)
         {
             // hide hud
             if (_isMenuHidden)
             {
                 _isMenuHidden = false;
-                _closeMenuButton.IsFlipped = false;
+                _closeMenuButton.IsFlipped = true;
             }
             else
             {
                 _isMenuHidden = true;
-                _closeMenuButton.IsFlipped = true;
+                _isMenuDisplaying = false;
+
+                _closeMenuButton.IsFlipped = false;
             }
             var res = _isMenuHidden ? "HUD Menu closed..." : "HUD Menu opened...";
             Log.Warn("CitySim-HUD", res);
