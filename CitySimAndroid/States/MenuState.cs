@@ -19,6 +19,8 @@ namespace CitySimAndroid.States
 {
     public class MenuState : State
     {
+        private GameInstance _game;
+
         // list to hold all components in menu
         private List<Component> _components;
 
@@ -35,6 +37,7 @@ namespace CitySimAndroid.States
         // construct state
         public MenuState(GameInstance game, GraphicsDevice graphicsDevice, ContentManager content) : base(game, graphicsDevice, content)
         {
+            _game = game;
 
             // variables to hold button texture and font
             var buttonTexture = _content.Load<Texture2D>("Sprites/UI/UI_Button");
@@ -143,7 +146,7 @@ namespace CitySimAndroid.States
         // draw state
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: _game.RenderScale);
 
             #region BG SCROLL LOGIC
             // do scroll math for background image

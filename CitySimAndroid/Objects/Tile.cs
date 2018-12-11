@@ -225,6 +225,7 @@ namespace CitySimAndroid.Objects
                         {
                             // set states currently hovered tile
                             state.CurrentlyHoveredTile = this;
+                            state.CurrentlySelectedTile = this;
                             Log.Info("CitySim-Tile", $"Tile {TileIndex} Press Registered");
                             Pressed?.Invoke(this, new EventArgs());
                         }
@@ -429,10 +430,51 @@ namespace CitySimAndroid.Objects
             var x = TileIndex.X;
             var y = TileIndex.Y;
 
-            var left_tile = _gameState.CurrentMap.Tiles[(int)x - 1, (int)y];
-            var right_tile = _gameState.CurrentMap.Tiles[(int)x + 1, (int)y];
-            var top_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y - 1];
-            var bot_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y + 1];
+            var blank_tile = new Tile(Content, GraphicsDevice_, new TileData());
+
+            var left = new Vector2((int)x - 1, (int)y);
+            Tile left_tile;
+            if (left.X <= 0 || left.X >= _gameState.MapBounds || left.Y <= 0 || left.Y >= _gameState.MapBounds)
+            {
+                left_tile = blank_tile;
+            }
+            else
+            {
+                left_tile = _gameState.CurrentMap.Tiles[(int)x - 1, (int)y];
+            }
+
+            var right = new Vector2((int)x + 1, (int)y);
+            Tile right_tile;
+            if (right.X <= 0 || right.X >= _gameState.MapBounds || right.Y <= 0 || right.Y >= _gameState.MapBounds)
+            {
+                right_tile = blank_tile;
+            }
+            else
+            {
+                right_tile = _gameState.CurrentMap.Tiles[(int)x + 1, (int)y];
+            }
+
+            var top = new Vector2((int)x, (int)y - 1);
+            Tile top_tile;
+            if (top.X <= 0 || top.X >= _gameState.MapBounds || top.Y <= 0 || top.Y >= _gameState.MapBounds)
+            {
+                top_tile = blank_tile;
+            }
+            else
+            {
+                top_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y - 1];
+            }
+
+            var bot = new Vector2((int)x, (int)y + 1);
+            Tile bot_tile;
+            if (bot.X <= 0 || bot.X >= _gameState.MapBounds || bot.Y <= 0 || bot.Y >= _gameState.MapBounds)
+            {
+                bot_tile = blank_tile;
+            }
+            else
+            {
+                bot_tile = _gameState.CurrentMap.Tiles[(int)x, (int)y + 1];
+            }
 
             return new[]
             {

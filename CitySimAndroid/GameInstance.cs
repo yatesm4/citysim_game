@@ -41,9 +41,16 @@ namespace CitySimAndroid
         private SoundEffect ClickSound;
         private SoundEffect DestroySound;
 
+        protected const int TargetWidth = 480 * 3;
+        protected const int TargetHeight = 270 * 3;
+        public Matrix RenderScale;
+
         public GameInstance()
         {
-            graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this)
+            {
+                IsFullScreen = true
+            };
 
             Content.RootDirectory = "Content";
         }
@@ -78,6 +85,10 @@ namespace CitySimAndroid
 
             fpsCounter = new GameAnalytics(spriteBatch, Content);
             fpsCounter.LoadContent(Content);
+
+            float scaleX = GraphicsDevice.Viewport.Width / TargetWidth;
+            float scaleY = GraphicsDevice.Viewport.Height / TargetHeight;
+            RenderScale = Matrix.CreateScale(new Vector3(scaleX, scaleY, 1));
         }
 
         /// <summary>
@@ -96,7 +107,6 @@ namespace CitySimAndroid
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-
             _previousMouseState = _currentMouseState;
             _currentMouseState = Mouse.GetState();
 

@@ -186,6 +186,7 @@ namespace CitySimAndroid.States
 
         // reduced map size for mobile devices
         private int _mapBounds = 20;
+        public int MapBounds => _mapBounds;
 
         private List<TileData> _tileData { get; set; }
 
@@ -1773,6 +1774,35 @@ namespace CitySimAndroid.States
                             }
                         }
                     }
+                }
+            }
+
+            // apply roads to tiles adjacent to town hall
+            var boolSent = 0;
+            var townHallRoadsConstructed = false;
+            while (!townHallRoadsConstructed)
+            {
+                boolSent++;
+                try
+                {
+                    var nextRefTileIndex = new Vector2((_townHallIndex.X - 2) + (boolSent - 1), _townHallIndex.Y + 1);
+                    if (nextRefTileIndex.X <= 0 || nextRefTileIndex.X >= _mapBounds || nextRefTileIndex.Y <= 0 ||
+                        nextRefTileIndex.Y >= _mapBounds) continue;
+                    var nextRefTiles = from t in _tileData where t.TileIndex == nextRefTileIndex select t;
+                    var nextRefTile = nextRefTiles.FirstOrDefault();
+                    if (nextRefTile != null && nextRefTile.TerrainId != 2)
+                    {
+                        nextRefTile.Object = Building.Road();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error("CitySim-Map", "Error applying road near townhall: " + e.Message);
+                }
+
+                if (boolSent == 5)
+                {
+                    townHallRoadsConstructed = true;
                 }
             }
 
